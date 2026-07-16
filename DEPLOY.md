@@ -18,11 +18,22 @@ Local prerequisites: `npm install`, the Supabase CLI, and a Supabase account.
    supabase link --project-ref YOUR_PROJECT_REF
    supabase db push
    ```
-3. Seed the catalog + logins into the cloud DB. Point the seed at the cloud project, then run it:
+3. Upload product media into this project's Storage. The repo ships no product imagery, so this must
+   run before the seed — the seed writes Storage URLs and does not check that the objects exist.
+   ```bash
+   SUPABASE_URL="https://YOUR-PROJECT.supabase.co" \
+   SUPABASE_SERVICE_KEY="YOUR_SERVICE_ROLE_KEY" \
+   npm run upload-assets
+   ```
+   Creates the public `product-images` and `media` buckets if absent and uploads ~79MB (well inside the
+   1GB free tier). Idempotent — re-run it freely. Needs a checkout that still has `public/assets/files`
+   and `public/assets/video`; if yours doesn't, restore them from the media backup first.
+4. Seed the catalog + logins into the cloud DB. Point the seed at the cloud project, then run it:
    ```bash
    # temporarily set the cloud creds in your shell (or a .env.local the seed reads)
    SUPABASE_URL="https://YOUR-PROJECT.supabase.co" \
    SUPABASE_SERVICE_KEY="YOUR_SERVICE_ROLE_KEY" \
+   NEXT_PUBLIC_SUPABASE_URL="https://YOUR-PROJECT.supabase.co" \
    ADMIN_EMAIL="admin@your-domain.com" \
    ADMIN_PASSWORD="A_STRONG_UNIQUE_PASSWORD" \
    DEMO_EMAIL="demo@your-domain.com" \
@@ -35,8 +46,9 @@ Local prerequisites: `npm install`, the Supabase CLI, and a Supabase account.
 
    Note your local `.env` is read as a fallback for anything you don't set in the shell, so run this
    from outside the project directory (or unset those vars) if you don't want your dev passwords
-   seeded into production.
-4. Regenerate types if you changed the schema afterward: `npm run db:types`.
+   seeded into production. `NEXT_PUBLIC_SUPABASE_URL` is what `lib/asset-url.ts` builds image URLs
+   from — set it to the cloud project here, or the DB gets `127.0.0.1` image URLs.
+5. Regenerate types if you changed the schema afterward: `npm run db:types`.
 
 > RLS is deny-all on every table; the app only ever talks to the DB through the server-side service-role
 > client. The browser never gets DB grants.

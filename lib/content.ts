@@ -2,6 +2,7 @@ import "server-only";
 import { cache } from "react";
 import { supabase } from "@/lib/supabase";
 import { DEFAULT_CONTENT, type Section } from "@/lib/content-schema";
+import { assetUrl } from "@/lib/asset-url";
 
 /** Read a CMS content section (content table merged over defaults). Deduped per request. */
 export const getContent = cache(async (section: Section): Promise<Record<string, string>> => {
@@ -11,12 +12,16 @@ export const getContent = cache(async (section: Section): Promise<Record<string,
 
 export const getSiteSettings = cache(async () => getContent("site-settings"));
 
-/** Homepage video sources (hero + campaign), admin-editable, with baked-in fallbacks. */
+/**
+ * Homepage video sources (hero + campaign), admin-editable, with baked-in fallbacks.
+ * assetUrl resolves "/assets/video/..." onto Supabase Storage and leaves the full URLs
+ * an admin may paste in untouched.
+ */
 export const getHomeMedia = cache(async () => {
   const c = await getContent("home");
   return {
-    heroVideo: c.heroVideo || "/assets/video/hero.mp4",
-    campaignVideo: c.campaignVideo || "/assets/video/campaign.mp4",
+    heroVideo: assetUrl(c.heroVideo || "/assets/video/hero.mp4"),
+    campaignVideo: assetUrl(c.campaignVideo || "/assets/video/campaign.mp4"),
   };
 });
 

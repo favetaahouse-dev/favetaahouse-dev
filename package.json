@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "extract": "tsx scripts/extract.ts",
+    "upload-assets": "tsx scripts/upload-assets.ts",
     "seed": "tsx scripts/seed-supabase.ts",
     "db:reset": "npx supabase db reset",
     "db:types": "npx supabase gen types typescript --local > lib/database.types.ts",

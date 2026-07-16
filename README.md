@@ -10,7 +10,8 @@ structure, translation method, and admin-panel style.
 |---|---|
 | Framework | Next.js 16 App Router, React 19, TypeScript (strict) |
 | Styling | Tailwind CSS v4 (CSS-first `@theme` in `app/globals.css`) |
-| Data | **Supabase** (local via CLI) — Postgres + Storage + PostgREST + RPC |
+| Data | **Supabase** — Postgres + PostgREST + RPC |
+| Media | **Supabase Storage** — product imagery (`product-images`) and video (`media`); the repo ships no product media |
 | Auth | Auth.js (NextAuth v5), JWT credentials backed by the Supabase `users` table, roles `CUSTOMER`/`ADMIN` |
 | Payments | **SkipCash** (Qatar gateway, QAR-native) with a demo fallback |
 | i18n | next-intl v4, `localePrefix: "as-needed"` — English **unprefixed**, Arabic `/ar`, full RTL |
@@ -31,12 +32,24 @@ npx supabase start
 npx supabase db reset            # applies supabase/migrations (schema + RPCs)
 npm run db:types                 # regenerate lib/database.types.ts
 
-# 2. Seed (reuses prisma/seed-data/*.json from the scrape → Supabase)
+# 2. Upload product media to Supabase Storage (idempotent; --dry-run to preview)
+npm run upload-assets            # 531 files / ~79MB -> product-images + media buckets
+
+# 3. Seed (reuses prisma/seed-data/*.json from the scrape → Supabase)
 npm run seed                     # 99 products, 448 variants, 19 collections, admin + demo users
 
-# 3. Run
+# 4. Run
 npm run dev                      # http://localhost:3000  (/ = English, /ar = Arabic)
 ```
+
+### Where media lives
+Product imagery and video are **not in this repo** — they live in Supabase Storage. Seed data keeps
+project-agnostic `/assets/files/…` keys; `lib/asset-url.ts` resolves them onto the current project's
+Storage URL, and `npm run seed` writes the resolved URL into the DB. Point `.env` at a different
+Supabase project and re-run `upload-assets` + `seed` and everything re-points itself.
+
+Site chrome (brand, favicon, icons, payment marks, fonts, home imagery — ~1MB) stays in `public/`,
+so first paint never waits on a cross-origin fetch.
 
 ### Logins
 Set in `.env` (`ADMIN_EMAIL` / `ADMIN_PASSWORD`, `DEMO_EMAIL` / `DEMO_PASSWORD`) and seeded into the

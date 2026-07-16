@@ -14,7 +14,8 @@ export const metadata: Metadata = {
   },
   description:
     "ALESSIA ABAYA — a Qatari house of timeless elegance. Luxury abayas and jalabiyas crafted from exclusive fabrics since 1982.",
-  icons: { icon: "/assets/files/64_x_64-q52d30e4f.png" },
+  // Site chrome stays in public/; only product media lives in Supabase Storage.
+  icons: { icon: "/assets/brand/favicon.png" },
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {

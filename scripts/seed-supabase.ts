@@ -16,6 +16,7 @@ import path from "node:path";
 import bcrypt from "bcryptjs";
 import { createClient } from "@supabase/supabase-js";
 import { PERMISSIONS, DEFAULT_ROLE_PERMISSIONS } from "../lib/rbac/permissions";
+import { assetUrl } from "../lib/asset-url";
 
 const url = process.env.SUPABASE_URL!;
 const key = process.env.SUPABASE_SERVICE_KEY!;
@@ -99,11 +100,13 @@ async function main() {
     p.variants.map((v) => ({
       product_id: prodMap.get(p.handle)!, shopify_id: v.shopifyId, color: v.color, color_hex: v.colorHex,
       size: v.size, sku: v.sku, price: v.price, compare_at: v.compareAt, stock: v.available ? 10 : 0,
-      available: v.available, image_url: v.imageUrl, position: v.position,
+      available: v.available, image_url: v.imageUrl ? assetUrl(v.imageUrl) : null, position: v.position,
     })),
   );
+  // Seed data stores project-agnostic "/assets/..." keys; the DB stores the resolved
+  // Storage URL, so re-seeding against another project just re-points them.
   const images = products.flatMap((p) =>
-    p.images.map((url, i) => ({ product_id: prodMap.get(p.handle)!, url, alt: p.title, position: i })),
+    p.images.map((url, i) => ({ product_id: prodMap.get(p.handle)!, url: assetUrl(url), alt: p.title, position: i })),
   );
   const links = collections.flatMap((c) =>
     c.productHandles

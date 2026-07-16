@@ -6,6 +6,11 @@ import { fileURLToPath } from "node:url";
 const dir = path.dirname(fileURLToPath(import.meta.url));
 const withNextIntl = createNextIntlPlugin("./i18n/request.ts");
 
+// Media lives in this project's Storage; parse once so images.remotePatterns can allow it.
+const supabaseHost = process.env.NEXT_PUBLIC_SUPABASE_URL
+  ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL)
+  : null;
+
 const securityHeaders = [
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "X-Frame-Options", value: "SAMEORIGIN" },
@@ -19,9 +24,13 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   turbopack: { root: dir },
   images: {
-    // Source imagery is already high-res and served locally; skip on-demand
-    // optimization to keep dev fast and avoid heavy memory use.
+    // Product imagery is served from Supabase Storage, which is already CDN-backed and
+    // stores one right-sized variant per photo, so there is nothing to re-optimize.
     unoptimized: true,
+    // Honoured if optimization is ever turned back on; harmless while unoptimized.
+    remotePatterns: supabaseHost
+      ? [{ protocol: supabaseHost.protocol.replace(":", "") as "http" | "https", hostname: supabaseHost.hostname, port: supabaseHost.port, pathname: "/storage/v1/object/public/**" }]
+      : [],
   },
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
