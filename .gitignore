@@ -52,6 +52,11 @@ yarn-error.log*
 .DS_Store
 Thumbs.db
 
+# product media — lives in Supabase Storage, not in git (see README "Where media lives").
+# Restore from backup here only to re-run `npm run upload-assets` against a new project.
+/public/assets/files/
+/public/assets/video/
+
 # vercel
 .vercel
 
