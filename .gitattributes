@@ -1,0 +1,18 @@
+# Auto detect text files and perform LF normalization
+* text=auto
+
+# Media and fonts: never normalize, never diff as text.
+*.jpg   binary
+*.jpeg  binary
+*.png   binary
+*.gif   binary
+*.webp  binary
+*.ico   binary
+*.mp4   binary
+*.woff  binary
+*.woff2 binary
+
+# Generated — collapse in diffs and PR review.
+package-lock.json       -diff linguist-generated
+lib/database.types.ts   linguist-generated
+prisma/seed-data/*.json linguist-generated

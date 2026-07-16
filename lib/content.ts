@@ -1,0 +1,51 @@
+import "server-only";
+import { cache } from "react";
+import { supabase } from "@/lib/supabase";
+import { DEFAULT_CONTENT, type Section } from "@/lib/content-schema";
+
+/** Read a CMS content section (content table merged over defaults). Deduped per request. */
+export const getContent = cache(async (section: Section): Promise<Record<string, string>> => {
+  const { data } = await supabase.from("content").select("data").eq("key", section).maybeSingle();
+  return { ...DEFAULT_CONTENT[section], ...((data?.data as Record<string, string>) ?? {}) };
+});
+
+export const getSiteSettings = cache(async () => getContent("site-settings"));
+
+/** Homepage video sources (hero + campaign), admin-editable, with baked-in fallbacks. */
+export const getHomeMedia = cache(async () => {
+  const c = await getContent("home");
+  return {
+    heroVideo: c.heroVideo || "/assets/video/hero.mp4",
+    campaignVideo: c.campaignVideo || "/assets/video/campaign.mp4",
+  };
+});
+
+export type CommerceSettings = {
+  shippingFee: number; // QAR major units
+  freeShippingThreshold: number; // QAR major units
+  taxRate: number; // percent
+  taxLabel: string;
+  taxLabelAr: string;
+  emailEnabled: boolean;
+  emailSenderName: string;
+  emailReplyTo: string;
+};
+
+/** Parsed commerce/payment settings (shipping, tax, order emails) from the CMS. */
+export const getCommerceSettings = cache(async (): Promise<CommerceSettings> => {
+  const c = await getContent("commerce");
+  const num = (k: string) => {
+    const n = parseFloat(c[k] ?? "");
+    return Number.isFinite(n) ? n : 0;
+  };
+  return {
+    shippingFee: num("shippingFee"),
+    freeShippingThreshold: num("freeShippingThreshold"),
+    taxRate: num("taxRate"),
+    taxLabel: c.taxLabel || "Tax",
+    taxLabelAr: c.taxLabel_ar || "ضريبة",
+    emailEnabled: c.emailEnabled !== "false",
+    emailSenderName: c.emailSenderName || "Alessia Abaya",
+    emailReplyTo: c.emailReplyTo || "",
+  };
+});

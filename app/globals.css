@@ -1,0 +1,309 @@
+@import "tailwindcss";
+
+/* ─────────────────────────── Brand fonts ─────────────────────────── */
+@font-face {
+  font-family: "Myriad Pro";
+  src: url("/assets/fonts/myriadpro-light.woff") format("woff");
+  font-weight: 300;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Myriad Pro";
+  src: url("/assets/fonts/myriadpro-regular.woff") format("woff");
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Myriad Pro";
+  src: url("/assets/fonts/myriadpro-semibold.woff") format("woff");
+  font-weight: 600;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Myriad Pro";
+  src: url("/assets/fonts/myriadpro-bold.woff") format("woff");
+  font-weight: 700;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Quicksand";
+  src: url("/assets/fonts/quicksand-400.woff2") format("woff2");
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Quicksand";
+  src: url("/assets/fonts/quicksand-500.woff2") format("woff2");
+  font-weight: 500;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Quicksand";
+  src: url("/assets/fonts/quicksand-700.woff2") format("woff2");
+  font-weight: 700;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Janna LT";
+  src: url("/assets/fonts/janna-bold.woff2") format("woff2");
+  font-weight: 400 700;
+  font-display: swap;
+}
+/* Editorial display serif — headings & section titles (Latin only; Arabic keeps Janna) */
+@font-face {
+  font-family: "Fraunces";
+  src: url("/assets/fonts/fraunces.woff2") format("woff2");
+  font-weight: 300 700;
+  font-display: swap;
+}
+
+/* ─────────────────────────── Design tokens ─────────────────────────── */
+@theme {
+  --color-ink: #000000;
+  --color-paper: #ffffff;
+  --color-cream: #ede9e6;
+  --color-sand: #d5c5bb;
+  --color-linen: #e9e1d3;
+  --color-gold: #c69229;
+  --color-gold-soft: #d1ad5e;
+  --color-star: #f49a13;
+  --color-sale: #974326;
+  --color-footer: #222320;
+  --color-footer-fg: #faf7ee;
+  --color-line: #e3ded9;
+  --color-muted: #6b6660;
+
+  --font-sans: "Myriad Pro", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-heading: "Myriad Pro", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-display: "Fraunces", "Cormorant Garamond", "Times New Roman", Georgia, serif;
+  --font-button: "Quicksand", "Myriad Pro", sans-serif;
+  --font-arabic: "Janna LT", "Segoe UI", Tahoma, sans-serif;
+
+  --radius: 0px;
+
+  --tracking-brand: 0.18em;
+}
+
+/* ─────────────────────────── Base ─────────────────────────── */
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  body {
+    background: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-weight: 300;
+    letter-spacing: 0.01em;
+    line-height: 1.65;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
+    font-weight: 400;
+    letter-spacing: 0.14em;
+  }
+  /* Arabic / RTL swaps the body typeface to Janna */
+  [dir="rtl"] body,
+  [lang="ar"] body {
+    font-family: var(--font-arabic);
+  }
+  [dir="rtl"] .flip-x {
+    transform: scaleX(-1);
+  }
+  ::selection {
+    background: var(--color-gold);
+    color: #fff;
+  }
+}
+
+@layer components {
+  /* Uppercase, letter-spaced brand button/label type */
+  .font-button {
+    font-family: var(--font-button);
+  }
+  .brand-track {
+    letter-spacing: var(--tracking-brand);
+  }
+
+  /* ── Buttons (sharp, Quicksand caps; refined hover — no layout shift) ── */
+  .btn-brand {
+    font-family: var(--font-button);
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    font-weight: 500;
+    font-size: 0.72rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-ink);
+    color: #fff;
+    padding: 0.95rem 2.2rem;
+    transition: background 0.3s ease, color 0.3s ease;
+    cursor: pointer;
+  }
+  .btn-brand:hover {
+    background: var(--color-footer);
+  }
+  .btn-outline {
+    font-family: var(--font-button);
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    font-weight: 500;
+    font-size: 0.72rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    color: var(--color-ink);
+    border: 1px solid var(--color-ink);
+    padding: 0.95rem 2.2rem;
+    transition: background 0.3s ease, color 0.3s ease;
+    cursor: pointer;
+  }
+  .btn-outline:hover {
+    background: var(--color-ink);
+    color: #fff;
+  }
+
+  /* ── Editorial serif headings ── */
+  .section-title {
+    font-family: var(--font-display);
+    text-transform: none;
+    font-weight: 400;
+    letter-spacing: 0.005em;
+    font-size: clamp(1.6rem, 3.4vw, 2.75rem);
+    line-height: 1.15;
+    text-align: center;
+  }
+  .display {
+    font-family: var(--font-display);
+    font-weight: 400;
+    letter-spacing: 0.005em;
+    line-height: 1.1;
+  }
+  /* The display serif is Latin-only — Arabic headings fall back to Janna.
+     Must live in this layer (same as .section-title/.display) so it wins by specificity. */
+  [dir="rtl"] .section-title,
+  [lang="ar"] .section-title,
+  [dir="rtl"] .display,
+  [lang="ar"] .display {
+    font-family: var(--font-arabic);
+    font-weight: 700;
+    letter-spacing: 0;
+  }
+
+  /* ── Eyebrow kicker (Quicksand caps micro-label above titles) ── */
+  .eyebrow {
+    font-family: var(--font-button);
+    text-transform: uppercase;
+    letter-spacing: 0.24em;
+    font-size: 0.6875rem;
+    font-weight: 500;
+    color: var(--color-muted);
+  }
+
+  /* ── Unified form field (sharp; gold underline on focus) ── */
+  .field {
+    width: 100%;
+    background: transparent;
+    border: 1px solid var(--color-line);
+    padding: 0.85rem 1rem;
+    font-size: 0.9rem;
+    color: var(--color-ink);
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+  .field::placeholder {
+    color: var(--color-muted);
+  }
+  .field:focus {
+    border-color: var(--color-ink);
+    box-shadow: inset 0 -2px 0 var(--color-gold);
+  }
+
+  /* ── Sharp caps chip (sale / status / coupon) ── */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    font-family: var(--font-button);
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    font-size: 0.6rem;
+    font-weight: 500;
+    line-height: 1;
+    padding: 0.35rem 0.6rem;
+  }
+
+  /* ── Animated gold underline for text links ── */
+  .link-underline {
+    background-image: linear-gradient(var(--color-gold), var(--color-gold));
+    background-repeat: no-repeat;
+    background-position: 0 100%;
+    background-size: 0% 1px;
+    transition: background-size 0.3s ease;
+  }
+  .link-underline:hover {
+    background-size: 100% 1px;
+  }
+}
+
+/* hide scrollbars on carousels */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* ═══════════════ Admin console theme (dark default + light) ═══════════════ */
+/* Semantic color utilities (bg-surface, text-foreground, border-edge, …) that
+   resolve to the runtime `--admin-*` variables, so toggling data-theme reskins
+   the whole panel. Only the admin console uses these classes. */
+@theme inline {
+  --color-canvas: var(--admin-canvas);
+  --color-surface: var(--admin-surface);
+  --color-elevated: var(--admin-elevated);
+  --color-edge: var(--admin-edge);
+  --color-foreground: var(--admin-foreground);
+  --color-secondary: var(--admin-secondary);
+  --color-faint: var(--admin-faint);
+  --color-accent: var(--admin-accent);
+  --color-accent-fg: var(--admin-accent-fg);
+  --color-positive: var(--admin-positive);
+  --color-warn: var(--admin-warn);
+  --color-danger: var(--admin-danger);
+  --color-info: var(--admin-info);
+}
+
+.admin-theme {
+  --admin-canvas: #171614;
+  --admin-surface: #1f1e1b;
+  --admin-elevated: #2a2825;
+  --admin-edge: rgba(255, 255, 255, 0.1);
+  --admin-foreground: #ece8e3;
+  --admin-secondary: #b4ada4;
+  --admin-faint: #857e75;
+  --admin-accent: #c69229;
+  --admin-accent-fg: #171614;
+  --admin-positive: #4ea674;
+  --admin-warn: #d9a441;
+  --admin-danger: #d1685f;
+  --admin-info: #6ba3d1;
+  color-scheme: dark;
+  background: var(--admin-canvas);
+  color: var(--admin-foreground);
+}
+.admin-theme[data-theme="light"] {
+  --admin-canvas: #f5f4f1;
+  --admin-surface: #ffffff;
+  --admin-elevated: #efede8;
+  --admin-edge: rgba(0, 0, 0, 0.1);
+  --admin-foreground: #201f1c;
+  --admin-secondary: #5c574f;
+  --admin-faint: #8b857b;
+  --admin-accent: #a9781c;
+  --admin-accent-fg: #ffffff;
+  --admin-positive: #2f8f57;
+  --admin-warn: #b3801f;
+  --admin-danger: #b8453c;
+  --admin-info: #3f7bb0;
+  color-scheme: light;
+}
+.admin-theme:not([data-theme]) { color-scheme: dark; }

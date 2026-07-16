@@ -1,0 +1,239 @@
+[
+  {
+    "handle": "abayas",
+    "title": "Abayas",
+    "kind": "CATEGORY",
+    "position": 3,
+    "productHandles": [
+      "5012a5300hb1",
+      "noir-celestia",
+      "saffron-stillness",
+      "5012a5156hb1",
+      "5012a5154eb1",
+      "moonlit-opal",
+      "midnight-bloom",
+      "black-serene",
+      "enchanted-mirage",
+      "satin-serene",
+      "5012a5106eb1-olive-heirloom",
+      "5012a5072eb1",
+      "obsidian-thread",
+      "5012a5010hb1-mocha-grace",
+      "5012a5028hb1",
+      "5012a4970sb1c-ivory-trace",
+      "5012a4965hb1-graphite-lace",
+      "bluestatement-blue-statement",
+      "5012a4958hb1",
+      "5012a4975se1"
+    ]
+  },
+  {
+    "handle": "all",
+    "title": "Shop",
+    "kind": "FEATURE",
+    "position": 6,
+    "productHandles": [
+      "5012a5120eb1",
+      "5012a5145hb1",
+      "5012a5405eb1",
+      "blackmeadow",
+      "black-serene",
+      "5012a5443ea1",
+      "bluestatement-blue-statement",
+      "5012a5121hb1bronzeheritage",
+      "5012a4958hb1",
+      "amberweave",
+      "5012a5099hb1723",
+      "5012a5287he1",
+      "5012a5062sb1-axis",
+      "axis-fold",
+      "blackedit",
+      "5012a4980hb1-black-petal",
+      "black-script",
+      "5012a5232he1burgundyember",
+      "5012a4645ee1",
+      "5012a4942he1"
+    ]
+  },
+  {
+    "handle": "jalabiyas",
+    "title": "Jalabiyas",
+    "kind": "CATEGORY",
+    "position": 4,
+    "productHandles": []
+  },
+  {
+    "handle": "sales",
+    "title": "Sale",
+    "kind": "SALE",
+    "position": 2,
+    "productHandles": [
+      "5012a5121hb1bronzeheritage",
+      "enchanted-mirage",
+      "floralpoise",
+      "5012a5156hb1",
+      "grey-serenity",
+      "midnight-bloom",
+      "5012a5130hb1",
+      "moonlit-opal",
+      "noir-celestia",
+      "obsidian-thread",
+      "5012a5106eb1-olive-heirloom",
+      "plum-dusk",
+      "5012a5154eb1",
+      "saffron-stillness",
+      "sheila-s3350",
+      "stoneblossom",
+      "5012a5072eb1",
+      "5012a5104eb1-zinah-verde",
+      "5012a5145hb1",
+      "black-serene"
+    ]
+  },
+  {
+    "handle": "travel-collection",
+    "title": "Travel Collection",
+    "kind": "FEATURE",
+    "position": 1,
+    "productHandles": [
+      "5012a5435eb1",
+      "5012a5475ee1",
+      "5012a5441eb2",
+      "5012a5466sb1",
+      "5012a5437he1",
+      "5012a5469he2",
+      "5012a5438hb1",
+      "5012a5442ea1",
+      "5012a5422ee1",
+      "5012a5476eb1",
+      "5012a5301ea1",
+      "5012a5395sb1",
+      "5012a5304ea1",
+      "5012a5455sb1",
+      "5012a5469he1",
+      "5012a5465sb1",
+      "5012a5535eb1",
+      "5012a5533ee1",
+      "5012a5441eb1"
+    ]
+  },
+  {
+    "handle": "view-all",
+    "title": "View All",
+    "kind": "FEATURE",
+    "position": 5,
+    "productHandles": [
+      "elara-luxe",
+      "grey-serenity",
+      "quiet-linen",
+      "plum-dusk",
+      "noir-celestia",
+      "5012a5156hb1",
+      "5012a5154eb1",
+      "moonlit-opal",
+      "midnight-bloom",
+      "black-serene",
+      "enchanted-mirage",
+      "satin-serene",
+      "saffron-stillness",
+      "5012a5106eb1-olive-heirloom",
+      "5012a5104eb1-zinah-verde",
+      "5012a5072eb1",
+      "obsidian-thread",
+      "floralpoise",
+      "rosewoodbloom",
+      "jewelfern"
+    ]
+  },
+  {
+    "handle": "sheilas",
+    "title": "Sheilas",
+    "kind": "CATEGORY",
+    "position": 20,
+    "productHandles": []
+  },
+  {
+    "handle": "new-in",
+    "title": "New In",
+    "kind": "FEATURE",
+    "position": 20,
+    "productHandles": []
+  },
+  {
+    "handle": "liberty",
+    "title": "Liberty",
+    "kind": "FEATURE",
+    "position": 20,
+    "productHandles": []
+  },
+  {
+    "handle": "daily-abayas",
+    "title": "Daily Abayas",
+    "kind": "CATEGORY",
+    "position": 20,
+    "productHandles": []
+  },
+  {
+    "handle": "evening-abayas",
+    "title": "Evening Abayas",
+    "kind": "CATEGORY",
+    "position": 20,
+    "productHandles": []
+  },
+  {
+    "handle": "daily-jalabiyas",
+    "title": "Daily Jalabiyas",
+    "kind": "CATEGORY",
+    "position": 20,
+    "productHandles": []
+  },
+  {
+    "handle": "evening-jalabiyas",
+    "title": "Evening Jalabiyas",
+    "kind": "CATEGORY",
+    "position": 20,
+    "productHandles": []
+  },
+  {
+    "handle": "pre-winter",
+    "title": "Pre-Winter",
+    "kind": "SEASONAL",
+    "position": 20,
+    "productHandles": []
+  },
+  {
+    "handle": "winter-2025",
+    "title": "Winter",
+    "kind": "SEASONAL",
+    "position": 20,
+    "productHandles": []
+  },
+  {
+    "handle": "ramadan-2026",
+    "title": "Ramadan Collection",
+    "kind": "SEASONAL",
+    "position": 20,
+    "productHandles": []
+  },
+  {
+    "handle": "eid-collection",
+    "title": "Eid Collection",
+    "kind": "SEASONAL",
+    "position": 20,
+    "productHandles": []
+  },
+  {
+    "handle": "black-collection",
+    "title": "Black Collection",
+    "kind": "SEASONAL",
+    "position": 20,
+    "productHandles": []
+  },
+  {
+    "handle": "eid-al-adha-collection-2026",
+    "title": "Eid Al-Adha 2026",
+    "kind": "SEASONAL",
+    "position": 20,
+    "productHandles": []
+  }
+]
