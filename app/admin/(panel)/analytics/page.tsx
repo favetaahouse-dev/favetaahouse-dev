@@ -2,10 +2,12 @@ import { DollarSign, ShoppingCart, Users, Package, TrendingUp, AlertTriangle } f
 import { getAnalytics } from "@/lib/data/admin-analytics";
 import { formatMoney } from "@/lib/money";
 import { PageHeader, StatCard, AreaTrend, Donut, Panel, SectionLabel, Money } from "@/components/admin/ui";
+import { requirePageAccess } from "@/lib/admin-guard";
 
 export const dynamic = "force-dynamic";
 
 export default async function AnalyticsPage() {
+  await requirePageAccess("analytics:read");
   const a = await getAnalytics(30);
   const money = (c: number) => formatMoney(c, "QAR");
 

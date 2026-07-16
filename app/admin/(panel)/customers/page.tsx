@@ -1,7 +1,9 @@
 import { supabase } from "@/lib/supabase";
 import { formatMoney } from "@/lib/money";
+import { requirePageAccess } from "@/lib/admin-guard";
 
 export default async function AdminCustomers() {
+  await requirePageAccess("customers:read");
   const [{ data: users }, { data: orders }] = await Promise.all([
     supabase.from("users").select("id, email, name, created_at").eq("role", "CUSTOMER").order("created_at", { ascending: false }),
     supabase.from("orders").select("user_id, email, total, status"),

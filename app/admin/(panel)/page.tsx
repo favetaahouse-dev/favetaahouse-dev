@@ -4,6 +4,7 @@ import { formatMoney } from "@/lib/money";
 import { skipcashEnabled, SKIPCASH_ENV } from "@/lib/skipcash";
 import { getCommerceSettings } from "@/lib/content";
 import { RevenueChart } from "@/components/admin/RevenueChart";
+import { requirePageAccess } from "@/lib/admin-guard";
 
 function last14Days(): string[] {
   const out: string[] = [];
@@ -17,6 +18,7 @@ function last14Days(): string[] {
 }
 
 export default async function AdminDashboard() {
+  await requirePageAccess("dashboard:read");
   const [{ count: products }, { count: orders }, paidOrders, { count: lowStock }, { count: customers }, orderItems] =
     await Promise.all([
       supabase.from("products").select("*", { count: "exact", head: true }),

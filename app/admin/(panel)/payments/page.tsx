@@ -1,5 +1,6 @@
 import { CreditCard, CheckCircle2, Clock, XCircle } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { requirePageAccess } from "@/lib/admin-guard";
 import { PageHeader, Panel, StatCard, StatusPill, Money, EmptyState } from "@/components/admin/ui";
 
 export const dynamic = "force-dynamic";
@@ -20,6 +21,7 @@ const OPEN = ["new", "pending", "processing"];
 const FAILED = ["failed", "cancelled", "declined"];
 
 export default async function PaymentsPage() {
+  await requirePageAccess("orders:read");
   const { data } = await supabase
     .from("payments")
     .select("id, amount, currency, provider, status, transaction_id, created_at, order:orders(number, email)")

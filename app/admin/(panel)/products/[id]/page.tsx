@@ -6,10 +6,12 @@ import { ProductForm } from "@/components/admin/ProductForm";
 import { VariantEditor } from "@/components/admin/VariantEditor";
 import { ProductActions } from "@/components/admin/ProductActions";
 import { ImageUploader } from "@/components/admin/ImageUploader";
+import { requirePageAccess } from "@/lib/admin-guard";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminProductEdit({ params }: { params: Promise<{ id: string }> }) {
+  await requirePageAccess("products:read");
   const { id } = await params;
   const product = await getAdminProduct(id);
   if (!product) notFound();

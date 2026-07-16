@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase";
+import { requirePageAccess } from "@/lib/admin-guard";
 import { PageHeader, Panel, Badge, EmptyState } from "@/components/admin/ui";
 
 export const dynamic = "force-dynamic";
@@ -19,6 +20,7 @@ function whenLabel(iso: string): string {
 }
 
 export default async function AuditPage() {
+  await requirePageAccess("audit:read");
   const { data } = await supabase
     .from("audit_logs")
     .select("id, action, actor_email, resource_type, resource_id, summary, created_at")

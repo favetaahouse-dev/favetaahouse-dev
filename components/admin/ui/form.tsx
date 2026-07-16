@@ -3,7 +3,7 @@
 import { type ReactNode } from "react";
 import {
   useForm, FormProvider, useFormContext, useController,
-  type DefaultValues, type SubmitHandler, type FieldValues, type Path,
+  type DefaultValues, type SubmitHandler, type FieldValues, type Path, type UseFormReturn,
 } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { ZodType } from "zod";
@@ -14,20 +14,30 @@ import { cn } from "@/lib/utils";
 const inputCls =
   "w-full border border-edge bg-canvas px-3 py-2 text-[13px] text-foreground outline-none placeholder:text-faint focus:border-accent/60";
 
-/** useForm preconfigured with a zod resolver. */
-export function useZodForm<T extends FieldValues>(schema: ZodType<T>, defaultValues: DefaultValues<T>) {
+/**
+ * useForm preconfigured with a zod resolver. The return type is pinned because
+ * `useForm<T>()` leaves RHF 7.80's third TTransformedValues generic unresolved, which
+ * otherwise leaks into every caller and won't match <Form>'s prop.
+ */
+export function useZodForm<T extends FieldValues>(
+  schema: ZodType<T>,
+  defaultValues: DefaultValues<T>,
+): UseFormReturn<T, unknown, T> {
   return useForm<T>({
     // @ts-expect-error resolver generic variance across zod/RHF versions
     resolver: zodResolver(schema),
     defaultValues,
     mode: "onBlur",
-  });
+  }) as unknown as UseFormReturn<T, unknown, T>;
 }
 
 export function Form<T extends FieldValues>({
   form, onSubmit, children, className,
 }: {
-  form: ReturnType<typeof useForm<T>>;
+  // RHF 7.80 carries a third TTransformedValues generic that `useForm<T>()` leaves
+  // unresolved, so pinning this to ReturnType<typeof useForm<T>> rejects the very
+  // object useZodForm hands back. Only TFieldValues matters here.
+  form: UseFormReturn<T, unknown, T>;
   onSubmit: SubmitHandler<T>;
   children: ReactNode;
   className?: string;

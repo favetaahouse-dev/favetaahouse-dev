@@ -5,6 +5,7 @@ import {
 import { getCommerceSettings } from "@/lib/content";
 import { skipcashEnabled, SKIPCASH_ENV } from "@/lib/skipcash";
 import { PageHeader, Panel, SectionLabel, Badge } from "@/components/admin/ui";
+import { requirePageAccess } from "@/lib/admin-guard";
 
 export const dynamic = "force-dynamic";
 
@@ -36,6 +37,7 @@ function StatusRow({ label, value, ok }: { label: string; value: string; ok?: bo
 }
 
 export default async function SettingsPage() {
+  await requirePageAccess("settings:manage");
   const commerce = await getCommerceSettings();
   const emailConfigured = !!process.env.RESEND_API_KEY;
 

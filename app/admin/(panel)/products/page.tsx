@@ -4,10 +4,12 @@ import { listAdminProducts } from "@/lib/data/admin-catalog";
 import { PageHeader, Button } from "@/components/admin/ui";
 import { ProductsTable } from "@/components/admin/ProductsTable";
 import { ImportButton } from "@/components/admin/ImportButton";
+import { requirePageAccess } from "@/lib/admin-guard";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminProducts() {
+  await requirePageAccess("products:read");
   const rows = await listAdminProducts();
   return (
     <div>

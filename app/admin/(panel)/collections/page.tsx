@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import { requirePageAccess } from "@/lib/admin-guard";
 
 const KIND_STYLE: Record<string, string> = {
   CATEGORY: "text-gold",
@@ -9,6 +10,7 @@ const KIND_STYLE: Record<string, string> = {
 };
 
 export default async function AdminCollections() {
+  await requirePageAccess("categories:read");
   const { data: collections } = await supabase
     .from("collections")
     .select("id, handle, title, kind, position")

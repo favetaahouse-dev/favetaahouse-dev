@@ -1,7 +1,9 @@
 import { supabase } from "@/lib/supabase";
 import { OrderRow } from "@/components/admin/OrderRow";
+import { requirePageAccess } from "@/lib/admin-guard";
 
 export default async function AdminOrders() {
+  await requirePageAccess("orders:read");
   const { data: orders } = await supabase
     .from("orders")
     .select("id, number, email, total, status, tracking_number, created_at, items:order_items(id)")

@@ -1,10 +1,12 @@
 import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
+import { requirePageAccess } from "@/lib/admin-guard";
 import { getOrder } from "@/lib/data/orders";
 import { formatMoney } from "@/lib/money";
 
 export default async function AdminOrderDetail({ params }: { params: Promise<{ id: string }> }) {
+  await requirePageAccess("orders:read");
   const { id } = await params;
   const order = await getOrder(id);
   if (!order) notFound();

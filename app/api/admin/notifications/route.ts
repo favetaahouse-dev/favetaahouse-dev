@@ -12,7 +12,9 @@ export async function GET() {
 }
 
 export async function PATCH(req: Request) {
-  const bad = await requirePermission("notifications:read");
+  // A write, and with no ids markNotificationsRead() clears the whole team's inbox —
+  // so it must not sit behind a :read grant.
+  const bad = await requirePermission("notifications:write");
   if (bad) return bad;
   const body = await req.json().catch(() => ({}));
   const ids = Array.isArray(body?.ids) ? (body.ids as string[]) : undefined;

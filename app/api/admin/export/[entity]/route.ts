@@ -1,8 +1,19 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { requireAdmin } from "@/lib/admin-auth";
+import { requirePermission } from "@/lib/admin-auth";
 import { supabase } from "@/lib/supabase";
+import type { Permission } from "@/lib/rbac/permissions";
 
 export const runtime = "nodejs";
+
+/**
+ * Each export is gated on the permission for the data it dumps — `requireAdmin()`
+ * only proved "is staff", so any role could pull the full customer PII CSV.
+ */
+const ENTITY_PERMISSION: Record<string, Permission> = {
+  orders: "orders:read",
+  products: "products:read",
+  customers: "customers:read",
+};
 
 function toCsv(rows: Record<string, unknown>[]): string {
   if (!rows.length) return "";
@@ -15,9 +26,11 @@ function toCsv(rows: Record<string, unknown>[]): string {
 }
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ entity: string }> }) {
-  const bad = await requireAdmin();
-  if (bad) return bad;
   const { entity } = await params;
+  const perm = ENTITY_PERMISSION[entity];
+  if (!perm) return NextResponse.json({ error: "unknown entity" }, { status: 404 });
+  const bad = await requirePermission(perm);
+  if (bad) return bad;
 
   let rows: Record<string, unknown>[] = [];
   if (entity === "orders") {

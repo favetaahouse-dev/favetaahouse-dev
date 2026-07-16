@@ -28,7 +28,6 @@ export const navGroups: NavGroup[] = [
       { href: "/admin/products", label: "Products", icon: Package, permission: "products:read" },
       { href: "/admin/inventory", label: "Inventory", icon: Boxes, permission: "inventory:read" },
       { href: "/admin/collections", label: "Collections", icon: FolderTree, permission: "categories:read" },
-      { href: "/admin/reviews", label: "Reviews", icon: Star, permission: "reviews:read" },
     ],
   },
   {

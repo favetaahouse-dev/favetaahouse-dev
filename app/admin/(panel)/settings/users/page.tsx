@@ -1,20 +1,25 @@
 import { ShieldCheck, Users as UsersIcon } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import { PageHeader, Panel, StatCard, Badge, EmptyState } from "@/components/admin/ui";
+import { PageHeader, StatCard } from "@/components/admin/ui";
 import { PERMISSIONS } from "@/lib/rbac/permissions";
+import { requirePageAccess } from "@/lib/admin-guard";
+import { SUPER_ADMIN_KEY } from "@/lib/rbac/guards";
+import { StaffTable, type StaffRow } from "@/components/admin/settings/StaffTable";
+import { RolePermissionMatrix, type MatrixRole } from "@/components/admin/settings/RolePermissionMatrix";
 
 export const dynamic = "force-dynamic";
 
 type RoleRef = { name: string; key: string; rank: number } | { name: string; key: string; rank: number }[] | null;
-type StaffRow = {
+type StaffQuery = {
   id: string;
   email: string;
   name: string | null;
   role: string;
+  role_id: string | null;
   created_at: string;
   role_info: RoleRef;
 };
-type RoleRow = {
+type RoleQuery = {
   id: string;
   key: string;
   name: string;
@@ -25,17 +30,15 @@ type RoleRow = {
 };
 
 const pretty = (s: string) => s.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
-
-function roleName(role: string, ref: RoleRef): string {
-  const r = Array.isArray(ref) ? ref[0] : ref;
-  return r?.name ?? pretty(role);
-}
+const one = (ref: RoleRef) => (Array.isArray(ref) ? ref[0] : ref) ?? null;
 
 export default async function StaffRolesPage() {
+  const actor = await requirePageAccess("users:read");
+
   const [{ data: staffData }, { data: rolesData }] = await Promise.all([
     supabase
       .from("users")
-      .select("id, email, name, role, created_at, role_info:roles(name, key, rank)")
+      .select("id, email, name, role, role_id, created_at, role_info:roles(name, key, rank)")
       .neq("role", "CUSTOMER")
       .order("created_at", { ascending: true }),
     supabase
@@ -44,9 +47,32 @@ export default async function StaffRolesPage() {
       .order("rank", { ascending: false }),
   ]);
 
-  const staff = (staffData ?? []) as StaffRow[];
-  const roles = (rolesData ?? []) as RoleRow[];
-  const totalPerms = PERMISSIONS.length;
+  const staff: StaffRow[] = ((staffData ?? []) as StaffQuery[]).map((u) => {
+    const r = one(u.role_info);
+    return {
+      id: u.id,
+      email: u.email,
+      name: u.name,
+      roleId: u.role_id,
+      roleName: r?.name ?? pretty(u.role),
+      // No role_id resolves to super_admin in lib/auth.ts, so treat it as rank 100
+      // here too — the table must not offer to edit someone it can't actually touch.
+      roleRank: r?.rank ?? (u.role === "ADMIN" ? 100 : 0),
+      createdAt: u.created_at,
+    };
+  });
+
+  const roleRows = (rolesData ?? []) as RoleQuery[];
+  const roles: MatrixRole[] = roleRows.map((r) => ({
+    id: r.id,
+    key: r.key,
+    name: r.name,
+    rank: r.rank,
+    isSystem: r.is_system,
+    permissions: (r.permissions ?? []).map((p) => p.permission),
+  }));
+
+  const actorIsSuper = actor.role === SUPER_ADMIN_KEY;
 
   return (
     <div className="space-y-6">
@@ -55,80 +81,18 @@ export default async function StaffRolesPage() {
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
         <StatCard label="Staff members" value={staff.length} icon={<UsersIcon size={15} />} />
         <StatCard label="Roles" value={roles.length} icon={<ShieldCheck size={15} />} />
-        <StatCard label="Permissions" value={totalPerms} icon={<ShieldCheck size={15} />} />
+        <StatCard label="Permissions" value={PERMISSIONS.length} icon={<ShieldCheck size={15} />} />
       </div>
 
-      <Panel>
-        <div className="border-b border-edge px-4 py-3">
-          <h2 className="text-[10px] uppercase tracking-[0.16em] text-faint">Staff members ({staff.length})</h2>
-        </div>
-        {staff.length === 0 ? (
-          <EmptyState title="No staff accounts" description="Users with any non-customer role appear here." />
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[560px] text-[13px]">
-              <thead>
-                <tr className="border-b border-edge text-[10px] uppercase tracking-[0.14em] text-faint">
-                  <th className="px-4 py-3 text-start">Name</th>
-                  <th className="px-3 py-3 text-start">Email</th>
-                  <th className="px-3 py-3 text-start">Role</th>
-                  <th className="px-3 py-3 text-start">Joined</th>
-                </tr>
-              </thead>
-              <tbody>
-                {staff.map((u) => (
-                  <tr key={u.id} className="border-b border-edge/60 text-foreground">
-                    <td className="px-4 py-2.5">{u.name ?? "—"}</td>
-                    <td className="px-3 py-2.5 text-secondary">{u.email}</td>
-                    <td className="px-3 py-2.5"><Badge tone="accent">{roleName(u.role, u.role_info)}</Badge></td>
-                    <td className="px-3 py-2.5 text-faint">{new Date(u.created_at).toLocaleDateString("en-US")}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </Panel>
+      <StaffTable
+        staff={staff}
+        roles={roles.map((r) => ({ id: r.id, name: r.name, rank: r.rank }))}
+        actorId={actor.id}
+        actorRank={actor.roleRank}
+        actorIsSuper={actorIsSuper}
+      />
 
-      <Panel>
-        <div className="border-b border-edge px-4 py-3">
-          <h2 className="text-[10px] uppercase tracking-[0.16em] text-faint">Roles ({roles.length})</h2>
-        </div>
-        {roles.length === 0 ? (
-          <EmptyState title="No roles defined" description="Seed the roles table to manage granular permissions." />
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[560px] text-[13px]">
-              <thead>
-                <tr className="border-b border-edge text-[10px] uppercase tracking-[0.14em] text-faint">
-                  <th className="px-4 py-3 text-start">Role</th>
-                  <th className="px-3 py-3 text-start">Description</th>
-                  <th className="px-3 py-3 text-end">Permissions</th>
-                  <th className="px-3 py-3 text-start">Type</th>
-                </tr>
-              </thead>
-              <tbody>
-                {roles.map((r) => {
-                  const count = r.permissions?.length ?? 0;
-                  const isSuper = r.key === "super_admin";
-                  return (
-                    <tr key={r.id} className="border-b border-edge/60 text-foreground">
-                      <td className="px-4 py-2.5 font-medium">{r.name}</td>
-                      <td className="px-3 py-2.5 text-secondary">{r.description ?? "—"}</td>
-                      <td className="px-3 py-2.5 text-end tabular-nums">
-                        {isSuper ? "All" : `${count} / ${totalPerms}`}
-                      </td>
-                      <td className="px-3 py-2.5">
-                        <Badge tone={r.is_system ? "info" : "neutral"}>{r.is_system ? "System" : "Custom"}</Badge>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </Panel>
+      <RolePermissionMatrix roles={roles} actorRank={actor.roleRank} actorIsSuper={actorIsSuper} />
     </div>
   );
 }

@@ -1,29 +1,52 @@
 import { NextResponse } from "next/server";
-import { requireAdmin } from "@/lib/admin-auth";
+import { auth } from "@/lib/auth";
+import { hasPermission, requireAdmin, sessionUser } from "@/lib/admin-auth";
 import { supabase } from "@/lib/supabase";
 
 export const runtime = "nodejs";
 
 export type SearchGroup = { type: string; items: { label: string; sub?: string; href: string }[] };
 
+const none = <T>() => Promise.resolve({ data: [] as T[] });
+
 export async function GET(req: Request) {
+  // Any staff may search; each source is then gated on its own permission, so a
+  // read_only session can't surface customers or coupons through the search box.
   const bad = await requireAdmin();
   if (bad) return bad;
+  const u = sessionUser(await auth());
 
   const q = new URL(req.url).searchParams.get("q")?.trim() ?? "";
   if (q.length < 2) return NextResponse.json({ groups: [] });
   const like = `%${q}%`;
   const isNum = /^\d+$/.test(q);
 
+  // Gate at query construction, not on the results — a denied source must never hit the DB.
+  const canProducts = hasPermission(u, "products:read");
+  const canOrders = hasPermission(u, "orders:read");
+  const canCustomers = hasPermission(u, "customers:read");
+  const canCoupons = hasPermission(u, "coupons:read");
+  const canCollections = hasPermission(u, "categories:read");
+
   const [products, ordersByEmail, ordersByNumber, customers, coupons, collections] = await Promise.all([
-    supabase.from("products").select("id, handle, title").ilike("title", like).limit(6),
-    supabase.from("orders").select("id, number, email").ilike("email", like).limit(6),
-    isNum
+    canProducts
+      ? supabase.from("products").select("id, handle, title").ilike("title", like).limit(6)
+      : none<{ id: string; handle: string; title: string }>(),
+    canOrders
+      ? supabase.from("orders").select("id, number, email").ilike("email", like).limit(6)
+      : none<{ id: string; number: number; email: string }>(),
+    canOrders && isNum
       ? supabase.from("orders").select("id, number, email").eq("number", Number(q)).limit(4)
-      : Promise.resolve({ data: [] as { id: string; number: number; email: string }[] }),
-    supabase.from("users").select("id, name, email").eq("role", "CUSTOMER").ilike("email", like).limit(6),
-    supabase.from("coupons").select("id, code").ilike("code", like).limit(4),
-    supabase.from("collections").select("id, handle, title").ilike("title", like).limit(4),
+      : none<{ id: string; number: number; email: string }>(),
+    canCustomers
+      ? supabase.from("users").select("id, name, email").eq("role", "CUSTOMER").ilike("email", like).limit(6)
+      : none<{ id: string; name: string | null; email: string }>(),
+    canCoupons
+      ? supabase.from("coupons").select("id, code").ilike("code", like).limit(4)
+      : none<{ id: string; code: string }>(),
+    canCollections
+      ? supabase.from("collections").select("id, handle, title").ilike("title", like).limit(4)
+      : none<{ id: string; handle: string; title: string }>(),
   ]);
 
   const orderMap = new Map<string, { id: string; number: number; email: string }>();
@@ -40,7 +63,8 @@ export async function GET(req: Request) {
     },
     {
       type: "Customers",
-      items: (customers.data ?? []).map((c) => ({ label: c.name ?? c.email, sub: c.email, href: `/admin/customers/${c.id}` })),
+      // No /admin/customers/[id] route exists — link the list, not a 404.
+      items: (customers.data ?? []).map((c) => ({ label: c.name ?? c.email, sub: c.email, href: `/admin/customers` })),
     },
     {
       type: "Coupons",

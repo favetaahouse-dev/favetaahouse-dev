@@ -1,4 +1,5 @@
 import NextAuth from "next-auth";
+import type { JWT } from "next-auth/jwt";
 import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { supabase } from "@/lib/supabase";
@@ -26,6 +27,35 @@ async function resolveAccess(user: {
   // Legacy fallback: a user with the old ADMIN role but no role_id is a super admin.
   if (user.role === "ADMIN") return { role: "super_admin", roleRank: 100, permissions: [] };
   return { role: CUSTOMER_ROLE, roleRank: 0, permissions: [] };
+}
+
+/** How long a JWT may hold stale grants before they're re-read from the DB. */
+const ACCESS_TTL_MS = 60_000;
+
+/**
+ * Re-read a live session's role and permissions. Fails CLOSED: if the user row is
+ * gone or the query throws, the session drops to zero permissions rather than
+ * keeping whatever it was last granted — a deleted staff member's cookie must stop
+ * working. Costs one indexed lookup per user per TTL.
+ */
+async function refreshAccess(token: JWT): Promise<JWT> {
+  try {
+    const { data: user, error } = await supabase
+      .from("users")
+      .select("role, role_id")
+      .eq("id", token.id as string)
+      .maybeSingle();
+    if (error) throw error;
+    if (!user) {
+      return { ...token, role: CUSTOMER_ROLE, roleRank: 0, permissions: [], accessAt: Date.now() };
+    }
+    const access = await resolveAccess({ role_id: user.role_id, role: user.role });
+    return { ...token, ...access, accessAt: Date.now() };
+  } catch {
+    // Don't stamp accessAt on failure — retry on the next request instead of
+    // locking the session out for a full TTL over one transient DB error.
+    return { ...token, role: CUSTOMER_ROLE, roleRank: 0, permissions: [] };
+  }
 }
 
 function clientMeta(req: Request | undefined) {
@@ -88,15 +118,22 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
   ],
   callbacks: {
-    jwt({ token, user }) {
+    async jwt({ token, user }) {
       if (user) {
         const u = user as { id: string; role?: string; roleRank?: number; permissions?: string[] };
         token.id = u.id;
         token.role = u.role ?? CUSTOMER_ROLE;
         token.roleRank = u.roleRank ?? 0;
         token.permissions = u.permissions ?? [];
+        token.accessAt = Date.now();
+        return token;
       }
-      return token;
+
+      // Access used to be resolved only at sign-in, which froze a session's permissions
+      // for its whole life: editing a role changed nothing until the user signed out, and
+      // a revoked admin kept their grants. Re-resolve on a TTL instead.
+      if (!token.id || Date.now() - ((token.accessAt as number) ?? 0) < ACCESS_TTL_MS) return token;
+      return refreshAccess(token);
     },
     session({ session, token }) {
       if (session.user) {
