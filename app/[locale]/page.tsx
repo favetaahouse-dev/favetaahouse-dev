@@ -21,7 +21,7 @@ export default async function HomePage({
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
-  const [featured, media] = await Promise.all([getFeaturedProducts(), getHomeMedia()]);
+  const [featured, media] = await Promise.all([getFeaturedProducts(20), getHomeMedia()]);
 
   return (
     <>
