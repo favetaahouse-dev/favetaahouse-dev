@@ -132,19 +132,25 @@ export type Database = {
         Row: {
           cart_id: string
           id: string
+          length: number | null
           quantity: number
+          tack_tack: boolean | null
           variant_id: string
         }
         Insert: {
           cart_id: string
           id?: string
+          length?: number | null
           quantity?: number
+          tack_tack?: boolean | null
           variant_id: string
         }
         Update: {
           cart_id?: string
           id?: string
+          length?: number | null
           quantity?: number
+          tack_tack?: boolean | null
           variant_id?: string
         }
         Relationships: [
@@ -713,6 +719,7 @@ export type Database = {
           tags: string[]
           title: string
           title_ar: string | null
+          total_qty: number
           updated_at: string
           vendor: string
         }
@@ -738,6 +745,7 @@ export type Database = {
           tags?: string[]
           title: string
           title_ar?: string | null
+          total_qty?: number
           updated_at?: string
           vendor?: string
         }
@@ -763,6 +771,7 @@ export type Database = {
           tags?: string[]
           title?: string
           title_ar?: string | null
+          total_qty?: number
           updated_at?: string
           vendor?: string
         }
@@ -1000,12 +1009,10 @@ export type Database = {
       generate_variants: {
         Args: {
           p_colors: Json
-          p_lengths: number[]
           p_price: number
           p_product_id: string
           p_sizes: string[]
           p_stock: number
-          p_tacktacks: boolean[]
         }
         Returns: number
       }

@@ -87,7 +87,7 @@ export type FullProduct = {
   priceMax: number;
   images: { id: string; url: string; alt: string | null; position: number }[];
   variants: {
-    id: string; color: string; colorHex: string | null; size: string; length: number; tackTack: boolean; sku: string | null;
+    id: string; color: string; colorHex: string | null; size: string; sku: string | null;
     price: number; compareAt: number | null; stock: number; available: boolean; imageUrl: string | null; position: number;
   }[];
 };
@@ -97,7 +97,7 @@ export async function getProductByHandle(handle: string): Promise<FullProduct | 
     .from("products")
     .select(
       "id,handle,title,category,product_code,description,materials,model_size,details,packaging,price_min,price_max," +
-        "images:product_images(id,url,alt,position),variants(id,color,color_hex,size,length,tack_tack,sku,price,compare_at,stock,available,image_url,position)",
+        "images:product_images(id,url,alt,position),variants(id,color,color_hex,size,sku,price,compare_at,stock,available,image_url,position)",
     )
     .eq("handle", handle)
     .eq("status", "active")
@@ -105,7 +105,7 @@ export async function getProductByHandle(handle: string): Promise<FullProduct | 
   if (!data) return null;
   const p = data as unknown as Record<string, unknown> & {
     images: { id: string; url: string; alt: string | null; position: number }[];
-    variants: { id: string; color: string; color_hex: string | null; size: string; length: number; tack_tack: boolean; sku: string | null; price: number; compare_at: number | null; stock: number; available: boolean; image_url: string | null; position: number }[];
+    variants: { id: string; color: string; color_hex: string | null; size: string; sku: string | null; price: number; compare_at: number | null; stock: number; available: boolean; image_url: string | null; position: number }[];
   };
   return {
     id: p.id as string,
@@ -124,7 +124,7 @@ export async function getProductByHandle(handle: string): Promise<FullProduct | 
     variants: [...p.variants]
       .sort((a, b) => a.position - b.position)
       .map((v) => ({
-        id: v.id, color: v.color, colorHex: v.color_hex, size: v.size, length: v.length, tackTack: v.tack_tack, sku: v.sku,
+        id: v.id, color: v.color, colorHex: v.color_hex, size: v.size, sku: v.sku,
         price: v.price, compareAt: v.compare_at, stock: v.stock, available: v.available, imageUrl: v.image_url, position: v.position,
       })),
   };

@@ -13,13 +13,13 @@ import { useCart } from "@/components/providers/cart-context";
 import { sortSizes } from "@/lib/variant-options";
 import { cn } from "@/lib/utils";
 
+// A variant is one colour+size, holding stock. Length + tack-tack are made-to-order choices
+// captured on the cart line, not stocked separately.
 export type VariantDTO = {
   id: string;
   color: string;
   colorHex: string | null;
   size: string;
-  length: number;
-  tackTack: boolean;
   sku: string | null;
   price: number;
   compareAt: number | null;
@@ -40,6 +40,7 @@ export type ProductDetailDTO = {
   packaging: string | null;
   images: { url: string; alt: string | null }[];
   variants: VariantDTO[];
+  lengths: number[]; // offered lengths (from the CMS list); made-to-order choices
 };
 
 const stocked = (v: VariantDTO) => v.available && v.stock > 0;
@@ -57,22 +58,14 @@ export function ProductDetail({ product }: { product: ProductDetailDTO }) {
     return [...map.entries()].map(([color, hex]) => ({ color, hex }));
   }, [variants]);
 
-  // Fill size → tack → length from the first in-stock option, given a partial choice.
-  const pickDefaults = (c: string, s?: string, tt?: boolean) => {
-    const inColor = variants.filter((v) => v.color === c);
-    const size = s ?? firstStocked(inColor)?.size ?? inColor[0]?.size ?? "";
-    const inSize = inColor.filter((v) => v.size === size);
-    const tackTack = tt ?? firstStocked(inSize)?.tackTack ?? inSize[0]?.tackTack ?? false;
-    const inTack = inSize.filter((v) => v.tackTack === tackTack);
-    const length = firstStocked(inTack)?.length ?? inTack[0]?.length ?? 0;
-    return { size, tackTack, length };
-  };
+  const firstColor = colors[0]?.color ?? "";
+  const firstSize = firstStocked(variants.filter((v) => v.color === firstColor))?.size ?? "";
+  const lengths = product.lengths;
 
-  const init = pickDefaults(colors[0]?.color ?? "");
-  const [color, setColor] = useState(colors[0]?.color ?? "");
-  const [size, setSize] = useState(init.size);
-  const [tackTack, setTackTack] = useState(init.tackTack);
-  const [length, setLength] = useState(init.length);
+  const [color, setColor] = useState(firstColor);
+  const [size, setSize] = useState(firstSize);
+  const [tackTack, setTackTack] = useState(false); // "No" by default
+  const [length, setLength] = useState<number | null>(lengths[0] ?? null);
   const [qty, setQty] = useState(1);
   const [activeImg, setActiveImg] = useState(0);
   const [lightbox, setLightbox] = useState(false);
@@ -80,22 +73,11 @@ export function ProductDetail({ product }: { product: ProductDetailDTO }) {
 
   const inColor = variants.filter((v) => v.color === color);
   const sizes = useMemo(() => sortSizes([...new Set(inColor.map((v) => v.size))]), [inColor]);
-  const inSize = inColor.filter((v) => v.size === size);
-  const tacks = useMemo(() => [...new Set(inSize.map((v) => v.tackTack))].sort((a, b) => Number(a) - Number(b)), [inSize]);
-  const inTack = inSize.filter((v) => v.tackTack === tackTack);
-  const lengths = useMemo(() => [...new Set(inTack.map((v) => v.length))].sort((a, b) => a - b), [inTack]);
 
-  const selected = variants.find(
-    (v) => v.color === color && v.size === size && v.tackTack === tackTack && v.length === length,
-  );
+  // Stock lives on (colour, size). Tack-tack + length are always-available made-to-order choices.
+  const selected = variants.find((v) => v.color === color && v.size === size);
   const allSoldOut = variants.length > 0 && variants.every((v) => !stocked(v));
-
-  const sizeSoldOut = (s: string) => inColor.filter((v) => v.size === s).every((v) => !stocked(v));
-  const tackSoldOut = (tt: boolean) => inSize.filter((v) => v.tackTack === tt).every((v) => !stocked(v));
-  const lengthSoldOut = (l: number) => {
-    const v = inTack.find((x) => x.length === l);
-    return !v || !stocked(v);
-  };
+  const sizeSoldOut = (s: string) => !inColor.some((v) => v.size === s && stocked(v));
 
   function jumpGallery(v?: VariantDTO) {
     if (v?.imageUrl) {
@@ -105,30 +87,28 @@ export function ProductDetail({ product }: { product: ProductDetailDTO }) {
   }
 
   function selectColor(c: string) {
-    const d = pickDefaults(c);
-    setColor(c); setSize(d.size); setTackTack(d.tackTack); setLength(d.length);
-    jumpGallery(variants.find((v) => v.color === c && v.size === d.size && v.tackTack === d.tackTack && v.length === d.length));
-  }
-  function selectSize(s: string) {
-    const d = pickDefaults(color, s);
-    setSize(s); setTackTack(d.tackTack); setLength(d.length);
-  }
-  function selectTack(tt: boolean) {
-    const d = pickDefaults(color, size, tt);
-    setTackTack(tt); setLength(d.length);
+    const inC = variants.filter((v) => v.color === c);
+    const s = firstStocked(inC)?.size ?? inC[0]?.size ?? "";
+    setColor(c);
+    setSize(s);
+    jumpGallery(inC.find((v) => v.size === s));
   }
 
   async function handleAdd(buyNow = false) {
     if (!selected) {
-      toast.error(t("unavailableCombination"));
+      toast.error(t("selectSize"));
       return;
     }
     if (!stocked(selected)) {
       toast.error(t("outOfStock"));
       return;
     }
+    if (lengths.length > 0 && length == null) {
+      toast.error(t("selectLength"));
+      return;
+    }
     setAdding(true);
-    const ok = await add(selected.id, qty);
+    const ok = await add(selected.id, qty, length ?? undefined, tackTack);
     setAdding(false);
     if (ok && buyNow) router.push("/checkout");
     if (!ok) toast.error(t("outOfStock"));
@@ -224,7 +204,7 @@ export function ProductDetail({ product }: { product: ProductDetailDTO }) {
                   <button
                     key={s}
                     disabled={disabled}
-                    onClick={() => selectSize(s)}
+                    onClick={() => setSize(s)}
                     className={cn(
                       "min-w-12 border px-4 py-2.5 text-xs uppercase tracking-wider transition-colors",
                       size === s ? "border-ink bg-ink text-white" : "border-line hover:border-ink",
@@ -238,54 +218,42 @@ export function ProductDetail({ product }: { product: ProductDetailDTO }) {
             </div>
           </div>
 
-          {/* Tack Tack */}
-          {tacks.length > 1 && (
-            <div className="mt-6">
-              <p className="mb-2 font-button text-[11px] uppercase tracking-[0.14em]">{t("tackTack")}</p>
-              <div className="flex flex-wrap gap-2">
-                {tacks.map((tt) => {
-                  const disabled = tackSoldOut(tt);
-                  return (
-                    <button
-                      key={String(tt)}
-                      disabled={disabled}
-                      onClick={() => selectTack(tt)}
-                      className={cn(
-                        "border px-4 py-2.5 text-xs tracking-wider transition-colors",
-                        tackTack === tt ? "border-ink bg-ink text-white" : "border-line hover:border-ink",
-                        disabled && "cursor-not-allowed border-line/60 text-muted line-through opacity-50",
-                      )}
-                    >
-                      {tt ? t("tackTackYes") : t("tackTackNo")}
-                    </button>
-                  );
-                })}
-              </div>
+          {/* Tack Tack — a made-to-order choice, always selectable */}
+          <div className="mt-6">
+            <p className="mb-2 font-button text-[11px] uppercase tracking-[0.14em]">{t("tackTack")}</p>
+            <div className="flex flex-wrap gap-2">
+              {[false, true].map((tt) => (
+                <button
+                  key={String(tt)}
+                  onClick={() => setTackTack(tt)}
+                  className={cn(
+                    "border px-4 py-2.5 text-xs tracking-wider transition-colors",
+                    tackTack === tt ? "border-ink bg-ink text-white" : "border-line hover:border-ink",
+                  )}
+                >
+                  {tt ? t("tackTackYes") : t("tackTackNo")}
+                </button>
+              ))}
             </div>
-          )}
+          </div>
 
-          {/* Length */}
-          {lengths.length > 1 && (
+          {/* Length — a made-to-order choice, always selectable */}
+          {lengths.length > 0 && (
             <div className="mt-6">
               <p className="mb-2 font-button text-[11px] uppercase tracking-[0.14em]">{t("length")}</p>
               <div className="flex flex-wrap gap-2">
-                {lengths.map((l) => {
-                  const disabled = lengthSoldOut(l);
-                  return (
-                    <button
-                      key={l}
-                      disabled={disabled}
-                      onClick={() => setLength(l)}
-                      className={cn(
-                        "min-w-12 border px-3 py-2.5 text-xs tracking-wider transition-colors",
-                        length === l ? "border-ink bg-ink text-white" : "border-line hover:border-ink",
-                        disabled && "cursor-not-allowed border-line/60 text-muted line-through opacity-50",
-                      )}
-                    >
-                      {l}
-                    </button>
-                  );
-                })}
+                {lengths.map((l) => (
+                  <button
+                    key={l}
+                    onClick={() => setLength(l)}
+                    className={cn(
+                      "min-w-12 border px-3 py-2.5 text-xs tracking-wider transition-colors",
+                      length === l ? "border-ink bg-ink text-white" : "border-line hover:border-ink",
+                    )}
+                  >
+                    {l}
+                  </button>
+                ))}
               </div>
             </div>
           )}

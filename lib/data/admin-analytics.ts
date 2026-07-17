@@ -27,7 +27,7 @@ export async function getAnalytics(days = 30): Promise<AnalyticsData> {
     supabase.from("order_items").select("title,price,quantity,orders!inner(status)").in("orders.status", PAID),
     supabase
       .from("variants")
-      .select("stock,color,size,length,tack_tack,products!inner(title,status)")
+      .select("stock,color,size,products!inner(title,status)")
       .lte("stock", 2)
       .eq("products.status", "active")
       .order("stock", { ascending: true })
@@ -70,12 +70,12 @@ export async function getAnalytics(days = 30): Promise<AnalyticsData> {
     .slice(0, 10);
 
   const lowRows = (lowRes.data ?? []) as unknown as {
-    stock: number; color: string; size: string; length: number; tack_tack: boolean;
+    stock: number; color: string; size: string;
     products: { title: string } | { title: string }[] | null;
   }[];
   const lowStock = lowRows.map((v) => {
     const p = Array.isArray(v.products) ? v.products[0] : v.products;
-    return { title: p?.title ?? "", variant: variantLabel({ color: v.color, size: v.size, length: v.length, tackTack: v.tack_tack }), stock: v.stock };
+    return { title: p?.title ?? "", variant: variantLabel({ color: v.color, size: v.size }), stock: v.stock };
   });
 
   const paidOrders = paid.length;

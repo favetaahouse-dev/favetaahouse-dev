@@ -7,7 +7,6 @@ import { Button, Panel, SectionLabel } from "./ui";
 import { createProduct, updateProduct, type ProductInput } from "@/lib/actions/products";
 import { VariantMatrixPanel, type MatrixSpec } from "./VariantMatrixPanel";
 import type { AdminProduct } from "@/lib/data/admin-catalog";
-import { cellKey } from "@/lib/variant-options";
 import { cn } from "@/lib/utils";
 
 const CATEGORIES = ["ABAYA", "JALABIYA", "SHEILA", "OTHER"] as const;
@@ -42,7 +41,7 @@ export function ProductForm({
   const set = (k: keyof typeof f, v: unknown) => setF((s) => ({ ...s, [k]: v }));
 
   const existingKeys = product
-    ? new Set(product.variants.map((v) => cellKey(v.color, v.size, v.length, v.tackTack)))
+    ? new Set(product.variants.map((v) => `${v.color}|${v.size}`))
     : undefined;
 
   const payload = (): ProductInput => ({

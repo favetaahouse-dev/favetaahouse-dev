@@ -15,7 +15,7 @@ type CartCtx = {
   open: boolean;
   pending: boolean;
   setOpen: (o: boolean) => void;
-  add: (variantId: string, qty?: number) => Promise<boolean>;
+  add: (variantId: string, qty?: number, length?: number, tackTack?: boolean) => Promise<boolean>;
   update: (itemId: string, qty: number) => void;
   remove: (itemId: string) => void;
   applyCoupon: (code: string) => Promise<boolean>;
@@ -29,8 +29,8 @@ export function CartProvider({ initial, children }: { initial: CartState; childr
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
 
-  const add = useCallback(async (variantId: string, qty = 1) => {
-    const res = await addToCartAction(variantId, qty);
+  const add = useCallback(async (variantId: string, qty = 1, length?: number, tackTack?: boolean) => {
+    const res = await addToCartAction(variantId, qty, length, tackTack);
     setState(res.cart);
     if (res.ok) setOpen(true);
     return res.ok;

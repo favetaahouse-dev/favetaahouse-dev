@@ -51,13 +51,11 @@ const variantSpecSchema = z
   .object({
     colors: z.array(z.object({ name: z.string().trim().min(1), hex: z.string().nullish() })).min(1),
     sizes: z.array(z.string().trim().min(1)).min(1),
-    lengths: z.array(z.number().int().min(0)).min(1),
-    tackTacks: z.array(z.boolean()).min(1),
     price: z.number().int().min(0),
     stock: z.number().int().min(0),
   })
-  .refine((s) => s.colors.length * s.sizes.length * s.lengths.length * s.tackTacks.length <= MAX_CELLS, {
-    message: `That combination exceeds ${MAX_CELLS} variants. Narrow the sizes, lengths, or colours.`,
+  .refine((s) => s.colors.length * s.sizes.length <= MAX_CELLS, {
+    message: `That combination exceeds ${MAX_CELLS} variants. Narrow the sizes or colours.`,
   });
 export type VariantSpec = z.infer<typeof variantSpecSchema>;
 
@@ -69,26 +67,22 @@ const FIELD_MAP: Record<string, string> = {
   category: "category", status: "status", tags: "tags",
 };
 
-/** Reject any size/length not in the admin-managed lists — this is where the "picker" is
- *  actually enforced; the client <select> is only a suggestion. */
-async function assertOptionsAllowed(sizes: string[], lengths: number[]) {
+/** Reject any size not in the admin-managed list — this is where the "picker" is actually
+ *  enforced; the client control is only a suggestion. */
+async function assertOptionsAllowed(sizes: string[]) {
   const opt = await getVariantOptions();
   const badSize = sizes.find((s) => !opt.sizes.includes(s));
   if (badSize) throw new Error(`"${badSize}" is not an allowed size. Add it under Content → Sizes & Lengths first.`);
-  const badLen = lengths.find((l) => !opt.lengths.includes(l));
-  if (badLen) throw new Error(`Length ${badLen} is not allowed. Add it under Content → Sizes & Lengths first.`);
 }
 
-/** Create the missing (color, size, length, tack_tack) cells for a product. Never touches an
- *  existing cell's stock/price (the RPC uses ON CONFLICT DO NOTHING). Returns rows created. */
+/** Create the missing (colour, size) variants for a product. Never touches an existing row's
+ *  stock/price (the RPC uses ON CONFLICT DO NOTHING). Returns rows created. */
 async function runGenerate(productId: string, spec: VariantSpec): Promise<number> {
-  await assertOptionsAllowed(spec.sizes, spec.lengths);
+  await assertOptionsAllowed(spec.sizes);
   const { data, error } = await supabase.rpc("generate_variants", {
     p_product_id: productId,
     p_colors: spec.colors.map((c) => ({ name: c.name.trim(), hex: c.hex ?? null })),
     p_sizes: spec.sizes,
-    p_lengths: spec.lengths,
-    p_tacktacks: spec.tackTacks,
     p_price: spec.price,
     p_stock: spec.stock,
   });
@@ -164,7 +158,21 @@ export async function setVariantStock(productId: string, cells: { id: string; st
   return { ok: true, changed: (data as number) ?? 0 };
 }
 
-/** Set the same price on many variant cells (e.g. all lengths of a colour+size) in one call. */
+/** Set the advisory product total (size stocks are kept summing ≤ it in the admin UI). */
+export async function setProductTotal(productId: string, total: number) {
+  const actor = await authorize("products:write");
+  const clean = z.number().int().min(0).parse(total);
+  const { error } = await supabase.from("products").update({ total_qty: clean }).eq("id", productId);
+  if (error) throw new Error(error.message);
+  await logAudit({
+    actorId: actor.id, actorEmail: actor.email, action: "product.total",
+    resourceType: "product", resourceId: productId, summary: `Set total quantity to ${clean}`,
+  });
+  revalidateAll(productId);
+  return { ok: true };
+}
+
+/** Set the same price on many variant rows in one call. */
 export async function setVariantPrice(productId: string, ids: string[], price: number) {
   const actor = await authorize("products:write");
   const clean = z.object({ ids: z.array(z.string().uuid()).min(1), price: z.number().int().min(0) }).parse({ ids, price });
@@ -286,8 +294,6 @@ const variantRowSchema = z.object({
   color: z.string().trim().min(1),
   colorHex: z.string().nullish(),
   size: z.string().trim().min(1),
-  length: z.number().int().min(0).default(50),
-  tackTack: z.boolean().default(false),
   sku: z.string().nullish(),
   price: z.number().int().min(0),
   compareAt: z.number().int().min(0).nullish(),
@@ -301,7 +307,6 @@ export async function upsertVariant(productId: string, v: z.input<typeof variant
   const stock = p.stock ?? 0;
   const row = {
     product_id: productId, color: p.color, color_hex: p.colorHex ?? null, size: p.size,
-    length: p.length, tack_tack: p.tackTack,
     sku: p.sku ?? null, price: p.price, compare_at: p.compareAt ?? null,
     stock, available: stock > 0, position: p.position ?? 0,
   };
@@ -312,7 +317,7 @@ export async function upsertVariant(productId: string, v: z.input<typeof variant
   await recomputePrices(productId);
   await logAudit({
     actorId: actor.id, actorEmail: actor.email, action: p.id ? "variant.update" : "variant.create",
-    resourceType: "product", resourceId: productId, summary: `${p.color} / ${p.size} / ${p.length} / ${p.tackTack ? "TT" : "no"}`,
+    resourceType: "product", resourceId: productId, summary: `${p.color} / ${p.size}`,
   });
   revalidateAll(productId);
   return { ok: true };

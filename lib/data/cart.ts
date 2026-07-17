@@ -12,8 +12,8 @@ export type CartLine = {
   title: string;
   color: string;
   size: string;
-  length: number;
-  tackTack: boolean;
+  length: number | null;
+  tackTack: boolean | null;
   price: number;
   compareAt: number | null;
   image: string | null;
@@ -33,7 +33,7 @@ export type CartState = {
 };
 
 const CART_SELECT =
-  "id, coupon_code, items:cart_items(id, quantity, variant:variants(id, color, size, length, tack_tack, price, compare_at, stock, available, image_url, product:products(handle, title, images:product_images(url, position))))";
+  "id, coupon_code, items:cart_items(id, quantity, length, tack_tack, variant:variants(id, color, size, price, compare_at, stock, available, image_url, product:products(handle, title, images:product_images(url, position))))";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function mapCart(cart: any): CartState {
@@ -50,7 +50,7 @@ function mapCart(cart: any): CartState {
         null;
       return {
         id: it.id, variantId: v.id, handle: p.handle, title: p.title, color: v.color, size: v.size,
-        length: v.length, tackTack: v.tack_tack,
+        length: it.length, tackTack: it.tack_tack,
         price: v.price, compareAt: v.compare_at, image: img, quantity: it.quantity, maxStock: v.stock, available: v.available,
       } as CartLine;
     })

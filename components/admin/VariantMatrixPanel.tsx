@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { X, Plus } from "lucide-react";
 import { Button, Panel, SectionLabel } from "./ui";
 import { generateVariants } from "@/lib/actions/products";
-import { cellKey, sortSizes } from "@/lib/variant-options";
+import { sortSizes } from "@/lib/variant-options";
 import { cn } from "@/lib/utils";
 
 const input =
@@ -15,17 +15,16 @@ const input =
 export type MatrixSpec = {
   colors: { name: string; hex: string }[];
   sizes: string[];
-  lengths: number[];
-  tackTacks: boolean[];
   price: number;
   stock: number;
 };
 
 /**
- * The colour × size × length × tack-tack generator. Rendered on both New and Edit.
+ * The colour × size variant generator. Each colour+size holds stock; length and tack-tack are
+ * made-to-order choices on the storefront, not part of a variant.
  * - create: reports its spec upward so the parent submits it with the product.
- * - edit: has its own "Generate variants" button (never wired into "Save changes"), and
- *   previews new-vs-existing so nobody creates hundreds of rows by accident.
+ * - edit: has its own "Generate variants" button (never wired into "Save changes"), previewing
+ *   new-vs-existing so nobody creates rows by accident.
  */
 export function VariantMatrixPanel({
   options,
@@ -37,54 +36,44 @@ export function VariantMatrixPanel({
   options: { sizes: string[]; lengths: number[] };
   mode: "create" | "edit";
   productId?: string;
-  existingKeys?: Set<string>;
+  existingKeys?: Set<string>; // "color|size" keys already in the product
   onSpecChange?: (spec: MatrixSpec) => void;
 }) {
   const router = useRouter();
   const [colors, setColors] = useState<{ name: string; hex: string }[]>([{ name: "Black", hex: "#111111" }]);
-  const [sizes, setSizes] = useState<string[]>(mode === "create" ? [] : []);
-  const [lengths, setLengths] = useState<number[]>(options.lengths);
-  const [offerTack, setOfferTack] = useState(true);
+  const [sizes, setSizes] = useState<string[]>([]);
   const [price, setPrice] = useState("");
   const [stock, setStock] = useState("");
   const [busy, setBusy] = useState(false);
 
-  const tackTacks = offerTack ? [false, true] : [false];
   const cleanColors = colors.filter((c) => c.name.trim());
 
   const spec: MatrixSpec = useMemo(
     () => ({
       colors: cleanColors.length ? cleanColors : [{ name: "Default", hex: "#111111" }],
       sizes,
-      lengths: lengths.length ? lengths : [50],
-      tackTacks,
       price: Math.round(Number(price) || 0),
       stock: Math.round(Number(stock) || 0),
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [colors, sizes, lengths, offerTack, price, stock],
+    [colors, sizes, price, stock],
   );
 
   useEffect(() => onSpecChange?.(spec), [spec, onSpecChange]);
 
-  const requested = spec.colors.length * spec.sizes.length * spec.lengths.length * spec.tackTacks.length;
+  const requested = spec.colors.length * spec.sizes.length;
   const willCreate = useMemo(() => {
     if (!existingKeys) return requested;
     let n = 0;
-    for (const c of spec.colors)
-      for (const s of spec.sizes)
-        for (const l of spec.lengths)
-          for (const t of spec.tackTacks) if (!existingKeys.has(cellKey(c.name.trim(), s, l, t))) n++;
+    for (const c of spec.colors) for (const s of spec.sizes) if (!existingKeys.has(`${c.name.trim()}|${s}`)) n++;
     return n;
   }, [spec, existingKeys, requested]);
 
-  const toggle = <T,>(arr: T[], v: T, set: (x: T[]) => void) =>
-    set(arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v]);
+  const toggle = (v: string) => setSizes((a) => (a.includes(v) ? a.filter((x) => x !== v) : [...a, v]));
 
   const generate = async () => {
     if (!productId) return;
     if (!spec.sizes.length) return toast.error("Pick at least one size");
-    if (willCreate > 200 && !confirm(`This will create ${willCreate} new variants. Continue?`)) return;
     setBusy(true);
     try {
       const res = await generateVariants(productId, spec);
@@ -100,11 +89,10 @@ export function VariantMatrixPanel({
   return (
     <Panel className="space-y-6 p-5">
       <div>
-        <SectionLabel className="mb-1">Variants</SectionLabel>
+        <SectionLabel className="mb-1">{mode === "create" ? "Variants" : "Add colours / sizes"}</SectionLabel>
         <p className="text-[11px] text-faint">
-          {mode === "create"
-            ? "Every colour × size × length × tack-tack combination becomes a stockable variant. Set stock per combination after creating."
-            : "Add missing combinations. Existing variants keep their stock and price untouched."}
+          A variant is one colour + size, with its own quantity. Length and Tack Tack are choices the
+          customer picks on the product page — they aren&apos;t stocked separately.
         </p>
       </div>
 
@@ -131,7 +119,7 @@ export function VariantMatrixPanel({
         ) : (
           <div className="flex flex-wrap gap-1.5">
             {sortSizes(options.sizes).map((s) => (
-              <button key={s} type="button" onClick={() => toggle(sizes, s, setSizes)}
+              <button key={s} type="button" onClick={() => toggle(s)}
                 className={cn("border px-3 py-1.5 text-[13px]", sizes.includes(s) ? "border-accent bg-accent/15 text-foreground" : "border-edge text-secondary hover:border-accent/50")}>
                 {s}
               </button>
@@ -140,33 +128,10 @@ export function VariantMatrixPanel({
         )}
       </div>
 
-      {/* lengths */}
-      <div>
-        <SectionLabel className="mb-2">Lengths</SectionLabel>
-        <div className="flex flex-wrap gap-1.5">
-          {options.lengths.map((l) => (
-            <button key={l} type="button" onClick={() => toggle(lengths, l, setLengths)}
-              className={cn("border px-3 py-1.5 text-[13px]", lengths.includes(l) ? "border-accent bg-accent/15 text-foreground" : "border-edge text-secondary hover:border-accent/50")}>
-              {l}
-            </button>
-          ))}
-        </div>
-        <div className="mt-2 flex gap-3 text-[11px] text-faint">
-          <button type="button" className="hover:text-foreground" onClick={() => setLengths(options.lengths)}>Select all</button>
-          <button type="button" className="hover:text-foreground" onClick={() => setLengths([])}>Clear</button>
-        </div>
-      </div>
-
-      {/* tack tack */}
-      <label className="flex items-center gap-2 text-[13px] text-foreground">
-        <input type="checkbox" checked={offerTack} onChange={(e) => setOfferTack(e.target.checked)} />
-        Offer Tack Tack (a Yes / No choice)
-      </label>
-
       {/* price + stock */}
       <div className="grid gap-4 md:grid-cols-2">
         <label className="block"><SectionLabel>Price (fils)</SectionLabel><input type="number" min={0} className={input} value={price} onChange={(e) => setPrice(e.target.value)} placeholder="e.g. 45000" /></label>
-        <label className="block"><SectionLabel>Starting stock per combination</SectionLabel><input type="number" min={0} className={input} value={stock} onChange={(e) => setStock(e.target.value)} placeholder="0" /></label>
+        <label className="block"><SectionLabel>Starting quantity per size</SectionLabel><input type="number" min={0} className={input} value={stock} onChange={(e) => setStock(e.target.value)} placeholder="0" /></label>
       </div>
 
       <p className="text-[11px] text-faint">

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { setRequestLocale } from "next-intl/server";
 import { getProductByHandle, getRelatedProducts } from "@/lib/data/catalog";
+import { getVariantOptions } from "@/lib/content";
 import { ProductDetail, type ProductDetailDTO } from "@/components/product/ProductDetail";
 import { ProductRecommendations } from "@/components/product/ProductRecommendations";
 
@@ -29,7 +30,10 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
   const product = await getProductByHandle(handle);
   if (!product) notFound();
 
-  const related = await getRelatedProducts(product.id, product.category, 4);
+  const [related, options] = await Promise.all([
+    getRelatedProducts(product.id, product.category, 4),
+    getVariantOptions(),
+  ]);
 
   const dto: ProductDetailDTO = {
     handle: product.handle,
@@ -47,8 +51,6 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
       color: v.color,
       colorHex: v.colorHex,
       size: v.size,
-      length: v.length,
-      tackTack: v.tackTack,
       sku: v.sku,
       price: v.price,
       compareAt: v.compareAt,
@@ -56,6 +58,7 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
       available: v.available,
       imageUrl: v.imageUrl,
     })),
+    lengths: options.lengths,
   };
 
   const jsonLd = {

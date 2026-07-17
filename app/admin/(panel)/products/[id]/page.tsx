@@ -30,7 +30,7 @@ export default async function AdminProductEdit({ params }: { params: Promise<{ i
         }
       />
       <ProductForm product={product} options={options} />
-      <VariantGrid productId={product.id} variants={product.variants} />
+      <VariantGrid productId={product.id} variants={product.variants} totalQty={product.totalQty} />
       <ImageUploader
         productId={product.id}
         initial={product.images.map((i) => ({ id: i.id, url: i.url, position: i.position }))}

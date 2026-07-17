@@ -99,7 +99,7 @@ async function main() {
   const variants = products.flatMap((p) =>
     p.variants.map((v) => ({
       product_id: prodMap.get(p.handle)!, shopify_id: v.shopifyId, color: v.color, color_hex: v.colorHex,
-      size: v.size, length: 50, tack_tack: false, sku: v.sku, price: v.price, compare_at: v.compareAt,
+      size: v.size, sku: v.sku, price: v.price, compare_at: v.compareAt,
       stock: v.available ? 10 : 0,
       available: v.available, image_url: v.imageUrl ? assetUrl(v.imageUrl) : null, position: v.position,
     })),
@@ -125,31 +125,13 @@ async function main() {
     }
   }
 
-  // Expand each product's anchor variants into the full length × tack-tack matrix so a fresh
-  // setup matches production (where the migration did this). New combinations start at stock 0.
-  const LENGTHS = Array.from({ length: 12 }, (_, i) => 50 + i);
-  console.log("Expanding variants into the length × tack-tack matrix...");
+  // Backfill each product's advisory total = sum of its size quantities.
+  console.log("Setting product totals...");
   for (const p of products) {
     const id = prodMap.get(p.handle);
     if (!id) continue;
-    const colors = new Map<string, string | null>();
-    const sizes = new Set<string>();
-    let price = 0;
-    for (const v of p.variants) {
-      if (!colors.has(v.color)) colors.set(v.color, v.colorHex);
-      sizes.add(v.size);
-      if (!price) price = v.price;
-    }
-    const { error } = await supabase.rpc("generate_variants", {
-      p_product_id: id,
-      p_colors: [...colors.entries()].map(([name, hex]) => ({ name, hex })),
-      p_sizes: [...sizes],
-      p_lengths: LENGTHS,
-      p_tacktacks: [false, true],
-      p_price: price,
-      p_stock: 0,
-    });
-    if (error) console.warn(`  expand ${p.handle}: ${error.message}`);
+    const total = p.variants.reduce((s, v) => s + (v.available ? 10 : 0), 0);
+    await supabase.from("products").update({ total_qty: total }).eq("id", id);
   }
 
   console.log("Seeding admin + demo users...");

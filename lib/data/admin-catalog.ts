@@ -25,7 +25,7 @@ export async function listAdminProducts(): Promise<AdminProductRow[]> {
 }
 
 export type AdminVariant = {
-  id: string; color: string; colorHex: string | null; size: string; length: number; tackTack: boolean;
+  id: string; color: string; colorHex: string | null; size: string;
   sku: string | null; price: number; compareAt: number | null; stock: number; available: boolean; position: number;
 };
 
@@ -35,15 +35,15 @@ export type AdminProduct = {
   materials: string | null; materialsAr: string | null; modelSize: string | null;
   details: string | null; detailsAr: string | null; packaging: string | null;
   category: string; status: string; tags: string[]; featured: boolean; onSale: boolean;
-  priceMin: number; priceMax: number;
+  priceMin: number; priceMax: number; totalQty: number;
   images: { id: string; url: string; alt: string | null; position: number }[];
   variants: AdminVariant[];
 };
 
 const FULL_SELECT =
   "id,handle,title,title_ar,description,description_ar,product_code,materials,materials_ar," +
-  "model_size,details,details_ar,packaging,category,status,tags,featured,on_sale,price_min,price_max," +
-  "images:product_images(id,url,alt,position),variants(id,color,color_hex,size,length,tack_tack,sku,price,compare_at,stock,available,position)";
+  "model_size,details,details_ar,packaging,category,status,tags,featured,on_sale,price_min,price_max,total_qty," +
+  "images:product_images(id,url,alt,position),variants(id,color,color_hex,size,sku,price,compare_at,stock,available,position)";
 
 type FullRow = {
   id: string; handle: string; title: string; title_ar: string | null;
@@ -51,10 +51,10 @@ type FullRow = {
   materials: string | null; materials_ar: string | null; model_size: string | null;
   details: string | null; details_ar: string | null; packaging: string | null;
   category: string; status: string; tags: string[] | null; featured: boolean; on_sale: boolean;
-  price_min: number; price_max: number;
+  price_min: number; price_max: number; total_qty: number;
   images: { id: string; url: string; alt: string | null; position: number }[];
   variants: {
-    id: string; color: string; color_hex: string | null; size: string; length: number; tack_tack: boolean;
+    id: string; color: string; color_hex: string | null; size: string;
     sku: string | null; price: number; compare_at: number | null; stock: number; available: boolean; position: number;
   }[];
 };
@@ -69,12 +69,12 @@ export async function getAdminProduct(id: string): Promise<AdminProduct | null> 
     materials: p.materials, materialsAr: p.materials_ar, modelSize: p.model_size,
     details: p.details, detailsAr: p.details_ar, packaging: p.packaging,
     category: p.category, status: p.status, tags: p.tags ?? [], featured: p.featured, onSale: p.on_sale,
-    priceMin: p.price_min, priceMax: p.price_max,
+    priceMin: p.price_min, priceMax: p.price_max, totalQty: p.total_qty ?? 0,
     images: [...(p.images ?? [])].sort((a, b) => a.position - b.position),
     variants: [...(p.variants ?? [])]
       .sort((a, b) => a.position - b.position)
       .map((v) => ({
-        id: v.id, color: v.color, colorHex: v.color_hex, size: v.size, length: v.length, tackTack: v.tack_tack,
+        id: v.id, color: v.color, colorHex: v.color_hex, size: v.size,
         sku: v.sku, price: v.price, compareAt: v.compare_at, stock: v.stock, available: v.available, position: v.position,
       })),
   };
@@ -82,31 +82,26 @@ export async function getAdminProduct(id: string): Promise<AdminProduct | null> 
 
 export type InventoryRow = {
   variantId: string; productId: string; productTitle: string; handle: string;
-  color: string; size: string; length: number; tackTack: boolean; sku: string | null; stock: number; available: boolean;
+  color: string; size: string; sku: string | null; stock: number; available: boolean;
 };
 
-/**
- * Lowest-stock variants first, capped. With the length × tack-tack matrix there can be
- * 10k+ variant rows — a plain select would truncate at PostgREST's max-rows and silently
- * hide most of the catalogue. The count is exact regardless of the cap, so the page can say
- * how many are hidden and point bulk edits at the per-product grid.
- */
+/** Lowest-stock variants first, capped. Count is exact regardless of the cap. */
 export async function listInventory(limit = 500): Promise<{ rows: InventoryRow[]; total: number }> {
   const { data, count } = await supabase
     .from("variants")
-    .select("id,color,size,length,tack_tack,sku,stock,available,product_id,products(title,handle)", { count: "exact" })
+    .select("id,color,size,sku,stock,available,product_id,products(title,handle)", { count: "exact" })
     .order("stock", { ascending: true })
     .order("product_id")
     .limit(limit);
   type Row = {
-    id: string; color: string; size: string; length: number; tack_tack: boolean;
+    id: string; color: string; size: string;
     sku: string | null; stock: number; available: boolean;
     product_id: string; products: { title: string; handle: string } | null;
   };
   const rows = ((data ?? []) as unknown as Row[]).map((v) => ({
     variantId: v.id, productId: v.product_id,
     productTitle: v.products?.title ?? "", handle: v.products?.handle ?? "",
-    color: v.color, size: v.size, length: v.length, tackTack: v.tack_tack,
+    color: v.color, size: v.size,
     sku: v.sku, stock: v.stock, available: v.available,
   }));
   return { rows, total: count ?? rows.length };

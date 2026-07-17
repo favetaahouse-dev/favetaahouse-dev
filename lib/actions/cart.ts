@@ -6,6 +6,8 @@ import { getOrCreateCart, cartStateById, getCart, type CartState } from "@/lib/d
 export async function addToCartAction(
   variantId: string,
   quantity = 1,
+  length?: number,
+  tackTack = false,
 ): Promise<{ ok: boolean; cart: CartState; error?: string }> {
   const cart = await getOrCreateCart();
   const { data: variant } = await supabase
@@ -16,11 +18,18 @@ export async function addToCartAction(
   if (!variant || !variant.available || variant.stock < 1) {
     return { ok: false, cart: await cartStateById(cart.id!), error: "unavailable" };
   }
-  const existing = cart.items.find((i) => i.variantId === variantId);
+  // A line is a (variant, length, tack-tack) choice — same size in two lengths = two lines.
+  const len = length ?? null;
+  const existing = cart.items.find(
+    (i) => i.variantId === variantId && i.length === len && i.tackTack === tackTack,
+  );
   const nextQty = Math.min((existing?.quantity ?? 0) + quantity, variant.stock);
   await supabase
     .from("cart_items")
-    .upsert({ cart_id: cart.id!, variant_id: variantId, quantity: nextQty }, { onConflict: "cart_id,variant_id" });
+    .upsert(
+      { cart_id: cart.id!, variant_id: variantId, quantity: nextQty, length: len, tack_tack: tackTack },
+      { onConflict: "cart_id,variant_id,length,tack_tack" },
+    );
   return { ok: true, cart: await cartStateById(cart.id!) };
 }
 

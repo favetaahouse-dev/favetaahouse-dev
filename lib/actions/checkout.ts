@@ -37,7 +37,12 @@ export async function createCheckout(
   const session = await auth().catch(() => null);
   const userId = session?.user?.id ?? null;
   const coupon = cart.id ? await getCartCoupon(cart.id) : null;
-  const items = cart.items.map((i) => ({ variant_id: i.variantId, quantity: i.quantity }));
+  const items = cart.items.map((i) => ({
+    variant_id: i.variantId,
+    quantity: i.quantity,
+    length: i.length,
+    tack_tack: i.tackTack,
+  }));
 
   const { data: res, error } = await supabase.rpc("create_order", {
     p_email: data.email,

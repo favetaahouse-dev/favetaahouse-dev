@@ -80,7 +80,7 @@ export function InventoryTable({ rows }: { rows: InventoryRow[] }) {
       rows={data}
       getRowId={(r) => r.variantId}
       searchable
-      searchText={(r) => `${r.productTitle} ${r.color} ${r.size} ${r.length} ${r.sku ?? ""}`}
+      searchText={(r) => `${r.productTitle} ${r.color} ${r.size} ${r.sku ?? ""}`}
       searchPlaceholder="Search inventory…"
       pageSize={25}
       emptyTitle="No variants"

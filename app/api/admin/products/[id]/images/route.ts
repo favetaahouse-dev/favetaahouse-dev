@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { revalidatePath } from "next/cache";
 import { requirePermission } from "@/lib/admin-auth";
 import { supabase } from "@/lib/supabase";
 
@@ -44,6 +45,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     .insert({ product_id: id, url, position: pos })
     .select("id, url, position")
     .single();
+  revalidatePath(`/admin/products/${id}`);
+  revalidatePath("/", "layout");
   return NextResponse.json(row);
 }
 
@@ -68,6 +71,8 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     }
   }
   await supabase.from("product_images").delete().eq("id", imageId).eq("product_id", id);
+  revalidatePath(`/admin/products/${id}`);
+  revalidatePath("/", "layout");
   return NextResponse.json({ ok: true });
 }
 
@@ -99,5 +104,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       supabase.from("product_images").update({ position: pos }).eq("id", imgId).eq("product_id", id),
     ),
   );
+  revalidatePath(`/admin/products/${id}`);
+  revalidatePath("/", "layout");
   return NextResponse.json({ ok: true });
 }

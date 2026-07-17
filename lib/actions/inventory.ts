@@ -41,5 +41,6 @@ export async function adjustStock(input: {
   });
   revalidatePath("/admin/inventory");
   revalidatePath("/admin/products");
+  revalidatePath("/", "layout"); // reflect the stock change on the storefront too
   return { ok: true, stock: data as number };
 }
