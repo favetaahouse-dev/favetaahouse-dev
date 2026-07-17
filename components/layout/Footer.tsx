@@ -1,13 +1,23 @@
 import Image from "next/image";
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/lib/i18n-navigation";
-import { SOCIALS, PAYMENT_ICONS } from "@/lib/constants";
+import { PAYMENT_ICONS } from "@/lib/constants";
+import { getSiteSettings } from "@/lib/content";
 import { LocaleSwitcher } from "./LocaleSwitcher";
 import { InstagramIcon, FacebookIcon, YoutubeIcon, TiktokIcon } from "@/components/icons/social";
 
 export async function Footer() {
   const t = await getTranslations("footer");
   const year = new Date().getFullYear();
+  const settings = await getSiteSettings();
+
+  // Blanking a social in the admin should hide its icon, not render href="".
+  const socials = [
+    { key: "instagram", label: "Instagram", url: settings.instagram, Icon: InstagramIcon },
+    { key: "facebook", label: "Facebook", url: settings.facebook, Icon: FacebookIcon },
+    { key: "youtube", label: "YouTube", url: settings.youtube, Icon: YoutubeIcon },
+    { key: "tiktok", label: "TikTok", url: settings.tiktok, Icon: TiktokIcon },
+  ].filter((s) => s.url);
 
   const cols = [
     { title: t("menu"), links: [{ label: t("search"), href: "/search" }] },
@@ -55,18 +65,11 @@ export async function Footer() {
         <div>
           <h3 className="mb-4 font-button text-[11px] uppercase tracking-[0.2em]">{t("followUs")}</h3>
           <div className="flex items-center gap-4">
-            <a href={SOCIALS.instagram} target="_blank" rel="noopener" aria-label="Instagram" className="hover:text-gold">
-              <InstagramIcon />
-            </a>
-            <a href={SOCIALS.facebook} target="_blank" rel="noopener" aria-label="Facebook" className="hover:text-gold">
-              <FacebookIcon />
-            </a>
-            <a href={SOCIALS.youtube} target="_blank" rel="noopener" aria-label="YouTube" className="hover:text-gold">
-              <YoutubeIcon />
-            </a>
-            <a href={SOCIALS.tiktok} target="_blank" rel="noopener" aria-label="TikTok" className="hover:text-gold">
-              <TiktokIcon />
-            </a>
+            {socials.map(({ key, label, url, Icon }) => (
+              <a key={key} href={url} target="_blank" rel="noopener" aria-label={label} className="hover:text-gold">
+                <Icon />
+              </a>
+            ))}
           </div>
         </div>
       </div>

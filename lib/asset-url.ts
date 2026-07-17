@@ -18,10 +18,11 @@ export function assetUrl(p: string): string {
   const bucket = BUCKET_FOR[m[1]];
   if (!bucket) return p;
 
-  // SUPABASE_URL first: it names the project being written to, so seeding cloud from a shell
-  // (see DEPLOY.md) can't bake .env's localhost into the DB. It is undefined in client bundles,
-  // where only NEXT_PUBLIC_ is inlined — so that fallback is what the browser uses.
-  const base = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+  // Server-side only by construction: the sole importers are lib/content.ts (server-only) and
+  // scripts/seed-supabase.ts, and the seed bakes absolute URLs into the DB, so nothing rebuilds
+  // them at render time. SUPABASE_URL therefore always resolves, and it names the project being
+  // written to — so seeding cloud from a shell (see DEPLOY.md) can't bake .env's localhost in.
+  const base = process.env.SUPABASE_URL;
   if (!base) return p;
 
   // Today's filenames are all URL-safe, so this is a no-op — but a scraped name with a

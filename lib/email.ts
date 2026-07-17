@@ -1,7 +1,7 @@
 import "server-only";
 import { Resend } from "resend";
 import { getOrder, type OrderDTO } from "@/lib/data/orders";
-import { getCommerceSettings } from "@/lib/content";
+import { getCommerceSettings, getSiteSettings } from "@/lib/content";
 import { formatMoney } from "@/lib/money";
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY || "";
@@ -10,11 +10,15 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
 const resend = RESEND_API_KEY ? new Resend(RESEND_API_KEY) : null;
 
-/** Build a `Name <addr>` From header, overriding the display name from admin settings. */
-function buildFrom(senderName: string): string {
+/**
+ * Build a `Name <addr>` From header. Both halves are admin-editable (Commerce settings);
+ * EMAIL_FROM is only the fallback for an install that has never set them. Note the address
+ * must be on a Resend-verified domain or the send is rejected.
+ */
+function buildFrom(senderName: string, fromAddress: string): string {
   const m = EMAIL_FROM.match(/<([^>]+)>/);
-  const addr = m ? m[1] : EMAIL_FROM.trim();
-  return senderName ? `${senderName} <${addr}>` : EMAIL_FROM;
+  const addr = fromAddress.trim() || (m ? m[1] : EMAIL_FROM.trim());
+  return senderName ? `${senderName} <${addr}>` : addr || EMAIL_FROM;
 }
 
 /** Send the order-confirmation email. No-op (logged) when disabled or unconfigured. */
@@ -28,20 +32,22 @@ export async function sendOrderConfirmation(orderId: string): Promise<void> {
     }
     const order = await getOrder(orderId);
     if (!order) return;
+    // cache()d and already awaited by the layout on any page render — no extra query.
+    const site = await getSiteSettings();
 
     await resend.emails.send({
-      from: buildFrom(settings.emailSenderName),
+      from: buildFrom(settings.emailSenderName, settings.emailFromAddress),
       to: order.email,
       replyTo: settings.emailReplyTo || undefined,
       subject: `Order #${order.number} confirmed — ALESSIA ABAYA`,
-      html: renderOrderEmail(order, settings.taxLabel),
+      html: renderOrderEmail(order, settings.taxLabel, site.storeLocation ?? ""),
     });
   } catch (e) {
     console.error(`[email] order confirmation failed for ${orderId}`, e);
   }
 }
 
-function renderOrderEmail(order: OrderDTO, taxLabel: string): string {
+function renderOrderEmail(order: OrderDTO, taxLabel: string, storeLocation: string): string {
   const money = (c: number) => formatMoney(c, "QAR");
   const addr = order.shippingAddress as Record<string, string> | null;
   const rows = order.items
@@ -100,7 +106,7 @@ function renderOrderEmail(order: OrderDTO, taxLabel: string): string {
         <a href="${SITE_URL}/account/orders/${order.id}" style="display:inline-block;padding:12px 28px;background:#1b1a18;color:#fff;text-decoration:none;font-size:12px;letter-spacing:2px;text-transform:uppercase;">View your order</a>
       </div>
     </div>
-    <div style="text-align:center;padding:20px 0;font-size:11px;color:#a8a29c;">ALESSIA ABAYA · Doha, Qatar</div>
+    <div style="text-align:center;padding:20px 0;font-size:11px;color:#a8a29c;">ALESSIA ABAYA${storeLocation ? ` · ${escapeHtml(storeLocation)}` : ""}</div>
   </div>
 </body></html>`;
 }

@@ -7,9 +7,10 @@ const dir = path.dirname(fileURLToPath(import.meta.url));
 const withNextIntl = createNextIntlPlugin("./i18n/request.ts");
 
 // Media lives in this project's Storage; parse once so images.remotePatterns can allow it.
-const supabaseHost = process.env.NEXT_PUBLIC_SUPABASE_URL
-  ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL)
-  : null;
+// SUPABASE_URL first: this runs at build, where it is available, so the project needs no
+// separate NEXT_PUBLIC_ copy just to name its own Storage host.
+const supabaseOrigin = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseHost = supabaseOrigin ? new URL(supabaseOrigin) : null;
 
 const securityHeaders = [
   { key: "X-Content-Type-Options", value: "nosniff" },

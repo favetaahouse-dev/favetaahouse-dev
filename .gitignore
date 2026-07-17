@@ -33,6 +33,11 @@ yarn-error.log*
 *.pem
 *.p12
 *.pfx
+# SSH keys carry no extension, so *.key above does not catch them.
+id_rsa
+id_ecdsa
+id_ed25519
+secrets.json
 *.sqlite
 *.db
 *.log

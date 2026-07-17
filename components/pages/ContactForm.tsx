@@ -3,9 +3,9 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
-import { WHATSAPP_URL } from "@/lib/constants";
 
-export function ContactForm() {
+/** whatsappUrl is passed in: lib/content is server-only, so the page resolves it (see checkout). */
+export function ContactForm({ whatsappUrl }: { whatsappUrl: string }) {
   const t = useTranslations("contact");
   const [form, setForm] = useState({ name: "", email: "", message: "" });
   const [sending, setSending] = useState(false);
@@ -49,7 +49,7 @@ export function ContactForm() {
         <button type="submit" disabled={sending} className="btn-brand flex-1">
           {t("send")}
         </button>
-        <a href={WHATSAPP_URL} target="_blank" rel="noopener" className="btn-outline flex-1">
+        <a href={whatsappUrl} target="_blank" rel="noopener" className="btn-outline flex-1">
           {t("whatsapp")}
         </a>
       </div>

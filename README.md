@@ -59,10 +59,22 @@ Set in `.env` (`ADMIN_EMAIL` / `ADMIN_PASSWORD`, `DEMO_EMAIL` / `DEMO_PASSWORD`)
 - **Customer:** `DEMO_EMAIL` / `DEMO_PASSWORD`
 
 ### Environment (`.env`)
-`SUPABASE_URL`, `SUPABASE_SERVICE_KEY`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-(from `npx supabase start`); `AUTH_SECRET`; `NEXT_PUBLIC_SITE_URL`. Payments:
+Production needs exactly **four**: `SUPABASE_URL` + `SUPABASE_SERVICE_KEY` (the whole database
+config — every query is server-side service-role, so the anon key is unused), `AUTH_SECRET`, and
+`NEXT_PUBLIC_SITE_URL` (payment returns, email links, sitemap, `metadataBase`).
+
+Optional, blank = feature off:
 `SKIPCASH_ENV` / `SKIPCASH_CLIENT_ID` / `SKIPCASH_KEY_ID` / `SKIPCASH_KEY_SECRET` / `SKIPCASH_WEBHOOK_KEY`
-(blank → checkout runs in **demo mode**). Emails: `RESEND_API_KEY` / `EMAIL_FROM` (blank → emails skipped).
+(blank → checkout runs in **demo mode**) and `RESEND_API_KEY` (blank → emails skipped).
+
+Locally, `npx supabase start` also sets `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY`;
+neither is needed in production.
+
+**Not env vars.** Anything the store owner should change without a redeploy — contact email, WhatsApp
+number, store location, socials, email sender name / from-address / reply-to — lives in
+**Admin → Content** ([`lib/content-schema.ts`](./lib/content-schema.ts)). `RESEND_API_KEY` stays in the
+environment because it's a provider credential, not a setting.
+
 See [`DEPLOY.md`](./DEPLOY.md) for the production (Vercel + cloud Supabase) runbook.
 
 ## Structure (ryzo conventions)

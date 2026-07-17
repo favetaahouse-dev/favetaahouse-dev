@@ -33,7 +33,6 @@ Local prerequisites: `npm install`, the Supabase CLI, and a Supabase account.
    # temporarily set the cloud creds in your shell (or a .env.local the seed reads)
    SUPABASE_URL="https://YOUR-PROJECT.supabase.co" \
    SUPABASE_SERVICE_KEY="YOUR_SERVICE_ROLE_KEY" \
-   NEXT_PUBLIC_SUPABASE_URL="https://YOUR-PROJECT.supabase.co" \
    ADMIN_EMAIL="admin@your-domain.com" \
    ADMIN_PASSWORD="A_STRONG_UNIQUE_PASSWORD" \
    DEMO_EMAIL="demo@your-domain.com" \
@@ -46,8 +45,9 @@ Local prerequisites: `npm install`, the Supabase CLI, and a Supabase account.
 
    Note your local `.env` is read as a fallback for anything you don't set in the shell, so run this
    from outside the project directory (or unset those vars) if you don't want your dev passwords
-   seeded into production. `NEXT_PUBLIC_SUPABASE_URL` is what `lib/asset-url.ts` builds image URLs
-   from — set it to the cloud project here, or the DB gets `127.0.0.1` image URLs.
+   seeded into production. `SUPABASE_URL` is also what `lib/asset-url.ts` builds the product image
+   URLs from, and the seed bakes them into the DB — set it to the cloud project here, or every image
+   row gets a `127.0.0.1` URL.
 5. Regenerate types if you changed the schema afterward: `npm run db:types`.
 
 > RLS is deny-all on every table; the app only ever talks to the DB through the server-side service-role
@@ -79,8 +79,10 @@ paid when `statusId === 2` — idempotently, so double-delivery never double-cha
 ## 3. Resend (order emails)
 
 1. Create an account at [resend.com](https://resend.com), verify your sending domain, create an API key.
-2. Set `RESEND_API_KEY` and `EMAIL_FROM` (e.g. `Alessia Abaya <orders@your-domain.com>`).
-3. Toggle emails on/off and set the sender name / reply-to under **Admin → Commerce & Payments**.
+2. Set `RESEND_API_KEY` — the only email value that is an env var, because it's a provider credential.
+3. Everything else is in **Admin → Content → Commerce & Payments**: toggle emails on/off, sender name,
+   **from-address** and reply-to. The from-address **must be on the domain you verified in step 1** —
+   Resend rejects anything else and the send fails silently, so change it there deliberately.
    Without `RESEND_API_KEY`, sends are skipped (and logged), so the rest of checkout is unaffected.
 
 ---

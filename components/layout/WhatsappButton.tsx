@@ -1,13 +1,13 @@
 import Image from "next/image";
-import { getSiteSettings } from "@/lib/content";
-import { WHATSAPP_NUMBER } from "@/lib/constants";
+import { getWhatsappUrl } from "@/lib/content";
 
 export async function WhatsappButton() {
-  const settings = await getSiteSettings();
-  const number = (settings.whatsapp || WHATSAPP_NUMBER).replace(/[^0-9]/g, "");
+  // No constants fallback: getContent already merges DEFAULT_CONTENT under the DB row,
+  // so the default lives in one place rather than two.
+  const href = await getWhatsappUrl();
   return (
     <a
-      href={`https://wa.me/${number}`}
+      href={href}
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Chat on WhatsApp"

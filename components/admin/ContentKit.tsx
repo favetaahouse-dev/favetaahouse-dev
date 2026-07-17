@@ -22,11 +22,13 @@ export function FieldRow({
   value,
   onChange,
   textarea,
+  hint,
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
   textarea?: boolean;
+  hint?: string;
 }) {
   return (
     <label className="block">
@@ -36,6 +38,7 @@ export function FieldRow({
       ) : (
         <input value={value} onChange={(e) => onChange(e.target.value)} className={inputCls} />
       )}
+      {hint && <span className="mt-1 block text-[11px] leading-relaxed text-white/30">{hint}</span>}
     </label>
   );
 }

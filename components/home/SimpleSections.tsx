@@ -2,7 +2,7 @@ import Image from "next/image";
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/lib/i18n-navigation";
 import { WHY_US, GALLERY_IMAGES } from "@/lib/home-content";
-import { SOCIALS } from "@/lib/constants";
+import { getSiteSettings } from "@/lib/content";
 
 export async function ShopSaleButton() {
   const t = await getTranslations("home");
@@ -79,6 +79,7 @@ export async function WhyUs() {
 
 export async function InstagramGallery() {
   const t = await getTranslations("home");
+  const { instagram } = await getSiteSettings();
   return (
     <section className="bg-cream px-4 py-16 md:px-8">
       <h2 className="section-title mb-10">{t("gallery")}</h2>
@@ -86,7 +87,7 @@ export async function InstagramGallery() {
         {GALLERY_IMAGES.map((src, i) => (
           <a
             key={src}
-            href={SOCIALS.instagram}
+            href={instagram}
             target="_blank"
             rel="noopener"
             className="group relative block aspect-[3/4] overflow-hidden"

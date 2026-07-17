@@ -1,7 +1,13 @@
 import type { Metadata } from "next";
 import { setRequestLocale } from "next-intl/server";
 import { COLLAB_LINKS } from "@/lib/pages-content";
-import { CONTACT_EMAIL, SOCIALS } from "@/lib/constants";
+import { getSiteSettings } from "@/lib/content";
+
+/** "https://www.instagram.com/alessia_abaya/" -> "@alessia_abaya" */
+function instagramHandle(url: string): string {
+  const slug = url.replace(/\/+$/, "").split("/").pop();
+  return slug ? `@${slug}` : url;
+}
 
 export const metadata: Metadata = { title: "Collaborations" };
 
@@ -12,6 +18,7 @@ export default async function CollaborationsPage({
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
+  const { contactEmail, instagram } = await getSiteSettings();
 
   return (
     <div className="mx-auto max-w-2xl px-6 py-16 md:py-24">
@@ -21,12 +28,12 @@ export default async function CollaborationsPage({
       </p>
       <p className="mt-4 text-center text-[15px] text-ink/80">
         Email us at:{" "}
-        <a href={`mailto:${CONTACT_EMAIL}`} className="text-gold hover:underline">
-          {CONTACT_EMAIL}
+        <a href={`mailto:${contactEmail}`} className="text-gold hover:underline">
+          {contactEmail}
         </a>{" "}
         or DM us on Instagram:{" "}
-        <a href={SOCIALS.instagram} target="_blank" rel="noopener" className="text-gold hover:underline">
-          @alessia_abaya
+        <a href={instagram} target="_blank" rel="noopener" className="text-gold hover:underline">
+          {instagramHandle(instagram)}
         </a>
       </p>
 

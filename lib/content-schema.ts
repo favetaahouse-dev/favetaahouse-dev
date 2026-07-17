@@ -16,8 +16,9 @@ export const SECTION_TITLES: Record<Section, string> = {
 export const FIELD_SCHEMA: Record<Section, Field[]> = {
   "site-settings": [
     { key: "contactEmail", label: "Contact email", kind: "text" },
-    { key: "whatsapp", label: "WhatsApp number", kind: "text" },
-    { key: "instagram", label: "Instagram URL", kind: "text" },
+    { key: "whatsapp", label: "WhatsApp number", kind: "text", hint: "Digits only, with country code. Shown as the floating chat button and on the contact page." },
+    { key: "storeLocation", label: "Store location", kind: "text", hint: "Shown on the contact page and in the order-email footer." },
+    { key: "instagram", label: "Instagram URL", kind: "text", hint: "Leave any social blank to hide its icon in the footer." },
     { key: "facebook", label: "Facebook URL", kind: "text" },
     { key: "tiktok", label: "TikTok URL", kind: "text" },
     { key: "youtube", label: "YouTube URL", kind: "text" },
@@ -30,6 +31,7 @@ export const FIELD_SCHEMA: Record<Section, Field[]> = {
     { key: "taxLabel", label: "Tax line label", kind: "bi" },
     { key: "emailEnabled", label: "Send order confirmation emails", kind: "toggle", hint: "Requires RESEND_API_KEY to be set in the environment." },
     { key: "emailSenderName", label: "Email sender name", kind: "text" },
+    { key: "emailFromAddress", label: "Email from address", kind: "text", hint: "Must be on a domain you have verified with Resend — an unverified address is rejected and order emails fail silently." },
     { key: "emailReplyTo", label: "Email reply-to address", kind: "text" },
   ],
   home: [
@@ -56,6 +58,7 @@ export const DEFAULT_CONTENT: Record<Section, Record<string, string>> = {
   "site-settings": {
     contactEmail: "customersupport@alessiaabaya.com",
     whatsapp: "97450099331",
+    storeLocation: "Doha, Qatar",
     instagram: "https://www.instagram.com/alessia_abaya/",
     facebook: "https://www.facebook.com/alessia_abaya/",
     tiktok: "https://www.tiktok.com/@alessia_abaya",
@@ -70,6 +73,7 @@ export const DEFAULT_CONTENT: Record<Section, Record<string, string>> = {
     taxLabel: "Tax", taxLabel_ar: "ضريبة",
     emailEnabled: "true",
     emailSenderName: "Alessia Abaya",
+    emailFromAddress: "orders@alessiaabaya.com",
     emailReplyTo: "customersupport@alessiaabaya.com",
   },
   home: {
@@ -91,9 +95,11 @@ export const DEFAULT_CONTENT: Record<Section, Record<string, string>> = {
     subtitle: "The finest materials and a palette that resonates with emotion",
     subtitle_ar: "أفخر الأقمشة ولوحة ألوان تلامس المشاعر",
   },
+  // Kept byte-identical to the `contact` block in messages/*.json, which these replaced as the
+  // rendered source — the defaults had drifted shorter and would have silently cut the live copy.
   contact: {
     title: "Customer Service", title_ar: "خدمة العملاء",
-    intro: "Please fill in the form and include your reason for return or exchange, or chat with our WhatsApp agent.",
-    intro_ar: "يرجى تعبئة النموذج مع ذكر سبب الإرجاع أو الاستبدال، أو التحدث مع وكيل واتساب.",
+    intro: "Please fill in the form and include your reason for return or exchange, or chat with our WhatsApp agent for more details. We're happy to assist you.",
+    intro_ar: "يرجى تعبئة النموذج مع ذكر سبب الإرجاع أو الاستبدال، أو التحدث مع وكيل واتساب لمزيد من التفاصيل. يسعدنا مساعدتك.",
   },
 };

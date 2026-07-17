@@ -1,15 +1,6 @@
-export const WHATSAPP_NUMBER = "97450099331";
-export const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMBER}`;
-export const CONTACT_EMAIL = "customersupport@alessiaabaya.com";
-export const STORE_LOCATION = "Doha, Qatar";
-export const FOUNDED = 1982;
-
-export const SOCIALS = {
-  instagram: "https://www.instagram.com/alessia_abaya/",
-  facebook: "https://www.facebook.com/alessia_abaya/",
-  youtube: "https://www.youtube.com/channel/UCuBotgo0vssjtPkgJ539rlw",
-  tiktok: "https://www.tiktok.com/@alessia_abaya",
-};
+// Contact details (WhatsApp, contact email, store location, socials) used to be hardcoded here
+// and shadowed the CMS, which already held the same values — editing them in the admin changed
+// nothing. They now live only in DEFAULT_CONTENT/site-settings; read them via getSiteSettings().
 
 export const PAYMENT_ICONS = [
   { name: "Visa", src: "/assets/payment/visa.svg" },

@@ -63,7 +63,7 @@ export default function ContentEditor({ params }: { params: Promise<{ section: s
             return <ToggleFieldRow key={f.key} label={f.label} value={data[f.key] ?? ""} onChange={set(f.key)} hint={f.hint} />;
           }
           return (
-            <FieldRow key={f.key} label={f.label} value={data[f.key] ?? ""} onChange={set(f.key)} textarea={f.kind === "textarea"} />
+            <FieldRow key={f.key} label={f.label} value={data[f.key] ?? ""} onChange={set(f.key)} textarea={f.kind === "textarea"} hint={f.hint} />
           );
         })}
       </ContentSection>

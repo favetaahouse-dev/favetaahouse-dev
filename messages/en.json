@@ -165,8 +165,6 @@
     "backToShop": "Back to shop"
   },
   "contact": {
-    "title": "Customer Service",
-    "intro": "Please fill in the form and include your reason for return or exchange, or chat with our WhatsApp agent for more details. We're happy to assist you.",
     "name": "Name",
     "email": "Email",
     "message": "Message",

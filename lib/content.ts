@@ -33,6 +33,8 @@ export type CommerceSettings = {
   taxLabelAr: string;
   emailEnabled: boolean;
   emailSenderName: string;
+  /** Blank falls back to the EMAIL_FROM env var — see lib/email.ts. */
+  emailFromAddress: string;
   emailReplyTo: string;
 };
 
@@ -51,6 +53,13 @@ export const getCommerceSettings = cache(async (): Promise<CommerceSettings> => 
     taxLabelAr: c.taxLabel_ar || "ضريبة",
     emailEnabled: c.emailEnabled !== "false",
     emailSenderName: c.emailSenderName || "Alessia Abaya",
+    emailFromAddress: c.emailFromAddress || "",
     emailReplyTo: c.emailReplyTo || "",
   };
+});
+
+/** The floating button, the contact page and the form all link here — build it once. */
+export const getWhatsappUrl = cache(async (): Promise<string> => {
+  const { whatsapp } = await getSiteSettings();
+  return `https://wa.me/${(whatsapp || "").replace(/[^0-9]/g, "")}`;
 });
