@@ -47,6 +47,8 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
       color: v.color,
       colorHex: v.colorHex,
       size: v.size,
+      length: v.length,
+      tackTack: v.tackTack,
       sku: v.sku,
       price: v.price,
       compareAt: v.compareAt,

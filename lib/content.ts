@@ -3,6 +3,7 @@ import { cache } from "react";
 import { supabase } from "@/lib/supabase";
 import { DEFAULT_CONTENT, type Section } from "@/lib/content-schema";
 import { assetUrl } from "@/lib/asset-url";
+import { parseList, parseLengths } from "@/lib/variant-options";
 
 /** Read a CMS content section (content table merged over defaults). Deduped per request. */
 export const getContent = cache(async (section: Section): Promise<Record<string, string>> => {
@@ -62,4 +63,14 @@ export const getCommerceSettings = cache(async (): Promise<CommerceSettings> => 
 export const getWhatsappUrl = cache(async (): Promise<string> => {
   const { whatsapp } = await getSiteSettings();
   return `https://wa.me/${(whatsapp || "").replace(/[^0-9]/g, "")}`;
+});
+
+/**
+ * The admin-editable size + length lists (Admin → Content → Variant Options). Only the admin
+ * needs these — the storefront derives a product's options from its actual variant rows.
+ * Passed as props into the client admin forms (this module is server-only).
+ */
+export const getVariantOptions = cache(async (): Promise<{ sizes: string[]; lengths: number[] }> => {
+  const c = await getContent("variant-options");
+  return { sizes: parseList(c.sizes), lengths: parseLengths(c.lengths) };
 });

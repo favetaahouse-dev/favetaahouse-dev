@@ -1,9 +1,11 @@
 "use server";
 
+import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { authorize } from "@/lib/admin-auth";
 import { logAudit } from "@/lib/audit";
 import { supabase } from "@/lib/supabase";
+import { getVariantOptions } from "@/lib/content";
 
 function slugify(s: string): string {
   return (
@@ -12,13 +14,52 @@ function slugify(s: string): string {
   );
 }
 
-export type ProductInput = {
-  title: string; titleAr?: string | null; handle?: string;
-  description?: string | null; descriptionAr?: string | null; productCode?: string | null;
-  materials?: string | null; materialsAr?: string | null; modelSize?: string | null;
-  details?: string | null; detailsAr?: string | null; packaging?: string | null;
-  category: string; status: string; tags?: string[]; featured?: boolean; onSale?: boolean;
-};
+/** Revalidate the admin views AND the whole storefront layout, so an edit shows on the
+ *  public site without depending on the incidental cookies()-forced SSR in the locale layout. */
+function revalidateAll(productId?: string) {
+  revalidatePath("/admin/products");
+  if (productId) revalidatePath(`/admin/products/${productId}`);
+  revalidatePath("/", "layout");
+}
+
+// ── validation ──────────────────────────────────────────────────────────────
+// Server actions are public endpoints; validate before touching the DB. category/status
+// enums mirror the CHECK constraints so a bad value is a clean 4xx, not a raw PG error.
+const productInputSchema = z.object({
+  title: z.string().trim().min(1, "Title is required"),
+  titleAr: z.string().nullish(),
+  handle: z.string().trim().optional(),
+  description: z.string().nullish(),
+  descriptionAr: z.string().nullish(),
+  productCode: z.string().nullish(),
+  materials: z.string().nullish(),
+  materialsAr: z.string().nullish(),
+  modelSize: z.string().nullish(),
+  details: z.string().nullish(),
+  detailsAr: z.string().nullish(),
+  packaging: z.string().nullish(),
+  category: z.enum(["ABAYA", "JALABIYA", "SHEILA", "OTHER"]),
+  status: z.enum(["active", "draft", "archived"]),
+  tags: z.array(z.string()).optional(),
+  featured: z.boolean().optional(),
+  onSale: z.boolean().optional(),
+});
+export type ProductInput = z.infer<typeof productInputSchema>;
+
+const MAX_CELLS = 1000;
+const variantSpecSchema = z
+  .object({
+    colors: z.array(z.object({ name: z.string().trim().min(1), hex: z.string().nullish() })).min(1),
+    sizes: z.array(z.string().trim().min(1)).min(1),
+    lengths: z.array(z.number().int().min(0)).min(1),
+    tackTacks: z.array(z.boolean()).min(1),
+    price: z.number().int().min(0),
+    stock: z.number().int().min(0),
+  })
+  .refine((s) => s.colors.length * s.sizes.length * s.lengths.length * s.tackTacks.length <= MAX_CELLS, {
+    message: `That combination exceeds ${MAX_CELLS} variants. Narrow the sizes, lengths, or colours.`,
+  });
+export type VariantSpec = z.infer<typeof variantSpecSchema>;
 
 const FIELD_MAP: Record<string, string> = {
   title: "title", titleAr: "title_ar", handle: "handle",
@@ -28,25 +69,52 @@ const FIELD_MAP: Record<string, string> = {
   category: "category", status: "status", tags: "tags",
 };
 
-export type VariantSeed = {
-  color?: string; colorHex?: string | null; size?: string; sku?: string | null; price: number; stock: number;
-};
+/** Reject any size/length not in the admin-managed lists — this is where the "picker" is
+ *  actually enforced; the client <select> is only a suggestion. */
+async function assertOptionsAllowed(sizes: string[], lengths: number[]) {
+  const opt = await getVariantOptions();
+  const badSize = sizes.find((s) => !opt.sizes.includes(s));
+  if (badSize) throw new Error(`"${badSize}" is not an allowed size. Add it under Content → Sizes & Lengths first.`);
+  const badLen = lengths.find((l) => !opt.lengths.includes(l));
+  if (badLen) throw new Error(`Length ${badLen} is not allowed. Add it under Content → Sizes & Lengths first.`);
+}
 
-export async function createProduct(input: ProductInput, initialVariants?: VariantSeed[]) {
+/** Create the missing (color, size, length, tack_tack) cells for a product. Never touches an
+ *  existing cell's stock/price (the RPC uses ON CONFLICT DO NOTHING). Returns rows created. */
+async function runGenerate(productId: string, spec: VariantSpec): Promise<number> {
+  await assertOptionsAllowed(spec.sizes, spec.lengths);
+  const { data, error } = await supabase.rpc("generate_variants", {
+    p_product_id: productId,
+    p_colors: spec.colors.map((c) => ({ name: c.name.trim(), hex: c.hex ?? null })),
+    p_sizes: spec.sizes,
+    p_lengths: spec.lengths,
+    p_tacktacks: spec.tackTacks,
+    p_price: spec.price,
+    p_stock: spec.stock,
+  });
+  if (error) throw new Error(error.message);
+  return (data as number) ?? 0;
+}
+
+export async function createProduct(input: ProductInput, spec?: VariantSpec) {
   const actor = await authorize("products:write");
-  let handle = input.handle?.trim() || slugify(input.title);
+  const parsed = productInputSchema.parse(input);
+  const cleanSpec = spec ? variantSpecSchema.parse(spec) : null;
+
+  let handle = parsed.handle?.trim() || slugify(parsed.title);
   const { data: existing } = await supabase.from("products").select("id").eq("handle", handle).maybeSingle();
   if (existing) handle = `${handle}-${Date.now().toString(36)}`;
+
   const { data, error } = await supabase
     .from("products")
     .insert({
-      handle, title: input.title, title_ar: input.titleAr ?? null,
-      description: input.description ?? null, description_ar: input.descriptionAr ?? null,
-      product_code: input.productCode ?? null, materials: input.materials ?? null,
-      materials_ar: input.materialsAr ?? null, model_size: input.modelSize ?? null,
-      details: input.details ?? null, details_ar: input.detailsAr ?? null,
-      packaging: input.packaging ?? null, category: input.category, status: input.status,
-      tags: input.tags ?? [], featured: !!input.featured, on_sale: !!input.onSale,
+      handle, title: parsed.title, title_ar: parsed.titleAr ?? null,
+      description: parsed.description ?? null, description_ar: parsed.descriptionAr ?? null,
+      product_code: parsed.productCode ?? null, materials: parsed.materials ?? null,
+      materials_ar: parsed.materialsAr ?? null, model_size: parsed.modelSize ?? null,
+      details: parsed.details ?? null, details_ar: parsed.detailsAr ?? null,
+      packaging: parsed.packaging ?? null, category: parsed.category, status: parsed.status,
+      tags: parsed.tags ?? [], featured: !!parsed.featured, on_sale: !!parsed.onSale,
       price_min: 0, price_max: 0,
     })
     .select("id")
@@ -54,70 +122,107 @@ export async function createProduct(input: ProductInput, initialVariants?: Varia
   if (error) throw new Error(error.message);
   const id = data.id as string;
 
-  // Seed the color×size variants so the product has stock, a price, and is sellable.
-  if (initialVariants && initialVariants.length) {
-    const seen = new Set<string>();
-    const rows = initialVariants
-      .map((v, i) => {
-        const stock = Math.max(0, Math.floor(v.stock || 0));
-        return {
-          product_id: id,
-          color: v.color?.trim() || "Default",
-          color_hex: v.colorHex ?? null,
-          size: v.size?.trim() || "One Size",
-          sku: v.sku ?? null,
-          price: Math.max(0, Math.floor(v.price || 0)),
-          compare_at: null,
-          stock,
-          available: stock > 0,
-          position: i,
-        };
-      })
-      .filter((r) => {
-        const k = `${r.color}|||${r.size}`; // respect the (product, color, size) unique constraint
-        if (seen.has(k)) return false;
-        seen.add(k);
-        return true;
-      });
-    if (rows.length) await supabase.from("variants").insert(rows);
-    await recomputePrices(id);
-  }
+  if (cleanSpec) await runGenerate(id, cleanSpec);
 
   await logAudit({
     actorId: actor.id, actorEmail: actor.email, action: "product.create",
-    resourceType: "product", resourceId: id, summary: `Created ${input.title}`,
+    resourceType: "product", resourceId: id, summary: `Created ${parsed.title}`,
   });
-  revalidatePath("/admin/products");
+  revalidateAll(id);
   return { ok: true, id };
+}
+
+/** Edit-page "Generate variants": create missing combinations for an existing product. */
+export async function generateVariants(productId: string, spec: VariantSpec) {
+  const actor = await authorize("products:write");
+  const clean = variantSpecSchema.parse(spec);
+  const created = await runGenerate(productId, clean);
+  await logAudit({
+    actorId: actor.id, actorEmail: actor.email, action: "variant.generate",
+    resourceType: "product", resourceId: productId, summary: `Generated ${created} variants`,
+    metadata: { created },
+  });
+  revalidateAll(productId);
+  return { ok: true, created };
+}
+
+/** Bulk-set stock across many cells in one round-trip (via adjust_stock_bulk, which keeps
+ *  `available` in sync and writes the inventory ledger). */
+export async function setVariantStock(productId: string, cells: { id: string; stock: number }[]) {
+  const actor = await authorize("inventory:write");
+  const clean = z.array(z.object({ id: z.string().uuid(), stock: z.number().int().min(0) })).parse(cells);
+  if (!clean.length) return { ok: true, changed: 0 };
+  const { data, error } = await supabase.rpc("adjust_stock_bulk", {
+    p_rows: clean,
+    p_reason: "correction",
+    p_actor_id: actor.id,
+    p_actor_email: actor.email,
+  });
+  if (error) throw new Error(error.message);
+  await recomputePrices(productId);
+  revalidateAll(productId);
+  return { ok: true, changed: (data as number) ?? 0 };
+}
+
+/** Set the same price on many variant cells (e.g. all lengths of a colour+size) in one call. */
+export async function setVariantPrice(productId: string, ids: string[], price: number) {
+  const actor = await authorize("products:write");
+  const clean = z.object({ ids: z.array(z.string().uuid()).min(1), price: z.number().int().min(0) }).parse({ ids, price });
+  const { error } = await supabase.from("variants").update({ price: clean.price }).in("id", clean.ids);
+  if (error) throw new Error(error.message);
+  await recomputePrices(productId);
+  await logAudit({
+    actorId: actor.id, actorEmail: actor.email, action: "variant.price",
+    resourceType: "product", resourceId: productId, summary: `Set price on ${clean.ids.length} variants`,
+  });
+  revalidateAll(productId);
+  return { ok: true };
+}
+
+/** Delete many variant cells at once (a whole colour or colour+size group). */
+export async function deleteVariants(productId: string, ids: string[]) {
+  const actor = await authorize("products:write");
+  const clean = z.array(z.string().uuid()).min(1).parse(ids);
+  const { error } = await supabase.from("variants").delete().in("id", clean);
+  if (error) throw new Error(error.message);
+  await recomputePrices(productId);
+  await logAudit({
+    actorId: actor.id, actorEmail: actor.email, action: "variant.delete.bulk",
+    resourceType: "product", resourceId: productId, summary: `Deleted ${clean.length} variants`,
+  });
+  revalidateAll(productId);
+  return { ok: true };
 }
 
 export async function updateProduct(id: string, input: Partial<ProductInput>) {
   const actor = await authorize("products:write");
+  const parsed = productInputSchema.partial().parse(input);
   const patch: Record<string, unknown> = {};
   for (const [k, col] of Object.entries(FIELD_MAP)) {
-    if (k in input) patch[col] = (input as Record<string, unknown>)[k];
+    if (k in parsed) patch[col] = (parsed as Record<string, unknown>)[k];
   }
-  if ("featured" in input) patch.featured = !!input.featured;
-  if ("onSale" in input) patch.on_sale = !!input.onSale;
-  await supabase.from("products").update(patch as never).eq("id", id);
+  if ("featured" in parsed) patch.featured = !!parsed.featured;
+  if ("onSale" in parsed) patch.on_sale = !!parsed.onSale;
+  const { error } = await supabase.from("products").update(patch as never).eq("id", id);
+  if (error) throw new Error(error.message);
   await logAudit({
     actorId: actor.id, actorEmail: actor.email, action: "product.update",
     resourceType: "product", resourceId: id, summary: "Updated product",
     metadata: { fields: Object.keys(patch) },
   });
-  revalidatePath("/admin/products");
-  revalidatePath(`/admin/products/${id}`);
+  revalidateAll(id);
   return { ok: true };
 }
 
 export async function deleteProduct(id: string) {
   const actor = await authorize("products:delete");
-  await supabase.from("products").delete().eq("id", id);
+  const { error } = await supabase.from("products").delete().eq("id", id);
+  if (error) throw new Error(error.message);
   await logAudit({
     actorId: actor.id, actorEmail: actor.email, action: "product.delete",
     resourceType: "product", resourceId: id, summary: "Deleted product",
   });
-  revalidatePath("/admin/products");
+  revalidateAll();
   return { ok: true };
 }
 
@@ -140,28 +245,30 @@ export async function duplicateProduct(id: string) {
   if (error) throw new Error(error.message);
 
   if (variants?.length) {
-    await supabase.from("variants").insert(
+    const { error: ve } = await supabase.from("variants").insert(
       variants.map((v) => {
         const vr = { ...(v as Record<string, unknown>) };
         delete vr.id; delete vr.created_at;
         return { ...vr, product_id: np.id };
       }) as never,
     );
+    if (ve) throw new Error(ve.message);
   }
   if (images?.length) {
-    await supabase.from("product_images").insert(
+    const { error: ie } = await supabase.from("product_images").insert(
       images.map((im) => {
         const ir = { ...(im as Record<string, unknown>) };
         delete ir.id;
         return { ...ir, product_id: np.id };
       }) as never,
     );
+    if (ie) throw new Error(ie.message);
   }
   await logAudit({
     actorId: actor.id, actorEmail: actor.email, action: "product.duplicate",
     resourceType: "product", resourceId: np.id, summary: `Duplicated ${p.title}`,
   });
-  revalidatePath("/admin/products");
+  revalidateAll(np.id as string);
   return { ok: true, id: np.id as string };
 }
 
@@ -174,37 +281,53 @@ async function recomputePrices(productId: string) {
     .eq("id", productId);
 }
 
-export async function upsertVariant(
-  productId: string,
-  v: { id?: string; color: string; colorHex?: string | null; size: string; sku?: string | null; price: number; compareAt?: number | null; stock?: number; position?: number },
-) {
+const variantRowSchema = z.object({
+  id: z.string().uuid().optional(),
+  color: z.string().trim().min(1),
+  colorHex: z.string().nullish(),
+  size: z.string().trim().min(1),
+  length: z.number().int().min(0).default(50),
+  tackTack: z.boolean().default(false),
+  sku: z.string().nullish(),
+  price: z.number().int().min(0),
+  compareAt: z.number().int().min(0).nullish(),
+  stock: z.number().int().min(0).optional(),
+  position: z.number().int().optional(),
+});
+
+export async function upsertVariant(productId: string, v: z.input<typeof variantRowSchema>) {
   const actor = await authorize("products:write");
-  const stock = Math.max(0, Math.floor(v.stock ?? 0));
+  const p = variantRowSchema.parse(v);
+  const stock = p.stock ?? 0;
   const row = {
-    product_id: productId, color: v.color, color_hex: v.colorHex ?? null, size: v.size,
-    sku: v.sku ?? null, price: Math.max(0, Math.floor(v.price)), compare_at: v.compareAt ?? null,
-    stock, available: stock > 0, position: v.position ?? 0,
+    product_id: productId, color: p.color, color_hex: p.colorHex ?? null, size: p.size,
+    length: p.length, tack_tack: p.tackTack,
+    sku: p.sku ?? null, price: p.price, compare_at: p.compareAt ?? null,
+    stock, available: stock > 0, position: p.position ?? 0,
   };
-  if (v.id) await supabase.from("variants").update(row).eq("id", v.id);
-  else await supabase.from("variants").insert(row);
+  const { error } = p.id
+    ? await supabase.from("variants").update(row).eq("id", p.id)
+    : await supabase.from("variants").insert(row);
+  if (error) throw new Error(error.message);
   await recomputePrices(productId);
   await logAudit({
-    actorId: actor.id, actorEmail: actor.email, action: v.id ? "variant.update" : "variant.create",
-    resourceType: "product", resourceId: productId, summary: `${v.color} / ${v.size}`,
+    actorId: actor.id, actorEmail: actor.email, action: p.id ? "variant.update" : "variant.create",
+    resourceType: "product", resourceId: productId, summary: `${p.color} / ${p.size} / ${p.length} / ${p.tackTack ? "TT" : "no"}`,
   });
-  revalidatePath(`/admin/products/${productId}`);
+  revalidateAll(productId);
   return { ok: true };
 }
 
 export async function deleteVariant(productId: string, variantId: string) {
   const actor = await authorize("products:write");
-  await supabase.from("variants").delete().eq("id", variantId);
+  const { error } = await supabase.from("variants").delete().eq("id", variantId);
+  if (error) throw new Error(error.message);
   await recomputePrices(productId);
   await logAudit({
     actorId: actor.id, actorEmail: actor.email, action: "variant.delete",
     resourceType: "product", resourceId: productId,
   });
-  revalidatePath(`/admin/products/${productId}`);
+  revalidateAll(productId);
   return { ok: true };
 }
 
@@ -214,16 +337,19 @@ export async function bulkProductAction(ids: string[], action: BulkAction) {
   const actor = await authorize(action === "delete" ? "products:delete" : "products:write");
   if (!ids.length) return { ok: true };
   const q = supabase.from("products");
-  if (action === "delete") await q.delete().in("id", ids);
-  else if (action === "archive") await q.update({ status: "archived" }).in("id", ids);
-  else if (action === "activate") await q.update({ status: "active" }).in("id", ids);
-  else if (action === "draft") await q.update({ status: "draft" }).in("id", ids);
-  else if (action === "feature") await q.update({ featured: true }).in("id", ids);
-  else if (action === "unfeature") await q.update({ featured: false }).in("id", ids);
+  const run =
+    action === "delete" ? q.delete().in("id", ids)
+    : action === "archive" ? q.update({ status: "archived" }).in("id", ids)
+    : action === "activate" ? q.update({ status: "active" }).in("id", ids)
+    : action === "draft" ? q.update({ status: "draft" }).in("id", ids)
+    : action === "feature" ? q.update({ featured: true }).in("id", ids)
+    : q.update({ featured: false }).in("id", ids);
+  const { error } = await run;
+  if (error) throw new Error(error.message);
   await logAudit({
     actorId: actor.id, actorEmail: actor.email, action: `product.bulk.${action}`,
     summary: `${action} ${ids.length} products`, metadata: { ids },
   });
-  revalidatePath("/admin/products");
+  revalidateAll();
   return { ok: true };
 }

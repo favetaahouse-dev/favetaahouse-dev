@@ -1,7 +1,8 @@
-export type FieldKind = "text" | "textarea" | "bi" | "bitext" | "number" | "toggle";
+// "list" edits a comma-joined string as removable chips (sizes, lengths).
+export type FieldKind = "text" | "textarea" | "bi" | "bitext" | "number" | "toggle" | "list";
 export type Field = { key: string; label: string; kind: FieldKind; hint?: string };
 
-export const SECTIONS = ["site-settings", "commerce", "home", "about", "materials-colors", "contact"] as const;
+export const SECTIONS = ["site-settings", "commerce", "home", "about", "materials-colors", "contact", "variant-options"] as const;
 export type Section = (typeof SECTIONS)[number];
 
 export const SECTION_TITLES: Record<Section, string> = {
@@ -11,6 +12,7 @@ export const SECTION_TITLES: Record<Section, string> = {
   about: "Our Story",
   "materials-colors": "Materials & Colors",
   contact: "Contact",
+  "variant-options": "Variant Options",
 };
 
 export const FIELD_SCHEMA: Record<Section, Field[]> = {
@@ -51,6 +53,10 @@ export const FIELD_SCHEMA: Record<Section, Field[]> = {
   contact: [
     { key: "title", label: "Heading", kind: "bi" },
     { key: "intro", label: "Intro text", kind: "bitext" },
+  ],
+  "variant-options": [
+    { key: "sizes", label: "Sizes", kind: "list", hint: "The size buttons a product can offer. Order here is the order shown on the product page." },
+    { key: "lengths", label: "Lengths", kind: "list", hint: "Whole numbers, e.g. hem length in inches. These become the length chips when a product's variants use them." },
   ],
 };
 
@@ -101,5 +107,12 @@ export const DEFAULT_CONTENT: Record<Section, Record<string, string>> = {
     title: "Customer Service", title_ar: "خدمة العملاء",
     intro: "Please fill in the form and include your reason for return or exchange, or chat with our WhatsApp agent for more details. We're happy to assist you.",
     intro_ar: "يرجى تعبئة النموذج مع ذكر سبب الإرجاع أو الاستبدال، أو التحدث مع وكيل واتساب لمزيد من التفاصيل. يسعدنا مساعدتك.",
+  },
+  // Union of sizes in use (XS/S/M/L/One Size) + the ones you asked for (XL/XXL). Lengths match
+  // the reference storefront (50–61). Edited in the admin; the product page still only offers a
+  // value if the product actually has variants for it.
+  "variant-options": {
+    sizes: "XS, S, M, L, XL, XXL, One Size",
+    lengths: "50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61",
   },
 };

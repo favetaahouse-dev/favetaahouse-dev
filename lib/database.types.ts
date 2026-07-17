@@ -437,11 +437,13 @@ export type Database = {
           color: string
           id: string
           image_url: string | null
+          length: number | null
           order_id: string
           price: number
           quantity: number
           size: string
           sku: string | null
+          tack_tack: boolean | null
           title: string
           variant_id: string | null
         }
@@ -449,11 +451,13 @@ export type Database = {
           color: string
           id?: string
           image_url?: string | null
+          length?: number | null
           order_id: string
           price: number
           quantity: number
           size: string
           sku?: string | null
+          tack_tack?: boolean | null
           title: string
           variant_id?: string | null
         }
@@ -461,11 +465,13 @@ export type Database = {
           color?: string
           id?: string
           image_url?: string | null
+          length?: number | null
           order_id?: string
           price?: number
           quantity?: number
           size?: string
           sku?: string | null
+          tack_tack?: boolean | null
           title?: string
           variant_id?: string | null
         }
@@ -867,6 +873,7 @@ export type Database = {
           compare_at: number | null
           id: string
           image_url: string | null
+          length: number
           position: number
           price: number
           product_id: string
@@ -874,6 +881,7 @@ export type Database = {
           size: string
           sku: string | null
           stock: number
+          tack_tack: boolean
         }
         Insert: {
           available?: boolean
@@ -882,6 +890,7 @@ export type Database = {
           compare_at?: number | null
           id?: string
           image_url?: string | null
+          length?: number
           position?: number
           price: number
           product_id: string
@@ -889,6 +898,7 @@ export type Database = {
           size: string
           sku?: string | null
           stock?: number
+          tack_tack?: boolean
         }
         Update: {
           available?: boolean
@@ -897,6 +907,7 @@ export type Database = {
           compare_at?: number | null
           id?: string
           image_url?: string | null
+          length?: number
           position?: number
           price?: number
           product_id?: string
@@ -904,6 +915,7 @@ export type Database = {
           size?: string
           sku?: string | null
           stock?: number
+          tack_tack?: boolean
         }
         Relationships: [
           {
@@ -965,6 +977,44 @@ export type Database = {
           p_variant_id: string
         }
         Returns: number
+      }
+      adjust_stock_bulk: {
+        Args: {
+          p_actor_email?: string
+          p_actor_id?: string
+          p_reason?: string
+          p_rows: Json
+        }
+        Returns: number
+      }
+      collection_color_facets: {
+        Args: {
+          p_ids: string[] | null
+        }
+        Returns: {
+          color: string
+          hex: string
+          product_count: number
+        }[]
+      }
+      generate_variants: {
+        Args: {
+          p_colors: Json
+          p_lengths: number[]
+          p_price: number
+          p_product_id: string
+          p_sizes: string[]
+          p_stock: number
+          p_tacktacks: boolean[]
+        }
+        Returns: number
+      }
+      variant_product_ids: {
+        Args: {
+          p_color: string | null
+          p_in_stock: boolean
+        }
+        Returns: string[]
       }
       create_order: {
         Args: {

@@ -7,6 +7,8 @@ export type OrderItemDTO = {
   title: string;
   color: string;
   size: string;
+  length: number | null;
+  tackTack: boolean | null;
   sku: string | null;
   price: number;
   quantity: number;
@@ -65,6 +67,8 @@ function mapOrder(o: any): OrderDTO {
       title: it.title,
       color: it.color,
       size: it.size,
+      length: it.length ?? null,
+      tackTack: it.tack_tack ?? null,
       sku: it.sku ?? null,
       price: it.price,
       quantity: it.quantity,

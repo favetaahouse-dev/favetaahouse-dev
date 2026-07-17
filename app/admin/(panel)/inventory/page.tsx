@@ -7,13 +7,18 @@ export const dynamic = "force-dynamic";
 
 export default async function InventoryPage() {
   await requirePageAccess("inventory:read");
-  const rows = await listInventory();
+  const { rows, total } = await listInventory();
   const low = rows.filter((r) => r.stock <= 2).length;
+  const capped = total > rows.length;
   return (
     <div>
       <PageHeader
         title="Inventory"
-        description={`${rows.length} variants · ${low} low or out of stock · adjust stock manually below`}
+        description={
+          capped
+            ? `Lowest-stock ${rows.length} of ${total} variants · ${low} low or out · open a product to manage all its stock at once`
+            : `${total} variants · ${low} low or out of stock · adjust stock below`
+        }
       />
       <InventoryTable rows={rows} />
     </div>

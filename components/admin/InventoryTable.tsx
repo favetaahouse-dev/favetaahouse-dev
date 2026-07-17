@@ -6,6 +6,7 @@ import { Minus, Plus } from "lucide-react";
 import { DataTable, type Column, Badge, Button } from "./ui";
 import { adjustStock } from "@/lib/actions/inventory";
 import type { InventoryRow } from "@/lib/data/admin-catalog";
+import { variantLabel } from "@/lib/variant-options";
 
 export function InventoryTable({ rows }: { rows: InventoryRow[] }) {
   const [data, setData] = useState(rows);
@@ -30,7 +31,7 @@ export function InventoryTable({ rows }: { rows: InventoryRow[] }) {
       cell: (r) => (
         <div>
           <div className="text-foreground">{r.productTitle}</div>
-          <div className="text-xs text-faint">{r.color} / {r.size}{r.sku ? ` · ${r.sku}` : ""}</div>
+          <div className="text-xs text-faint">{variantLabel(r)}{r.sku ? ` · ${r.sku}` : ""}</div>
         </div>
       ),
     },
@@ -79,7 +80,7 @@ export function InventoryTable({ rows }: { rows: InventoryRow[] }) {
       rows={data}
       getRowId={(r) => r.variantId}
       searchable
-      searchText={(r) => `${r.productTitle} ${r.color} ${r.size} ${r.sku ?? ""}`}
+      searchText={(r) => `${r.productTitle} ${r.color} ${r.size} ${r.length} ${r.sku ?? ""}`}
       searchPlaceholder="Search inventory…"
       pageSize={25}
       emptyTitle="No variants"

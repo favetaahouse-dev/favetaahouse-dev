@@ -10,6 +10,7 @@ import { Price } from "@/components/Price";
 import { WishlistButton } from "@/components/wishlist/WishlistButton";
 import { ProductAccordion } from "@/components/product/ProductAccordion";
 import { useCart } from "@/components/providers/cart-context";
+import { sortSizes } from "@/lib/variant-options";
 import { cn } from "@/lib/utils";
 
 export type VariantDTO = {
@@ -17,6 +18,8 @@ export type VariantDTO = {
   color: string;
   colorHex: string | null;
   size: string;
+  length: number;
+  tackTack: boolean;
   sku: string | null;
   price: number;
   compareAt: number | null;
@@ -39,49 +42,88 @@ export type ProductDetailDTO = {
   variants: VariantDTO[];
 };
 
+const stocked = (v: VariantDTO) => v.available && v.stock > 0;
+const firstStocked = (list: VariantDTO[]) => list.find(stocked) ?? list[0];
+
 export function ProductDetail({ product }: { product: ProductDetailDTO }) {
   const t = useTranslations("product");
   const router = useRouter();
   const { add } = useCart();
+  const variants = product.variants;
 
   const colors = useMemo(() => {
     const map = new Map<string, string | null>();
-    for (const v of product.variants) if (!map.has(v.color)) map.set(v.color, v.colorHex);
+    for (const v of variants) if (!map.has(v.color)) map.set(v.color, v.colorHex);
     return [...map.entries()].map(([color, hex]) => ({ color, hex }));
-  }, [product.variants]);
+  }, [variants]);
 
+  // Fill size → tack → length from the first in-stock option, given a partial choice.
+  const pickDefaults = (c: string, s?: string, tt?: boolean) => {
+    const inColor = variants.filter((v) => v.color === c);
+    const size = s ?? firstStocked(inColor)?.size ?? inColor[0]?.size ?? "";
+    const inSize = inColor.filter((v) => v.size === size);
+    const tackTack = tt ?? firstStocked(inSize)?.tackTack ?? inSize[0]?.tackTack ?? false;
+    const inTack = inSize.filter((v) => v.tackTack === tackTack);
+    const length = firstStocked(inTack)?.length ?? inTack[0]?.length ?? 0;
+    return { size, tackTack, length };
+  };
+
+  const init = pickDefaults(colors[0]?.color ?? "");
   const [color, setColor] = useState(colors[0]?.color ?? "");
-  const sizesForColor = product.variants.filter((v) => v.color === color);
-  const firstAvailable = sizesForColor.find((v) => v.available && v.stock > 0) ?? sizesForColor[0];
-  const [size, setSize] = useState(firstAvailable?.size ?? "");
+  const [size, setSize] = useState(init.size);
+  const [tackTack, setTackTack] = useState(init.tackTack);
+  const [length, setLength] = useState(init.length);
   const [qty, setQty] = useState(1);
   const [activeImg, setActiveImg] = useState(0);
   const [lightbox, setLightbox] = useState(false);
   const [adding, setAdding] = useState(false);
 
-  const selected =
-    product.variants.find((v) => v.color === color && v.size === size) ?? firstAvailable;
-  const allSoldOut =
-    product.variants.length > 0 && product.variants.every((v) => !v.available || v.stock < 1);
+  const inColor = variants.filter((v) => v.color === color);
+  const sizes = useMemo(() => sortSizes([...new Set(inColor.map((v) => v.size))]), [inColor]);
+  const inSize = inColor.filter((v) => v.size === size);
+  const tacks = useMemo(() => [...new Set(inSize.map((v) => v.tackTack))].sort((a, b) => Number(a) - Number(b)), [inSize]);
+  const inTack = inSize.filter((v) => v.tackTack === tackTack);
+  const lengths = useMemo(() => [...new Set(inTack.map((v) => v.length))].sort((a, b) => a - b), [inTack]);
 
-  function selectColor(c: string) {
-    setColor(c);
-    const vs = product.variants.filter((v) => v.color === c);
-    const avail = vs.find((v) => v.available && v.stock > 0) ?? vs[0];
-    setSize(avail?.size ?? "");
-    if (avail?.imageUrl) {
-      const idx = product.images.findIndex((im) => im.url === avail.imageUrl);
+  const selected = variants.find(
+    (v) => v.color === color && v.size === size && v.tackTack === tackTack && v.length === length,
+  );
+  const allSoldOut = variants.length > 0 && variants.every((v) => !stocked(v));
+
+  const sizeSoldOut = (s: string) => inColor.filter((v) => v.size === s).every((v) => !stocked(v));
+  const tackSoldOut = (tt: boolean) => inSize.filter((v) => v.tackTack === tt).every((v) => !stocked(v));
+  const lengthSoldOut = (l: number) => {
+    const v = inTack.find((x) => x.length === l);
+    return !v || !stocked(v);
+  };
+
+  function jumpGallery(v?: VariantDTO) {
+    if (v?.imageUrl) {
+      const idx = product.images.findIndex((im) => im.url === v.imageUrl);
       if (idx >= 0) setActiveImg(idx);
     }
   }
 
+  function selectColor(c: string) {
+    const d = pickDefaults(c);
+    setColor(c); setSize(d.size); setTackTack(d.tackTack); setLength(d.length);
+    jumpGallery(variants.find((v) => v.color === c && v.size === d.size && v.tackTack === d.tackTack && v.length === d.length));
+  }
+  function selectSize(s: string) {
+    const d = pickDefaults(color, s);
+    setSize(s); setTackTack(d.tackTack); setLength(d.length);
+  }
+  function selectTack(tt: boolean) {
+    const d = pickDefaults(color, size, tt);
+    setTackTack(tt); setLength(d.length);
+  }
+
   async function handleAdd(buyNow = false) {
-    if (!selected) return;
-    if (!size) {
-      toast.error(t("selectSize"));
+    if (!selected) {
+      toast.error(t("unavailableCombination"));
       return;
     }
-    if (!selected.available || selected.stock < 1) {
+    if (!stocked(selected)) {
       toast.error(t("outOfStock"));
       return;
     }
@@ -176,25 +218,77 @@ export function ProductDetail({ product }: { product: ProductDetailDTO }) {
           <div className="mt-6">
             <p className="mb-2 font-button text-[11px] uppercase tracking-[0.14em]">{t("size")}</p>
             <div className="flex flex-wrap gap-2">
-              {sizesForColor.map((v) => {
-                const disabled = !v.available || v.stock < 1;
+              {sizes.map((s) => {
+                const disabled = sizeSoldOut(s);
                 return (
                   <button
-                    key={v.id}
+                    key={s}
                     disabled={disabled}
-                    onClick={() => setSize(v.size)}
+                    onClick={() => selectSize(s)}
                     className={cn(
                       "min-w-12 border px-4 py-2.5 text-xs uppercase tracking-wider transition-colors",
-                      size === v.size ? "border-ink bg-ink text-white" : "border-line hover:border-ink",
+                      size === s ? "border-ink bg-ink text-white" : "border-line hover:border-ink",
                       disabled && "cursor-not-allowed border-line/60 text-muted line-through opacity-50",
                     )}
                   >
-                    {v.size}
+                    {s}
                   </button>
                 );
               })}
             </div>
           </div>
+
+          {/* Tack Tack */}
+          {tacks.length > 1 && (
+            <div className="mt-6">
+              <p className="mb-2 font-button text-[11px] uppercase tracking-[0.14em]">{t("tackTack")}</p>
+              <div className="flex flex-wrap gap-2">
+                {tacks.map((tt) => {
+                  const disabled = tackSoldOut(tt);
+                  return (
+                    <button
+                      key={String(tt)}
+                      disabled={disabled}
+                      onClick={() => selectTack(tt)}
+                      className={cn(
+                        "border px-4 py-2.5 text-xs tracking-wider transition-colors",
+                        tackTack === tt ? "border-ink bg-ink text-white" : "border-line hover:border-ink",
+                        disabled && "cursor-not-allowed border-line/60 text-muted line-through opacity-50",
+                      )}
+                    >
+                      {tt ? t("tackTackYes") : t("tackTackNo")}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Length */}
+          {lengths.length > 1 && (
+            <div className="mt-6">
+              <p className="mb-2 font-button text-[11px] uppercase tracking-[0.14em]">{t("length")}</p>
+              <div className="flex flex-wrap gap-2">
+                {lengths.map((l) => {
+                  const disabled = lengthSoldOut(l);
+                  return (
+                    <button
+                      key={l}
+                      disabled={disabled}
+                      onClick={() => setLength(l)}
+                      className={cn(
+                        "min-w-12 border px-3 py-2.5 text-xs tracking-wider transition-colors",
+                        length === l ? "border-ink bg-ink text-white" : "border-line hover:border-ink",
+                        disabled && "cursor-not-allowed border-line/60 text-muted line-through opacity-50",
+                      )}
+                    >
+                      {l}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Quantity + actions */}
           <div className="mt-7 flex items-center gap-4">

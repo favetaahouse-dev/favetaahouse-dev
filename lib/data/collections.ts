@@ -117,14 +117,15 @@ export type CollectionQuery = {
 export async function getCollectionProducts(handle: string, q: CollectionQuery = {}) {
   const ids = await resolveCollectionProductIds(handle);
 
-  // Colour + in-stock both live on `variants` — resolve them in one pass so they intersect.
+  // Colour + in-stock both live on `variants`. Past 1000 variant rows a plain select truncates
+  // silently, so aggregate in the DB (≤ #products rows back) via an RPC.
   let variantIds: string[] | null = null;
   if (q.color || q.inStock) {
-    let vq = supabase.from("variants").select("product_id");
-    if (q.color) vq = vq.eq("color", q.color);
-    if (q.inStock) vq = vq.eq("available", true).gt("stock", 0);
-    const { data: v } = await vq;
-    variantIds = [...new Set((v ?? []).map((r) => r.product_id as string))];
+    const { data: v } = await supabase.rpc("variant_product_ids", {
+      p_color: q.color ?? null,
+      p_in_stock: !!q.inStock,
+    });
+    variantIds = (v as string[]) ?? [];
   }
 
   // Fabric is normalized from free text, so resolve matching products in JS (keeps the
@@ -161,20 +162,10 @@ export async function getCollectionFacets(handle: string): Promise<CollectionFac
   const ids = await resolveCollectionProductIds(handle);
   const idFilter = ids !== null ? (ids.length ? ids : [EMPTY_SENTINEL]) : null;
 
-  let vq = supabase.from("variants").select("color,color_hex,product_id,products!inner(status)").eq("products.status", "active");
-  if (idFilter) vq = vq.in("product_id", idFilter);
-  const { data: variants } = await vq;
-
-  const colorMap = new Map<string, { hex: string | null; products: Set<string> }>();
-  for (const v of variants ?? []) {
-    const color = v.color as string;
-    const entry = colorMap.get(color) ?? { hex: null, products: new Set<string>() };
-    if (!entry.hex && v.color_hex) entry.hex = v.color_hex as string;
-    entry.products.add(v.product_id as string);
-    colorMap.set(color, entry);
-  }
-  const colors = [...colorMap.entries()]
-    .map(([color, e]) => ({ color, hex: e.hex, count: e.products.size }))
+  // Distinct-product colour counts, aggregated in the DB so it doesn't truncate at 1000 variants.
+  const { data: facetRows } = await supabase.rpc("collection_color_facets", { p_ids: idFilter });
+  const colors = ((facetRows ?? []) as { color: string; hex: string | null; product_count: number }[])
+    .map((r) => ({ color: r.color, hex: r.hex, count: Number(r.product_count) }))
     .sort((a, b) => b.count - a.count || a.color.localeCompare(b.color));
 
   let pq = supabase.from("products").select("id,materials").eq("status", "active");

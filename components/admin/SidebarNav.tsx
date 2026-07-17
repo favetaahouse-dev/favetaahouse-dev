@@ -4,8 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, ShoppingCart, Package, Boxes, FolderTree, Users, CreditCard,
-  TicketPercent, Star, BarChart3, Megaphone, ShieldCheck, ScrollText, Home,
-  FileText, Palette, Phone, Settings, Film, type LucideIcon,
+  TicketPercent, BarChart3, Megaphone, ShieldCheck, ScrollText, Home,
+  FileText, Palette, Phone, Settings, Film, Ruler, type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { can, type Access } from "@/lib/rbac/access";
@@ -28,6 +28,7 @@ export const navGroups: NavGroup[] = [
       { href: "/admin/products", label: "Products", icon: Package, permission: "products:read" },
       { href: "/admin/inventory", label: "Inventory", icon: Boxes, permission: "inventory:read" },
       { href: "/admin/collections", label: "Collections", icon: FolderTree, permission: "categories:read" },
+      { href: "/admin/content/variant-options", label: "Sizes & Lengths", icon: Ruler, permission: "content:read" },
     ],
   },
   {

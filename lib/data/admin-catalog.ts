@@ -25,8 +25,8 @@ export async function listAdminProducts(): Promise<AdminProductRow[]> {
 }
 
 export type AdminVariant = {
-  id: string; color: string; colorHex: string | null; size: string; sku: string | null;
-  price: number; compareAt: number | null; stock: number; available: boolean; position: number;
+  id: string; color: string; colorHex: string | null; size: string; length: number; tackTack: boolean;
+  sku: string | null; price: number; compareAt: number | null; stock: number; available: boolean; position: number;
 };
 
 export type AdminProduct = {
@@ -43,7 +43,7 @@ export type AdminProduct = {
 const FULL_SELECT =
   "id,handle,title,title_ar,description,description_ar,product_code,materials,materials_ar," +
   "model_size,details,details_ar,packaging,category,status,tags,featured,on_sale,price_min,price_max," +
-  "images:product_images(id,url,alt,position),variants(id,color,color_hex,size,sku,price,compare_at,stock,available,position)";
+  "images:product_images(id,url,alt,position),variants(id,color,color_hex,size,length,tack_tack,sku,price,compare_at,stock,available,position)";
 
 type FullRow = {
   id: string; handle: string; title: string; title_ar: string | null;
@@ -54,8 +54,8 @@ type FullRow = {
   price_min: number; price_max: number;
   images: { id: string; url: string; alt: string | null; position: number }[];
   variants: {
-    id: string; color: string; color_hex: string | null; size: string; sku: string | null;
-    price: number; compare_at: number | null; stock: number; available: boolean; position: number;
+    id: string; color: string; color_hex: string | null; size: string; length: number; tack_tack: boolean;
+    sku: string | null; price: number; compare_at: number | null; stock: number; available: boolean; position: number;
   }[];
 };
 
@@ -74,31 +74,42 @@ export async function getAdminProduct(id: string): Promise<AdminProduct | null> 
     variants: [...(p.variants ?? [])]
       .sort((a, b) => a.position - b.position)
       .map((v) => ({
-        id: v.id, color: v.color, colorHex: v.color_hex, size: v.size, sku: v.sku,
-        price: v.price, compareAt: v.compare_at, stock: v.stock, available: v.available, position: v.position,
+        id: v.id, color: v.color, colorHex: v.color_hex, size: v.size, length: v.length, tackTack: v.tack_tack,
+        sku: v.sku, price: v.price, compareAt: v.compare_at, stock: v.stock, available: v.available, position: v.position,
       })),
   };
 }
 
 export type InventoryRow = {
   variantId: string; productId: string; productTitle: string; handle: string;
-  color: string; size: string; sku: string | null; stock: number; available: boolean;
+  color: string; size: string; length: number; tackTack: boolean; sku: string | null; stock: number; available: boolean;
 };
 
-export async function listInventory(): Promise<InventoryRow[]> {
-  const { data } = await supabase
+/**
+ * Lowest-stock variants first, capped. With the length × tack-tack matrix there can be
+ * 10k+ variant rows — a plain select would truncate at PostgREST's max-rows and silently
+ * hide most of the catalogue. The count is exact regardless of the cap, so the page can say
+ * how many are hidden and point bulk edits at the per-product grid.
+ */
+export async function listInventory(limit = 500): Promise<{ rows: InventoryRow[]; total: number }> {
+  const { data, count } = await supabase
     .from("variants")
-    .select("id,color,size,sku,stock,available,product_id,products(title,handle)")
-    .order("stock", { ascending: true });
+    .select("id,color,size,length,tack_tack,sku,stock,available,product_id,products(title,handle)", { count: "exact" })
+    .order("stock", { ascending: true })
+    .order("product_id")
+    .limit(limit);
   type Row = {
-    id: string; color: string; size: string; sku: string | null; stock: number; available: boolean;
+    id: string; color: string; size: string; length: number; tack_tack: boolean;
+    sku: string | null; stock: number; available: boolean;
     product_id: string; products: { title: string; handle: string } | null;
   };
-  return ((data ?? []) as unknown as Row[]).map((v) => ({
+  const rows = ((data ?? []) as unknown as Row[]).map((v) => ({
     variantId: v.id, productId: v.product_id,
     productTitle: v.products?.title ?? "", handle: v.products?.handle ?? "",
-    color: v.color, size: v.size, sku: v.sku, stock: v.stock, available: v.available,
+    color: v.color, size: v.size, length: v.length, tackTack: v.tack_tack,
+    sku: v.sku, stock: v.stock, available: v.available,
   }));
+  return { rows, total: count ?? rows.length };
 }
 
 export async function listVariantAdjustments(variantId: string, limit = 50) {

@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { useCart } from "@/components/providers/cart-context";
 import { Price } from "@/components/Price";
 import { createCheckout } from "@/lib/actions/checkout";
+import { variantLabel } from "@/lib/variant-options";
 
 export function CheckoutForm({
   userEmail,
@@ -95,7 +96,7 @@ export function CheckoutForm({
               <div className="flex flex-1 flex-col justify-center">
                 <p className="text-[13px]">{it.title}</p>
                 <p className="text-xs text-muted">
-                  {it.color} / {it.size}
+                  {variantLabel(it)}
                 </p>
               </div>
               <div className="self-center text-[13px]">

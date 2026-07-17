@@ -6,6 +6,7 @@ import { Link } from "@/lib/i18n-navigation";
 import { getOrder } from "@/lib/data/orders";
 import { getCommerceSettings } from "@/lib/content";
 import { formatMoney } from "@/lib/money";
+import { variantLabel } from "@/lib/variant-options";
 import { OrderStatusBadge } from "@/components/account/OrderStatusBadge";
 
 type Params = { locale: string; id: string };
@@ -71,7 +72,7 @@ export default async function OrderPage({
               <div className="flex flex-1 flex-col justify-center">
                 <p className="text-sm">{it.title}</p>
                 <p className="text-xs text-muted">
-                  {it.color} / {it.size} · × {it.quantity}
+                  {variantLabel(it)} · × {it.quantity}
                 </p>
               </div>
               <div className="self-center text-sm">{formatMoney(it.price * it.quantity, "QAR")}</div>

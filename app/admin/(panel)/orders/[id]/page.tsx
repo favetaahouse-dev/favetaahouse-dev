@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { requirePageAccess } from "@/lib/admin-guard";
 import { getOrder } from "@/lib/data/orders";
 import { formatMoney } from "@/lib/money";
+import { variantLabel } from "@/lib/variant-options";
 
 export default async function AdminOrderDetail({ params }: { params: Promise<{ id: string }> }) {
   await requirePageAccess("orders:read");
@@ -36,7 +37,7 @@ export default async function AdminOrderDetail({ params }: { params: Promise<{ i
               </div>
               <div className="flex-1 text-sm">
                 <p>{it.title}</p>
-                <p className="text-xs text-white/40">{it.color} / {it.size} · × {it.quantity}</p>
+                <p className="text-xs text-white/40">{variantLabel(it)} · × {it.quantity}</p>
               </div>
               <div className="self-center text-sm">{formatMoney(it.price * it.quantity, "QAR")}</div>
             </div>

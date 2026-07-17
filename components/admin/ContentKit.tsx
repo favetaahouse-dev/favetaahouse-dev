@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Check, Loader2 } from "lucide-react";
+import { Check, Loader2, X } from "lucide-react";
+import { parseList } from "@/lib/variant-options";
 
 export function ContentSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -95,6 +96,53 @@ export function ToggleFieldRow({
       </button>
       {hint && <span className="mt-1 block text-[11px] leading-relaxed text-white/30">{hint}</span>}
     </div>
+  );
+}
+
+/** Edit a comma-joined list as removable chips + an add-input. Stored back as "a, b, c". */
+export function ListFieldRow({
+  label,
+  value,
+  onChange,
+  hint,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  hint?: string;
+}) {
+  const items = parseList(value);
+  const commit = (next: string[]) => onChange(next.join(", "));
+  const add = (raw: string) => {
+    const v = raw.trim();
+    if (v && !items.includes(v)) commit([...items, v]);
+  };
+  return (
+    <label className="block">
+      <span className="mb-1 block text-[11px] uppercase tracking-[0.12em] text-white/40">{label}</span>
+      <div className={`flex flex-wrap items-center gap-1.5 ${inputCls} !h-auto !py-2`}>
+        {items.map((it) => (
+          <span key={it} className="inline-flex items-center gap-1 bg-white/10 px-2 py-0.5 text-xs">
+            {it}
+            <button type="button" onClick={() => commit(items.filter((x) => x !== it))} className="text-white/40 hover:text-red-400" aria-label={`Remove ${it}`}>
+              <X size={11} />
+            </button>
+          </span>
+        ))}
+        <input
+          placeholder="Add + Enter"
+          className="flex-1 bg-transparent px-1 py-0.5 text-sm outline-none placeholder:text-white/30"
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === ",") {
+              e.preventDefault();
+              add((e.target as HTMLInputElement).value);
+              (e.target as HTMLInputElement).value = "";
+            }
+          }}
+        />
+      </div>
+      {hint && <span className="mt-1 block text-[11px] leading-relaxed text-white/30">{hint}</span>}
+    </label>
   );
 }
 

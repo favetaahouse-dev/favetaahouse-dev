@@ -2,6 +2,7 @@ import "server-only";
 import { Resend } from "resend";
 import { getOrder, type OrderDTO } from "@/lib/data/orders";
 import { getCommerceSettings, getSiteSettings } from "@/lib/content";
+import { variantLabel } from "@/lib/variant-options";
 import { formatMoney } from "@/lib/money";
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY || "";
@@ -56,7 +57,7 @@ function renderOrderEmail(order: OrderDTO, taxLabel: string, storeLocation: stri
       <tr>
         <td style="padding:12px 0;border-bottom:1px solid #eee;">
           <div style="font-size:14px;color:#1b1a18;">${escapeHtml(it.title)}</div>
-          <div style="font-size:12px;color:#8a8580;">${escapeHtml(it.color)} / ${escapeHtml(it.size)} · × ${it.quantity}</div>
+          <div style="font-size:12px;color:#8a8580;">${escapeHtml(variantLabel(it))} · × ${it.quantity}</div>
         </td>
         <td style="padding:12px 0;border-bottom:1px solid #eee;text-align:right;font-size:14px;color:#1b1a18;white-space:nowrap;">${money(it.price * it.quantity)}</td>
       </tr>`,

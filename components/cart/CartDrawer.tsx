@@ -9,6 +9,7 @@ import { Link } from "@/lib/i18n-navigation";
 import { useCart } from "@/components/providers/cart-context";
 import { Price } from "@/components/Price";
 import { useCurrency } from "@/components/providers/currency-context";
+import { variantLabel } from "@/lib/variant-options";
 
 export function CartDrawer() {
   const t = useTranslations("cart");
@@ -78,7 +79,7 @@ export function CartDrawer() {
                       </button>
                     </div>
                     <p className="mt-0.5 text-xs text-muted">
-                      {it.color} / {it.size}
+                      {variantLabel(it)}
                     </p>
                     <div className="mt-auto flex items-center justify-between pt-2">
                       <div className="flex items-center border border-line">
