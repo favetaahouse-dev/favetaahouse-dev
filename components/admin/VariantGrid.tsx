@@ -91,20 +91,23 @@ function ColorBlock({
 
   return (
     <div className="border border-edge">
-      <button type="button" onClick={() => setOpen((o) => !o)} className="flex w-full items-center gap-2 px-3 py-2 text-start">
-        <ChevronRight size={15} className={cn("shrink-0 transition-transform", open && "rotate-90")} />
-        <span className="inline-block h-4 w-4 shrink-0 rounded-full border border-edge" style={{ background: hex ?? "#000" }} />
-        <span className="text-[13px] font-medium text-foreground">{color}</span>
-        <span className="text-[11px] text-faint">{allCells.length} variants · {inStock} in stock · total {totalStock}</span>
+      {/* toggle and delete are SIBLINGS — a button may not be nested in a button */}
+      <div className="flex w-full items-center gap-2 px-3 py-2">
+        <button type="button" onClick={() => setOpen((o) => !o)} className="flex flex-1 items-center gap-2 text-start">
+          <ChevronRight size={15} className={cn("shrink-0 transition-transform", open && "rotate-90")} />
+          <span className="inline-block h-4 w-4 shrink-0 rounded-full border border-edge" style={{ background: hex ?? "#000" }} />
+          <span className="text-[13px] font-medium text-foreground">{color}</span>
+          <span className="text-[11px] text-faint">{allCells.length} variants · {inStock} in stock · total {totalStock}</span>
+        </button>
         <button
           type="button"
           disabled={busy}
-          onClick={(e) => { e.stopPropagation(); if (confirm(`Delete all ${allCells.length} "${color}" variants?`)) run(() => deleteVariants(productId, allCells.map((v) => v.id)), "Colour deleted"); }}
-          className="ms-auto text-faint hover:text-danger" aria-label="Delete colour"
+          onClick={() => { if (confirm(`Delete all ${allCells.length} "${color}" variants?`)) run(() => deleteVariants(productId, allCells.map((v) => v.id)), "Colour deleted"); }}
+          className="shrink-0 text-faint hover:text-danger" aria-label="Delete colour"
         >
           <Trash2 size={14} />
         </button>
-      </button>
+      </div>
       {open && (
         <div className="space-y-1 border-t border-edge p-2">
           {sortSizes([...sizes.keys()]).map((size) => (
