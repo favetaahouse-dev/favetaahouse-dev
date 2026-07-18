@@ -3,8 +3,6 @@ import { z } from "zod";
 import { requirePermission } from "@/lib/admin-auth";
 import { supabase } from "@/lib/supabase";
 
-export const runtime = "nodejs";
-
 const CouponInput = z.object({
   code: z.string().trim().min(1, "Code is required"),
   type: z.enum(["PERCENT", "FIXED"]).default("PERCENT"),

@@ -1,4 +1,4 @@
-import { cache } from "react";
+import { cacheLife, cacheTag } from "next/cache";
 import { supabase } from "@/lib/supabase";
 import { CARD, cardImages, toCard, type ProductCardDTO } from "./catalog";
 
@@ -20,6 +20,20 @@ const CATEGORY_COLLECTIONS: Record<string, string> = {
   sheilas: "SHEILA",
 };
 const ALL_HANDLES = new Set(["view-all", "all", "new-in", "shop"]);
+
+/**
+ * Handles prerendered at build time — the ones the nav, footer and homepage actually link
+ * to. Any other handle still renders on first visit (dynamicParams defaults to true), so
+ * this is a warm-cache list rather than an allowlist.
+ */
+export const COLLECTION_HANDLES = [
+  "all",
+  "abayas",
+  "jalabiyas",
+  "sheilas",
+  "sales",
+  "travel-collection",
+];
 const EMPTY_SENTINEL = "00000000-0000-0000-0000-000000000000";
 
 // The listing query is capped so a runaway catalogue can't silently hit PostgREST's
@@ -86,7 +100,10 @@ function intersectIds(sets: (string[] | null)[]): string[] | null {
  *   ids  => explicit product-id set
  * Used by both the listing query and the facet query so they can never diverge.
  */
-const resolveCollectionProductIds = cache(async (handle: string): Promise<string[] | null> => {
+async function resolveCollectionProductIds(handle: string): Promise<string[] | null> {
+  "use cache";
+  cacheLife("hours");
+  cacheTag("products");
   const cat = CATEGORY_COLLECTIONS[handle];
   if (cat) {
     const { data } = await supabase.from("products").select("id").eq("category", cat).eq("status", "active");
@@ -105,7 +122,7 @@ const resolveCollectionProductIds = cache(async (handle: string): Promise<string
     .eq("product_collections.collection.handle", handle)
     .eq("status", "active");
   return (data ?? []).map((r) => r.id as string);
-});
+}
 
 export type CollectionQuery = {
   sort?: SortKey;
@@ -117,6 +134,9 @@ export type CollectionQuery = {
 };
 
 export async function getCollectionProducts(handle: string, q: CollectionQuery = {}) {
+  "use cache";
+  cacheLife("hours");
+  cacheTag("products");
   const ids = await resolveCollectionProductIds(handle);
 
   // Colour + in-stock both live on `variants`. Past 1000 variant rows a plain select truncates
@@ -161,6 +181,9 @@ export type CollectionFacets = {
 
 /** Available colour + fabric facets within a collection's product set (counts = distinct products). */
 export async function getCollectionFacets(handle: string): Promise<CollectionFacets> {
+  "use cache";
+  cacheLife("hours");
+  cacheTag("products");
   const ids = await resolveCollectionProductIds(handle);
   const idFilter = ids !== null ? (ids.length ? ids : [EMPTY_SENTINEL]) : null;
 
@@ -198,14 +221,20 @@ const TITLES: Record<string, string> = {
   "eid-collection": "Eid Collection", "black-collection": "Black Collection", "eid-al-adha-collection-2026": "Eid Al-Adha 2026",
 };
 
-/** Deduped: generateMetadata and the page body both ask for the same handle. */
-export const getCollectionTitle = cache(async (handle: string): Promise<string> => {
+/** generateMetadata and the page body both ask for the same handle. */
+export async function getCollectionTitle(handle: string): Promise<string> {
+  "use cache";
+  cacheLife("days");
+  cacheTag("content");
   if (TITLES[handle]) return TITLES[handle];
   const { data } = await supabase.from("collections").select("title").eq("handle", handle).maybeSingle();
   return data?.title ?? handle.replace(/-/g, " ").replace(/\b\w/g, (m) => m.toUpperCase());
-});
+}
 
 export async function getPriceRange(): Promise<{ min: number; max: number }> {
+  "use cache";
+  cacheLife("hours");
+  cacheTag("products");
   const { data } = await supabase.rpc("price_range");
   const row = Array.isArray(data) ? data[0] : data;
   return { min: row?.min ?? 0, max: row?.max ?? 390000 };

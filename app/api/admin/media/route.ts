@@ -2,7 +2,6 @@ import { NextResponse, type NextRequest } from "next/server";
 import { requirePermission } from "@/lib/admin-auth";
 import { supabase } from "@/lib/supabase";
 
-export const runtime = "nodejs";
 export const maxDuration = 120;
 
 const BUCKET = "media";

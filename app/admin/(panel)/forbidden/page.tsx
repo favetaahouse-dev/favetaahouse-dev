@@ -1,8 +1,6 @@
 import Link from "next/link";
 import { PageHeader, Panel, EmptyState } from "@/components/admin/ui";
 
-export const dynamic = "force-dynamic";
-
 /** Where `requirePageAccess` lands a staff member who lacks a page's permission. */
 export default function ForbiddenPage() {
   return (

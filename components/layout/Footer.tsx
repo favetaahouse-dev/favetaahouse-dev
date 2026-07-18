@@ -1,4 +1,6 @@
+import { Suspense } from "react";
 import Image from "next/image";
+import { cacheLife } from "next/cache";
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/lib/i18n-navigation";
 import { PAYMENT_ICONS } from "@/lib/constants";
@@ -6,9 +8,21 @@ import { getSiteSettings } from "@/lib/content";
 import { LocaleSwitcher } from "./LocaleSwitcher";
 import { InstagramIcon, FacebookIcon, YoutubeIcon, TiktokIcon } from "@/components/icons/social";
 
+/**
+ * Cached rather than read inline: the copyright year is identical for every visitor and
+ * changes once a year, and reading the clock during prerendering is exactly what Cache
+ * Components rejects — it would otherwise pin the footer, and so the whole site, to
+ * request-time rendering.
+ */
+async function copyrightYear(): Promise<number> {
+  "use cache";
+  cacheLife("days");
+  return new Date().getFullYear();
+}
+
 export async function Footer() {
   const t = await getTranslations("footer");
-  const year = new Date().getFullYear();
+  const year = await copyrightYear();
   const settings = await getSiteSettings();
 
   // Blanking a social in the admin should hide its icon, not render href="".
@@ -76,7 +90,12 @@ export async function Footer() {
 
       <div className="border-t border-white/10">
         <div className="mx-auto flex max-w-[1400px] flex-col items-center justify-between gap-4 px-6 py-5 md:flex-row">
-          <LocaleSwitcher />
+          {/* Needs the current pathname to switch locale in place, which is runtime data on
+              routes whose params aren't enumerated. Suspending just this control keeps the
+              rest of the footer in the static shell. */}
+          <Suspense fallback={<div className="h-4" />}>
+            <LocaleSwitcher />
+          </Suspense>
           <div className="flex items-center gap-2.5">
             {PAYMENT_ICONS.map((p) => (
               <span key={p.name} className="flex h-6 w-9 items-center justify-center bg-white/95 px-1">

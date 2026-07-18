@@ -3,8 +3,6 @@ import { supabase } from "@/lib/supabase";
 import { requirePageAccess } from "@/lib/admin-guard";
 import { PageHeader, Panel, StatCard, StatusPill, Money, EmptyState } from "@/components/admin/ui";
 
-export const dynamic = "force-dynamic";
-
 type PaymentRow = {
   id: string;
   amount: number;

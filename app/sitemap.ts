@@ -1,8 +1,8 @@
 import type { MetadataRoute } from "next";
 import { getAllProductHandles } from "@/lib/data/catalog";
 
-export const dynamic = "force-dynamic";
-
+// getAllProductHandles carries its own "use cache" + "products" tag, so the sitemap
+// rebuilds when the catalogue changes rather than re-querying on every crawl.
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
   const handles = await getAllProductHandles();

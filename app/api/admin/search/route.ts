@@ -3,8 +3,6 @@ import { auth } from "@/lib/auth";
 import { hasPermission, requireAdmin, sessionUser } from "@/lib/admin-auth";
 import { supabase } from "@/lib/supabase";
 
-export const runtime = "nodejs";
-
 export type SearchGroup = { type: string; items: { label: string; sub?: string; href: string }[] };
 
 const none = <T>() => Promise.resolve({ data: [] as T[] });

@@ -3,8 +3,6 @@ import { PageHeader } from "@/components/admin/ui";
 import { InventoryTable } from "@/components/admin/InventoryTable";
 import { requirePageAccess } from "@/lib/admin-guard";
 
-export const dynamic = "force-dynamic";
-
 export default async function InventoryPage() {
   await requirePageAccess("inventory:read");
   const { rows, total } = await listInventory();

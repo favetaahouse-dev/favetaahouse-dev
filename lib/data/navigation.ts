@@ -1,5 +1,5 @@
 import "server-only";
-import { cache } from "react";
+import { cacheLife, cacheTag } from "next/cache";
 import { getTranslations } from "next-intl/server";
 import { supabase } from "@/lib/supabase";
 
@@ -30,11 +30,15 @@ type CollectionRow = {
  * that actually hold products appear, so empty collections auto-hide with no config.
  * Order: Home → categories → featured collections → Sale → Our Story.
  */
-export const getNavItems = cache(async (locale: string): Promise<NavItem[]> => {
+export async function getNavItems(locale: string): Promise<NavItem[]> {
+  "use cache";
+  cacheLife("days");
+  cacheTag("nav");
   const t = await getTranslations({ locale, namespace: "nav" });
 
   const [{ data: products }, { data: collections }, { data: links }] = await Promise.all([
-    supabase.from("products").select("category,on_sale"),
+    // Only live products decide which categories appear — drafts must not conjure a nav item.
+    supabase.from("products").select("category,on_sale").eq("status", "active"),
     supabase.from("collections").select("id,handle,title,title_ar,kind,position"),
     supabase.from("product_collections").select("collection_id"),
   ]);
@@ -88,4 +92,4 @@ export const getNavItems = cache(async (locale: string): Promise<NavItem[]> => {
   items.push({ key: "ourStory", href: "/pages/about-us", label: t("ourStory") });
 
   return items;
-});
+}

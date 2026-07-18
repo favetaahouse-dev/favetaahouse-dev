@@ -2,8 +2,6 @@ import { NextResponse, type NextRequest } from "next/server";
 import { requirePermission } from "@/lib/admin-auth";
 import { supabase } from "@/lib/supabase";
 
-export const runtime = "nodejs";
-
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const bad = await requirePermission("coupons:write");
   if (bad) return bad;

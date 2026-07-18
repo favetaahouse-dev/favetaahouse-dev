@@ -1,9 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { requirePermission } from "@/lib/admin-auth";
 import { supabase } from "@/lib/supabase";
 
-export const runtime = "nodejs";
 export const maxDuration = 60;
 
 const BUCKET = "product-images";
@@ -46,7 +45,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     .select("id, url, position")
     .single();
   revalidatePath(`/admin/products/${id}`);
-  revalidatePath("/", "layout");
+  // Card and gallery images are baked into cached product/collection pages.
+  revalidateTag("products", { expire: 0 });
   return NextResponse.json(row);
 }
 
@@ -72,7 +72,8 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
   }
   await supabase.from("product_images").delete().eq("id", imageId).eq("product_id", id);
   revalidatePath(`/admin/products/${id}`);
-  revalidatePath("/", "layout");
+  // Card and gallery images are baked into cached product/collection pages.
+  revalidateTag("products", { expire: 0 });
   return NextResponse.json({ ok: true });
 }
 
@@ -105,6 +106,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     ),
   );
   revalidatePath(`/admin/products/${id}`);
-  revalidatePath("/", "layout");
+  // Card and gallery images are baked into cached product/collection pages.
+  revalidateTag("products", { expire: 0 });
   return NextResponse.json({ ok: true });
 }

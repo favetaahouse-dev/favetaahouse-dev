@@ -1,4 +1,4 @@
-import { cache } from "react";
+import { cacheLife, cacheTag } from "next/cache";
 import { supabase } from "@/lib/supabase";
 
 export type ProductCardDTO = {
@@ -70,6 +70,9 @@ export function toCard(p: CardRow): ProductCardDTO {
 }
 
 export async function getFeaturedProducts(take = 16): Promise<ProductCardDTO[]> {
+  "use cache";
+  cacheLife("hours");
+  cacheTag("products");
   // Homepage "Explore the Creation" grid = products flagged Featured in the admin.
   const { data } = await cardImages(
     supabase
@@ -86,6 +89,9 @@ export async function getFeaturedProducts(take = 16): Promise<ProductCardDTO[]> 
 }
 
 export async function getNewestProducts(take = 8): Promise<ProductCardDTO[]> {
+  "use cache";
+  cacheLife("hours");
+  cacheTag("products");
   const { data } = await cardImages(
     supabase.from("products").select(CARD).eq("status", "active").order("created_at", { ascending: false }).limit(take),
   );
@@ -113,10 +119,14 @@ export type FullProduct = {
 };
 
 /**
- * Deduped per request: every product page asks for this twice — once in generateMetadata
- * and once in the page body — and it is the heaviest single-product query we run.
+ * Every product page asks for this twice — once in generateMetadata and once in the page
+ * body — and it is the heaviest single-product query we run, so it is cached rather than
+ * merely deduped. Admin product saves expire the "products" tag.
  */
-export const getProductByHandle = cache(async (handle: string): Promise<FullProduct | null> => {
+export async function getProductByHandle(handle: string): Promise<FullProduct | null> {
+  "use cache";
+  cacheLife("hours");
+  cacheTag("products");
   const { data } = await supabase
     .from("products")
     .select(
@@ -152,14 +162,20 @@ export const getProductByHandle = cache(async (handle: string): Promise<FullProd
         price: v.price, compareAt: v.compare_at, stock: v.stock, available: v.available, imageUrl: v.image_url, position: v.position,
       })),
   };
-});
+}
 
 export async function getAllProductHandles(): Promise<string[]> {
+  "use cache";
+  cacheLife("hours");
+  cacheTag("products");
   const { data } = await supabase.from("products").select("handle").eq("status", "active");
   return (data ?? []).map((r) => r.handle as string);
 }
 
 export async function getRelatedProducts(productId: string, category: string, take = 4): Promise<ProductCardDTO[]> {
+  "use cache";
+  cacheLife("hours");
+  cacheTag("products");
   const { data } = await cardImages(
     supabase
       .from("products")

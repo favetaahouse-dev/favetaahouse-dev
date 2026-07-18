@@ -10,8 +10,6 @@ import {
 } from "@/lib/skipcash";
 import { markOrderPaid } from "@/lib/actions/checkout";
 
-export const runtime = "nodejs";
-
 function str(v: unknown): string | undefined {
   return v === undefined || v === null ? undefined : String(v);
 }

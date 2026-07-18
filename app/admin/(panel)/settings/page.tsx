@@ -7,8 +7,6 @@ import { skipcashEnabled, SKIPCASH_ENV } from "@/lib/skipcash";
 import { PageHeader, Panel, SectionLabel, Badge } from "@/components/admin/ui";
 import { requirePageAccess } from "@/lib/admin-guard";
 
-export const dynamic = "force-dynamic";
-
 const links = [
   { href: "/admin/content/site-settings", label: "Site Settings", desc: "Contact details, socials & announcement bar", icon: SettingsIcon },
   { href: "/admin/content/commerce", label: "Commerce & Payments", desc: "Shipping, tax and order-email options", icon: CreditCard },

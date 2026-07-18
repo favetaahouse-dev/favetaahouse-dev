@@ -2,8 +2,6 @@ import { supabase } from "@/lib/supabase";
 import { requirePageAccess } from "@/lib/admin-guard";
 import { PageHeader, Panel, Badge, EmptyState } from "@/components/admin/ui";
 
-export const dynamic = "force-dynamic";
-
 type AuditRow = {
   id: string;
   action: string;

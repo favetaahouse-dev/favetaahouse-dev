@@ -2,8 +2,6 @@ import { NextResponse } from "next/server";
 import { requirePermission } from "@/lib/admin-auth";
 import { listAdminNotifications, unreadAdminCount, markNotificationsRead } from "@/lib/notify";
 
-export const runtime = "nodejs";
-
 export async function GET() {
   const bad = await requirePermission("notifications:read");
   if (bad) return bad;

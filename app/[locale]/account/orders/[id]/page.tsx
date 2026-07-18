@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { CheckCircle2 } from "lucide-react";
@@ -11,11 +12,16 @@ import { OrderStatusBadge } from "@/components/account/OrderStatusBadge";
 
 type Params = { locale: string; id: string };
 
-export default async function OrderPage({
-  params,
-}: {
-  params: Promise<Params>;
-}) {
+/** A single shopper's order — nothing here is shared, so the whole body streams. */
+export default function OrderPage({ params }: { params: Promise<Params> }) {
+  return (
+    <Suspense fallback={<div className="mx-auto max-w-3xl px-6 py-14" />}>
+      <OrderContent params={params} />
+    </Suspense>
+  );
+}
+
+async function OrderContent({ params }: { params: Promise<Params> }) {
   const { locale, id } = await params;
   setRequestLocale(locale);
   const order = await getOrder(id);

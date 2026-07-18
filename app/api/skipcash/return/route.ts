@@ -3,8 +3,6 @@ import { supabase } from "@/lib/supabase";
 import { skipcashEnabled, getPayment, PAID_STATUS_ID } from "@/lib/skipcash";
 import { markOrderPaid } from "@/lib/actions/checkout";
 
-export const runtime = "nodejs";
-
 const ORIGIN = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
 // Browser return target after the SkipCash hosted page. Reconciles against the

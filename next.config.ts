@@ -24,6 +24,10 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   turbopack: { root: dir },
+  // Partial Prerendering: the nav, footer and product grids are prerendered into a static
+  // shell served from the CDN, while the cart — the only genuinely per-visitor part —
+  // streams in at request time. Without this every page re-queried Singapore on every hit.
+  cacheComponents: true,
   images: {
     // Product imagery is served from Supabase Storage, which is already CDN-backed and
     // stores one right-sized variant per photo, so there is nothing to re-optimize.

@@ -7,8 +7,6 @@ import { SUPER_ADMIN_KEY } from "@/lib/rbac/guards";
 import { StaffTable, type StaffRow } from "@/components/admin/settings/StaffTable";
 import { RolePermissionMatrix, type MatrixRole } from "@/components/admin/settings/RolePermissionMatrix";
 
-export const dynamic = "force-dynamic";
-
 type RoleRef = { name: string; key: string; rank: number } | { name: string; key: string; rank: number }[] | null;
 type StaffQuery = {
   id: string;

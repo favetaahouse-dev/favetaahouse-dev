@@ -1,30 +1,40 @@
 import "server-only";
-import { cache } from "react";
+import { cacheLife, cacheTag } from "next/cache";
 import { supabase } from "@/lib/supabase";
 import { DEFAULT_CONTENT, type Section } from "@/lib/content-schema";
 import { assetUrl } from "@/lib/asset-url";
 import { parseList, parseLengths } from "@/lib/variant-options";
 
-/** Read a CMS content section (content table merged over defaults). Deduped per request. */
-export const getContent = cache(async (section: Section): Promise<Record<string, string>> => {
+/**
+ * Read a CMS content section (content table merged over defaults).
+ *
+ * Cached into the prerendered shell: this is admin-edited copy that changes a few times
+ * a month, not per visitor. Admin saves call updateTag("content") to expire it, so edits
+ * still appear immediately — see lib/actions/content.ts.
+ */
+export async function getContent(section: Section): Promise<Record<string, string>> {
+  "use cache";
+  cacheLife("days");
+  cacheTag("content");
   const { data } = await supabase.from("content").select("data").eq("key", section).maybeSingle();
   return { ...DEFAULT_CONTENT[section], ...((data?.data as Record<string, string>) ?? {}) };
-});
+}
 
-export const getSiteSettings = cache(async () => getContent("site-settings"));
+export async function getSiteSettings() {
+  return getContent("site-settings");
+}
 
 /**
  * Homepage video sources (hero + campaign), admin-editable, with baked-in fallbacks.
  * assetUrl resolves "/assets/video/..." onto Supabase Storage and leaves the full URLs
  * an admin may paste in untouched.
  */
-export const getHomeMedia = cache(async () => {
+export async function getHomeMedia() {
   const c = await getContent("home");
   return {
     heroVideo: assetUrl(c.heroVideo || "/assets/video/hero.mp4"),
-    campaignVideo: assetUrl(c.campaignVideo || "/assets/video/campaign.mp4"),
   };
-});
+}
 
 export type CommerceSettings = {
   shippingFee: number; // QAR major units
@@ -40,7 +50,7 @@ export type CommerceSettings = {
 };
 
 /** Parsed commerce/payment settings (shipping, tax, order emails) from the CMS. */
-export const getCommerceSettings = cache(async (): Promise<CommerceSettings> => {
+export async function getCommerceSettings(): Promise<CommerceSettings> {
   const c = await getContent("commerce");
   const num = (k: string) => {
     const n = parseFloat(c[k] ?? "");
@@ -57,20 +67,20 @@ export const getCommerceSettings = cache(async (): Promise<CommerceSettings> => 
     emailFromAddress: c.emailFromAddress || "",
     emailReplyTo: c.emailReplyTo || "",
   };
-});
+}
 
 /** The floating button, the contact page and the form all link here — build it once. */
-export const getWhatsappUrl = cache(async (): Promise<string> => {
+export async function getWhatsappUrl(): Promise<string> {
   const { whatsapp } = await getSiteSettings();
   return `https://wa.me/${(whatsapp || "").replace(/[^0-9]/g, "")}`;
-});
+}
 
 /**
  * The admin-editable size + length lists (Admin → Content → Variant Options). Only the admin
  * needs these — the storefront derives a product's options from its actual variant rows.
  * Passed as props into the client admin forms (this module is server-only).
  */
-export const getVariantOptions = cache(async (): Promise<{ sizes: string[]; lengths: number[] }> => {
+export async function getVariantOptions(): Promise<{ sizes: string[]; lengths: number[] }> {
   const c = await getContent("variant-options");
   return { sizes: parseList(c.sizes), lengths: parseLengths(c.lengths) };
-});
+}

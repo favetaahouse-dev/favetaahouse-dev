@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { authorize } from "@/lib/admin-auth";
 import { logAudit } from "@/lib/audit";
 import { supabase } from "@/lib/supabase";
@@ -39,8 +39,10 @@ export async function adjustStock(input: {
         : `Adjust stock ${(input.delta ?? 0) >= 0 ? "+" : ""}${input.delta ?? 0}`,
     metadata: { ...input },
   });
+  // Stock decides the greyed-out sizes and the "Out of stock" badge, both of which are
+  // baked into cached product/collection pages — expire them so the change is visible.
+  updateTag("products");
   revalidatePath("/admin/inventory");
   revalidatePath("/admin/products");
-  revalidatePath("/", "layout"); // reflect the stock change on the storefront too
   return { ok: true, stock: data as number };
 }

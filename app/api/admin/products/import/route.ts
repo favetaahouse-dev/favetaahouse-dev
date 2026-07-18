@@ -1,9 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { revalidatePath } from "next/cache";
+import { revalidateTag } from "next/cache";
 import { requirePermission } from "@/lib/admin-auth";
 import { supabase } from "@/lib/supabase";
 
-export const runtime = "nodejs";
 export const maxDuration = 60;
 
 type ImportProduct = {
@@ -89,6 +88,9 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  revalidatePath("/", "layout");
+  // A bulk import can touch every product, so expire the whole catalogue and
+  // the nav, which depends on which categories have live products.
+  revalidateTag("products", { expire: 0 });
+  revalidateTag("nav", { expire: 0 });
   return NextResponse.json({ ok: true, created, updated });
 }

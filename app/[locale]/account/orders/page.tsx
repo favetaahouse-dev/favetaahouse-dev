@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { setRequestLocale, getTranslations } from "next-intl/server";
@@ -9,7 +10,16 @@ import { OrderStatusBadge } from "@/components/account/OrderStatusBadge";
 
 export const metadata: Metadata = { title: "My Account" };
 
-export default async function OrdersPage({ params }: { params: Promise<{ locale: string }> }) {
+/** Every line of this page is the signed-in shopper's own data, so the whole body streams. */
+export default function OrdersPage({ params }: { params: Promise<{ locale: string }> }) {
+  return (
+    <Suspense fallback={<div className="mx-auto max-w-3xl px-6 py-14" />}>
+      <OrdersContent params={params} />
+    </Suspense>
+  );
+}
+
+async function OrdersContent({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   setRequestLocale(locale);
   const session = await auth();

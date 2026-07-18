@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { authorize } from "@/lib/admin-auth";
 import { logAudit } from "@/lib/audit";
 import { supabase } from "@/lib/supabase";
@@ -18,6 +18,9 @@ export async function updateVariantStock(variantId: string, stock: number) {
     summary: `Set stock to ${s}`,
     metadata: { stock: s },
   });
+  // Stock drives the size availability and "Out of stock" badge on cached product and
+  // collection pages, so the storefront copies have to be expired too.
+  updateTag("products");
   revalidatePath("/admin/products");
   return { ok: true };
 }
@@ -40,6 +43,10 @@ export async function updateProductFlags(
     summary: "Updated product flags",
     metadata: patch,
   });
+  // "featured" changes the homepage grid and "on_sale" both the Sale collection and
+  // whether the Sale link appears in the nav at all.
+  updateTag("products");
+  updateTag("nav");
   revalidatePath("/admin/products");
   return { ok: true };
 }

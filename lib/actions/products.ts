@@ -1,7 +1,7 @@
 "use server";
 
 import { z } from "zod";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { authorize } from "@/lib/admin-auth";
 import { logAudit } from "@/lib/audit";
 import { supabase } from "@/lib/supabase";
@@ -14,12 +14,20 @@ function slugify(s: string): string {
   );
 }
 
-/** Revalidate the admin views AND the whole storefront layout, so an edit shows on the
- *  public site without depending on the incidental cookies()-forced SSR in the locale layout. */
+/**
+ * Push an admin edit out to the public site.
+ *
+ * Storefront product data is cached under the "products" tag (lib/data/catalog.ts,
+ * lib/data/collections.ts). updateTag expires it so the next request re-reads rather than
+ * serving the stale copy — the read-your-own-writes behaviour an admin expects after
+ * hitting Save. The nav is tagged separately because adding the first product in a
+ * category, or the first sale item, changes which links appear.
+ */
 function revalidateAll(productId?: string) {
+  updateTag("products");
+  updateTag("nav");
   revalidatePath("/admin/products");
   if (productId) revalidatePath(`/admin/products/${productId}`);
-  revalidatePath("/", "layout");
 }
 
 // ── validation ──────────────────────────────────────────────────────────────

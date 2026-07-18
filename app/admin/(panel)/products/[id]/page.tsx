@@ -9,8 +9,6 @@ import { ImageUploader } from "@/components/admin/ImageUploader";
 import { requirePageAccess } from "@/lib/admin-guard";
 import { getVariantOptions } from "@/lib/content";
 
-export const dynamic = "force-dynamic";
-
 export default async function AdminProductEdit({ params }: { params: Promise<{ id: string }> }) {
   await requirePageAccess("products:read");
   const { id } = await params;

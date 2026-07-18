@@ -3,8 +3,6 @@ import { requirePermission } from "@/lib/admin-auth";
 import { supabase } from "@/lib/supabase";
 import type { Permission } from "@/lib/rbac/permissions";
 
-export const runtime = "nodejs";
-
 /**
  * Each export is gated on the permission for the data it dumps — `requireAdmin()`
  * only proved "is staff", so any role could pull the full customer PII CSV.
