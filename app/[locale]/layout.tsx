@@ -30,8 +30,9 @@ export default async function LocaleLayout({
     locale === "ar"
       ? (await import("@/messages/ar.json")).default
       : (await import("@/messages/en.json")).default;
-  const navItems = await getNavItems(locale);
-  const cart = await getCart();
+  // Independent queries, and the database is a round trip away — awaiting them in
+  // sequence costs a whole extra trip on every page of the site.
+  const [navItems, cart] = await Promise.all([getNavItems(locale), getCart()]);
 
   return (
     <NextIntlClientProvider locale={locale} messages={messages}>

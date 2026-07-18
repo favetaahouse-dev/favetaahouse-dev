@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { supabase } from "@/lib/supabase";
 
 export type ProductCardDTO = {
@@ -15,8 +16,23 @@ export type ProductCardDTO = {
 };
 
 // PostgREST select for card rows (images/variants ordered by position via query below).
-const CARD =
-  "handle,title,category,on_sale,price_min,price_max,images:product_images(url,alt,position),variants(color,color_hex,price,compare_at,available,position)";
+// Shared with lib/data/collections.ts so the two listing queries can't drift apart.
+export const CARD =
+  "handle,title,category,on_sale,price_min,price_max,images:product_images(url,position),variants(color,color_hex,price,compare_at,available,position)";
+
+/**
+ * A card renders only images[0] (main) and images[1] (hover), so ask the database for
+ * exactly those two rather than every image row of every product — on the full catalogue
+ * that is 195 rows instead of 419, a third off the response.
+ *
+ * The ordering is not decorative: without it PostgREST would pick an arbitrary two.
+ */
+export function cardImages<T>(query: T): T {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (query as any)
+    .order("position", { referencedTable: "product_images", ascending: true })
+    .limit(2, { referencedTable: "product_images" });
+}
 
 type CardRow = {
   handle: string;
@@ -25,7 +41,7 @@ type CardRow = {
   on_sale: boolean;
   price_min: number;
   price_max: number;
-  images: { url: string; alt: string | null; position: number }[];
+  images: { url: string; position: number }[];
   variants: { color: string; color_hex: string | null; price: number; compare_at: number | null; available: boolean; position: number }[];
 };
 
@@ -54,21 +70,25 @@ export function toCard(p: CardRow): ProductCardDTO {
 }
 
 export async function getFeaturedProducts(take = 16): Promise<ProductCardDTO[]> {
-  // Homepage "Explore the Creation" carousel = products flagged Featured in the admin.
-  const { data } = await supabase
-    .from("products")
-    .select(CARD)
-    .eq("status", "active")
-    .eq("featured", true)
-    .order("created_at", { ascending: false })
-    .limit(take);
+  // Homepage "Explore the Creation" grid = products flagged Featured in the admin.
+  const { data } = await cardImages(
+    supabase
+      .from("products")
+      .select(CARD)
+      .eq("status", "active")
+      .eq("featured", true)
+      .order("created_at", { ascending: false })
+      .limit(take),
+  );
   const featured = ((data ?? []) as CardRow[]).map(toCard);
   // Never leave the homepage empty — fall back to the newest active products.
   return featured.length > 0 ? featured : getNewestProducts(take);
 }
 
 export async function getNewestProducts(take = 8): Promise<ProductCardDTO[]> {
-  const { data } = await supabase.from("products").select(CARD).eq("status", "active").order("created_at", { ascending: false }).limit(take);
+  const { data } = await cardImages(
+    supabase.from("products").select(CARD).eq("status", "active").order("created_at", { ascending: false }).limit(take),
+  );
   return ((data ?? []) as CardRow[]).map(toCard);
 }
 
@@ -92,7 +112,11 @@ export type FullProduct = {
   }[];
 };
 
-export async function getProductByHandle(handle: string): Promise<FullProduct | null> {
+/**
+ * Deduped per request: every product page asks for this twice — once in generateMetadata
+ * and once in the page body — and it is the heaviest single-product query we run.
+ */
+export const getProductByHandle = cache(async (handle: string): Promise<FullProduct | null> => {
   const { data } = await supabase
     .from("products")
     .select(
@@ -128,7 +152,7 @@ export async function getProductByHandle(handle: string): Promise<FullProduct | 
         price: v.price, compareAt: v.compare_at, stock: v.stock, available: v.available, imageUrl: v.image_url, position: v.position,
       })),
   };
-}
+});
 
 export async function getAllProductHandles(): Promise<string[]> {
   const { data } = await supabase.from("products").select("handle").eq("status", "active");
@@ -136,25 +160,29 @@ export async function getAllProductHandles(): Promise<string[]> {
 }
 
 export async function getRelatedProducts(productId: string, category: string, take = 4): Promise<ProductCardDTO[]> {
-  const { data } = await supabase
-    .from("products")
-    .select(CARD)
-    .eq("status", "active")
-    .eq("category", category)
-    .neq("id", productId)
-    .order("created_at", { ascending: false })
-    .limit(take);
+  const { data } = await cardImages(
+    supabase
+      .from("products")
+      .select(CARD)
+      .eq("status", "active")
+      .eq("category", category)
+      .neq("id", productId)
+      .order("created_at", { ascending: false })
+      .limit(take),
+  );
   return ((data ?? []) as CardRow[]).map(toCard);
 }
 
 export async function searchProducts(q: string, take = 24): Promise<ProductCardDTO[]> {
   const term = q.trim().replace(/[,()*%]/g, " ").trim();
   if (!term) return [];
-  const { data } = await supabase
-    .from("products")
-    .select(CARD)
-    .eq("status", "active")
-    .or(`title.ilike.*${term}*,product_code.ilike.*${term}*,materials.ilike.*${term}*,description.ilike.*${term}*`)
-    .limit(take);
+  const { data } = await cardImages(
+    supabase
+      .from("products")
+      .select(CARD)
+      .eq("status", "active")
+      .or(`title.ilike.*${term}*,product_code.ilike.*${term}*,materials.ilike.*${term}*,description.ilike.*${term}*`)
+      .limit(take),
+  );
   return ((data ?? []) as CardRow[]).map(toCard);
 }

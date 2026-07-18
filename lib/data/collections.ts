@@ -1,5 +1,6 @@
+import { cache } from "react";
 import { supabase } from "@/lib/supabase";
-import { toCard, type ProductCardDTO } from "./catalog";
+import { CARD, cardImages, toCard, type ProductCardDTO } from "./catalog";
 
 export type SortKey =
   | "featured" | "best-selling" | "title-ascending" | "title-descending"
@@ -21,8 +22,9 @@ const CATEGORY_COLLECTIONS: Record<string, string> = {
 const ALL_HANDLES = new Set(["view-all", "all", "new-in", "shop"]);
 const EMPTY_SENTINEL = "00000000-0000-0000-0000-000000000000";
 
-const CARD =
-  "handle,title,category,on_sale,price_min,price_max,images:product_images(url,alt,position),variants(color,color_hex,price,compare_at,available,position)";
+// The listing query is capped so a runaway catalogue can't silently hit PostgREST's
+// max_rows (1000, see supabase/config.toml) and return a truncated page as if complete.
+const MAX_COLLECTION_PRODUCTS = 500;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function applySort(query: any, sort: SortKey) {
@@ -84,7 +86,7 @@ function intersectIds(sets: (string[] | null)[]): string[] | null {
  *   ids  => explicit product-id set
  * Used by both the listing query and the facet query so they can never diverge.
  */
-async function resolveCollectionProductIds(handle: string): Promise<string[] | null> {
+const resolveCollectionProductIds = cache(async (handle: string): Promise<string[] | null> => {
   const cat = CATEGORY_COLLECTIONS[handle];
   if (cat) {
     const { data } = await supabase.from("products").select("id").eq("category", cat).eq("status", "active");
@@ -103,7 +105,7 @@ async function resolveCollectionProductIds(handle: string): Promise<string[] | n
     .eq("product_collections.collection.handle", handle)
     .eq("status", "active");
   return (data ?? []).map((r) => r.id as string);
-}
+});
 
 export type CollectionQuery = {
   sort?: SortKey;
@@ -146,9 +148,9 @@ export async function getCollectionProducts(handle: string, q: CollectionQuery =
   if (q.minPrice != null) query = query.gte("price_min", q.minPrice);
   if (q.maxPrice != null) query = query.lte("price_min", q.maxPrice);
 
-  query = applySort(query, q.sort ?? "featured");
+  query = applySort(query, q.sort ?? "featured").limit(MAX_COLLECTION_PRODUCTS);
 
-  const { data, count } = await query;
+  const { data, count } = await cardImages(query);
   return { products: ((data ?? []) as Parameters<typeof toCard>[0][]).map(toCard) as ProductCardDTO[], total: count ?? 0 };
 }
 
@@ -196,11 +198,12 @@ const TITLES: Record<string, string> = {
   "eid-collection": "Eid Collection", "black-collection": "Black Collection", "eid-al-adha-collection-2026": "Eid Al-Adha 2026",
 };
 
-export async function getCollectionTitle(handle: string): Promise<string> {
+/** Deduped: generateMetadata and the page body both ask for the same handle. */
+export const getCollectionTitle = cache(async (handle: string): Promise<string> => {
   if (TITLES[handle]) return TITLES[handle];
   const { data } = await supabase.from("collections").select("title").eq("handle", handle).maybeSingle();
   return data?.title ?? handle.replace(/-/g, " ").replace(/\b\w/g, (m) => m.toUpperCase());
-}
+});
 
 export async function getPriceRange(): Promise<{ min: number; max: number }> {
   const { data } = await supabase.rpc("price_range");
