@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "extract": "tsx scripts/extract.ts",
+    "favicon": "tsx scripts/generate-favicon.ts",
     "upload-assets": "tsx scripts/upload-assets.ts",
     "seed": "tsx scripts/seed-supabase.ts",
     "db:reset": "npx supabase db reset",

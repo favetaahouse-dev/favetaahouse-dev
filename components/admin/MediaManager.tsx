@@ -79,7 +79,6 @@ export function MediaManager({ initial }: { initial: Record<string, string> }) {
   return (
     <Panel className="space-y-6 p-5">
       <VideoField label="Hero video (top of homepage)" value={data.heroVideo ?? ""} onChange={set("heroVideo")} />
-      <VideoField label="Campaign video (mid homepage)" value={data.campaignVideo ?? ""} onChange={set("campaignVideo")} />
       <p className="text-[11px] leading-relaxed text-faint">
         Paste a hosted URL (e.g. a CDN/Cloudflare/S3 <code>.mp4</code> link) or upload a file. Very large uploads may hit
         local storage limits — for big videos, host them and paste the URL. Changes go live immediately after saving.
