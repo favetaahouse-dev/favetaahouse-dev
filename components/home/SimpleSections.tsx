@@ -1,8 +1,11 @@
 import Image from "next/image";
 import { getTranslations } from "next-intl/server";
+import { ArrowRight, Gem, ShieldCheck, Truck } from "lucide-react";
 import { Link } from "@/lib/i18n-navigation";
 import { WHY_US, GALLERY_IMAGES } from "@/lib/home-content";
 import { getSiteSettings } from "@/lib/content";
+
+const WHY_ICONS = { shield: ShieldCheck, gem: Gem, truck: Truck };
 
 export async function ShopSaleButton() {
   const t = await getTranslations("home");
@@ -15,63 +18,50 @@ export async function ShopSaleButton() {
   );
 }
 
-export async function TravelCollage() {
-  const t = await getTranslations("home");
-  return (
-    <section className="bg-cream px-4 pb-4 pt-14 md:px-8">
-      <h2 className="section-title mb-8">{t("travelCollection")}</h2>
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-        {["/assets/home/travel-1.jpg", "/assets/home/travel-2.jpg"].map((src, i) => (
-          <div
-            key={src}
-            className={`relative aspect-square overflow-hidden ${i === 1 ? "hidden md:block" : ""}`}
-          >
-            <Image
-              src={src}
-              alt=""
-              fill
-              sizes="(max-width:768px) 100vw, 50vw"
-              className="object-cover transition-transform duration-[1.2s] hover:scale-105"
-            />
-            <div className="absolute inset-0 bg-black/15" />
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-}
-
-export async function TravelIntro() {
-  const t = await getTranslations("home");
-  return (
-    <section className="bg-cream px-6 pb-16 pt-8">
-      <p className="mx-auto max-w-2xl text-center text-[15px] leading-relaxed text-ink/80">
-        {t("travelIntro")}
-      </p>
-    </section>
-  );
-}
-
+/* Dark band between the two linen sections — the homepage's one deliberate pause.
+   Columns are split by hairlines: horizontal when stacked, inline-start when in a row. */
 export async function WhyUs() {
   const t = await getTranslations("home");
   return (
-    <section className="bg-cream px-6 py-16">
-      <h2 className="section-title mb-12">{t("whyTitle")}</h2>
-      <div className="mx-auto grid max-w-4xl grid-cols-3 gap-6">
-        {WHY_US.map((item) => (
-          <Link key={item.key} href={item.href} className="group flex flex-col items-center gap-4 text-center">
-            <Image
-              src={item.icon}
-              alt=""
-              width={64}
-              height={64}
-              className="h-10 w-10 transition-transform group-hover:scale-110 md:h-16 md:w-16"
-            />
-            <span className="text-[11px] uppercase tracking-[0.14em] text-ink/80 md:text-sm">
-              {t(item.key)}
-            </span>
-          </Link>
-        ))}
+    <section className="bg-footer px-6 py-20 md:py-28">
+      <div className="mx-auto max-w-5xl">
+        <p className="eyebrow mb-4 text-center !text-gold">{t("whyEyebrow")}</p>
+        <h2 className="section-title text-footer-fg">{t("whyTitle")}</h2>
+        <span className="mx-auto mt-8 mb-14 block h-px w-12 bg-gold/50 md:mb-20" />
+
+        <div className="grid grid-cols-1 md:grid-cols-3">
+          {WHY_US.map((item) => {
+            const Icon = WHY_ICONS[item.icon];
+            return (
+              <Link
+                key={item.key}
+                href={item.href}
+                className="group flex flex-col items-center gap-5 border-t border-footer-fg/12 px-4 py-10 text-center first:border-t-0 md:border-t-0 md:border-s md:px-8 md:py-0 md:first:border-s-0"
+              >
+                <Icon
+                  size={30}
+                  strokeWidth={1}
+                  className="text-gold transition-transform duration-500 group-hover:-translate-y-1"
+                  aria-hidden
+                />
+                <h3 className="display text-[1.3rem] text-footer-fg">{t(item.key)}</h3>
+                <p className="max-w-[28ch] text-[13px] leading-relaxed text-footer-fg/55">
+                  {t(item.desc)}
+                </p>
+                {/* Slide on the wrapper, mirror on the glyph — .flip-x is a transform,
+                    so keeping them on separate elements avoids clobbering either one. */}
+                <span className="inline-block transition-transform duration-300 group-hover:translate-x-1 rtl:group-hover:-translate-x-1">
+                  <ArrowRight
+                    size={16}
+                    strokeWidth={1.25}
+                    className="flip-x text-gold opacity-40 transition-opacity duration-300 group-hover:opacity-100"
+                    aria-hidden
+                  />
+                </span>
+              </Link>
+            );
+          })}
+        </div>
       </div>
     </section>
   );

@@ -52,8 +52,10 @@ export const GALLERY_IMAGES = [
   "/assets/home/gallery-4.jpg",
 ];
 
+// `icon` names a lucide component resolved in components/home/SimpleSections.tsx —
+// inline SVG so the glyphs can take the gold brand colour on the dark band.
 export const WHY_US = [
-  { icon: "/assets/icon/why-guarantee.svg", key: "whyGuarantee", href: "/pages/terms-and-conditions" },
-  { icon: "/assets/icon/why-fabric.svg", key: "whyFabric", href: "/pages/materials-colors" },
-  { icon: "/assets/icon/why-shipping.svg", key: "whyShipping", href: "/pages/terms-and-conditions" },
-];
+  { icon: "shield", key: "whyGuarantee", desc: "whyGuaranteeDesc", href: "/pages/terms-and-conditions" },
+  { icon: "gem", key: "whyFabric", desc: "whyFabricDesc", href: "/pages/materials-colors" },
+  { icon: "truck", key: "whyShipping", desc: "whyShippingDesc", href: "/pages/terms-and-conditions" },
+] as const;

@@ -38,9 +38,7 @@ export const FIELD_SCHEMA: Record<Section, Field[]> = {
   ],
   home: [
     { key: "shopSale", label: "Sale button", kind: "bi" },
-    { key: "campaignTitle", label: "Campaign title", kind: "bi" },
     { key: "newsletterTitle", label: "Newsletter title", kind: "bi" },
-    { key: "travelIntro", label: "Travel intro", kind: "bitext" },
   ],
   about: [
     { key: "storyTitle", label: "Story heading", kind: "bi" },
@@ -84,12 +82,8 @@ export const DEFAULT_CONTENT: Record<Section, Record<string, string>> = {
   },
   home: {
     shopSale: "Shop Sale", shopSale_ar: "تسوّق التخفيضات",
-    campaignTitle: "Discover the Campaign", campaignTitle_ar: "اكتشفي الحملة",
     newsletterTitle: "Newsletter", newsletterTitle_ar: "النشرة البريدية",
-    travelIntro: "Discover luxury travel abayas designed for comfort, versatility, and effortless elegance.",
-    travelIntro_ar: "اكتشفي عبايات السفر الفاخرة المصممة للراحة والتنوّع والأناقة السهلة.",
     heroVideo: "/assets/video/hero.mp4",
-    campaignVideo: "/assets/video/campaign.mp4",
   },
   about: {
     storyTitle: "Our Story", storyTitle_ar: "قصتنا",
