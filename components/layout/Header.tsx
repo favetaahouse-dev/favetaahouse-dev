@@ -1,16 +1,25 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import dynamic from "next/dynamic";
 import Image from "next/image";
 import { Search, ShoppingBag, Menu, Heart } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Link, usePathname } from "@/lib/i18n-navigation";
 import type { NavItem } from "@/lib/data/navigation";
 import { useCart } from "@/components/providers/cart-context";
-import { MobileMenu } from "@/components/layout/MobileMenu";
-import { SearchDrawer } from "@/components/layout/SearchDrawer";
 import { AccountMenu } from "@/components/layout/AccountMenu";
 import { cn } from "@/lib/utils";
+
+// Both were mounted closed into every page, with `open` only toggling CSS. Loading them on
+// first use keeps their code — and, for the search drawer, the search action and price
+// formatter it pulls in — out of the initial bundle.
+const MobileMenu = dynamic(() =>
+  import("@/components/layout/MobileMenu").then((m) => m.MobileMenu),
+);
+const SearchDrawer = dynamic(() =>
+  import("@/components/layout/SearchDrawer").then((m) => m.SearchDrawer),
+);
 
 export function Header({ navItems }: { navItems: NavItem[] }) {
   const ta = useTranslations("actions");
@@ -21,6 +30,11 @@ export function Header({ navItems }: { navItems: NavItem[] }) {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  // Latch: once a drawer has been opened it stays mounted, so closing still animates.
+  const mobileMounted = useRef(false);
+  const searchMounted = useRef(false);
+  if (mobileOpen) mobileMounted.current = true;
+  if (searchOpen) searchMounted.current = true;
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40);
@@ -108,8 +122,14 @@ export function Header({ navItems }: { navItems: NavItem[] }) {
       {/* spacer so content clears the fixed header on non-home pages */}
       {!isHome && <div className="h-[84px] lg:h-[132px]" />}
 
-      <MobileMenu open={mobileOpen} onClose={() => setMobileOpen(false)} navItems={navItems} />
-      <SearchDrawer open={searchOpen} onClose={() => setSearchOpen(false)} />
+      {/* Mounted on first open — not on every `open` — so the slide-out transition still
+          has an element to animate when it closes. */}
+      {mobileMounted.current && (
+        <MobileMenu open={mobileOpen} onClose={() => setMobileOpen(false)} navItems={navItems} />
+      )}
+      {searchMounted.current && (
+        <SearchDrawer open={searchOpen} onClose={() => setSearchOpen(false)} />
+      )}
     </>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, useCallback } from "react";
+import { createContext, useContext, useEffect, useState, useCallback, useMemo } from "react";
 
 type WishlistCtx = {
   handles: string[];
@@ -40,13 +40,20 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
     [handles, persist],
   );
 
-  return (
-    <Ctx.Provider
-      value={{ handles, has: (h) => handles.includes(h), toggle, count: handles.length, ready }}
-    >
-      {children}
-    </Ctx.Provider>
+  // Memoised: a fresh object literal here re-rendered every WishlistButton on the page
+  // — up to 99 of them on a collection — whenever any single one was toggled.
+  const value = useMemo<WishlistCtx>(
+    () => ({
+      handles,
+      has: (h: string) => handles.includes(h),
+      toggle,
+      count: handles.length,
+      ready,
+    }),
+    [handles, toggle, ready],
   );
+
+  return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
 
 export function useWishlist() {

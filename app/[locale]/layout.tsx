@@ -13,7 +13,7 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { WhatsappButton } from "@/components/layout/WhatsappButton";
 import { CurrencySwitcher } from "@/components/layout/CurrencySwitcher";
-import { CartDrawer } from "@/components/cart/CartDrawer";
+import { CartDrawerMount } from "@/components/cart/CartDrawerMount";
 import { CartHydrator } from "@/components/cart/CartHydrator";
 import "../globals.css";
 
@@ -63,6 +63,9 @@ export default async function LocaleLayout({
   return (
     <html lang={locale} dir={locale === "ar" ? "rtl" : "ltr"} className="h-full">
       <body className="flex min-h-full flex-col bg-paper text-ink">
+        {/* No `session` prop: fetching it needs cookies(), which would pull the whole
+            shell out of the prerender. Anonymous visitors — nearly all of them — get one
+            background /api/auth/session call after hydration instead. */}
         <SessionProvider>
           <NextIntlClientProvider locale={locale} messages={messages}>
             <DirSync />
@@ -84,7 +87,7 @@ export default async function LocaleLayout({
                 <WhatsappButton />
               </Suspense>
               <CurrencySwitcher />
-              <CartDrawer />
+              <CartDrawerMount />
               {/* The only per-visitor read on the page; streams in so the rest prerenders. */}
               <Suspense fallback={null}>
                 <CartHydrator />

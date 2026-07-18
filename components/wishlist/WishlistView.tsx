@@ -5,12 +5,14 @@ import { useTranslations } from "next-intl";
 import { Link } from "@/lib/i18n-navigation";
 import { useWishlist } from "@/components/providers/wishlist-context";
 import { getCardsByHandles } from "@/lib/actions/catalog";
-import { ProductGrid } from "@/components/product/ProductGrid";
+import { PRODUCT_GRID_CLASS } from "@/components/product/ProductGrid";
+import { ProductCardView } from "@/components/product/ProductCardView";
 import type { ProductCardDTO } from "@/lib/data/catalog";
 
 export function WishlistView() {
   const t = useTranslations("actions");
   const tc = useTranslations("cart");
+  const tp = useTranslations("product");
   const { handles, ready } = useWishlist();
   const [products, setProducts] = useState<ProductCardDTO[]>([]);
   const [loading, setLoading] = useState(true);
@@ -39,7 +41,17 @@ export function WishlistView() {
           </Link>
         </div>
       ) : (
-        <ProductGrid products={products} />
+        // The wishlist lives in localStorage, so its cards are rendered client-side and
+        // take their labels from the client translator rather than the server one.
+        <div className={PRODUCT_GRID_CLASS}>
+          {products.map((p) => (
+            <ProductCardView
+              key={p.handle}
+              product={p}
+              labels={{ outOfStock: tp("outOfStock"), sale: tp("sale") }}
+            />
+          ))}
+        </div>
       )}
     </div>
   );
