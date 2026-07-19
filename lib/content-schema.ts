@@ -109,6 +109,6 @@ export const DEFAULT_CONTENT: Record<Section, Record<string, string>> = {
   // value if the product actually has variants for it.
   "variant-options": {
     sizes: "XS, S, M, L, XL, XXL, One Size",
-    lengths: "50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61",
+    lengths: "50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62",
   },
 };

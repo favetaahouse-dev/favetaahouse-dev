@@ -218,25 +218,6 @@ export function ProductDetail({ product }: { product: ProductDetailDTO }) {
             </div>
           </div>
 
-          {/* Tack Tack — a made-to-order choice, always selectable */}
-          <div className="mt-6">
-            <p className="mb-2 font-button text-[11px] uppercase tracking-[0.14em]">{t("tackTack")}</p>
-            <div className="flex flex-wrap gap-2">
-              {[false, true].map((tt) => (
-                <button
-                  key={String(tt)}
-                  onClick={() => setTackTack(tt)}
-                  className={cn(
-                    "border px-4 py-2.5 text-xs tracking-wider transition-colors",
-                    tackTack === tt ? "border-ink bg-ink text-white" : "border-line hover:border-ink",
-                  )}
-                >
-                  {tt ? t("tackTackYes") : t("tackTackNo")}
-                </button>
-              ))}
-            </div>
-          </div>
-
           {/* Length — a made-to-order choice, always selectable */}
           {lengths.length > 0 && (
             <div className="mt-6">
@@ -257,6 +238,25 @@ export function ProductDetail({ product }: { product: ProductDetailDTO }) {
               </div>
             </div>
           )}
+
+          {/* Tack Tack — a made-to-order choice, always selectable; sits under length */}
+          <div className="mt-6">
+            <p className="mb-2 font-button text-[11px] uppercase tracking-[0.14em]">{t("tackTack")}</p>
+            <div className="flex flex-wrap gap-2">
+              {[false, true].map((tt) => (
+                <button
+                  key={String(tt)}
+                  onClick={() => setTackTack(tt)}
+                  className={cn(
+                    "border px-4 py-2.5 text-xs tracking-wider transition-colors",
+                    tackTack === tt ? "border-ink bg-ink text-white" : "border-line hover:border-ink",
+                  )}
+                >
+                  {tt ? t("tackTackYes") : t("tackTackNo")}
+                </button>
+              ))}
+            </div>
+          </div>
 
           {/* Quantity + actions */}
           <div className="mt-7 flex items-center gap-4">
