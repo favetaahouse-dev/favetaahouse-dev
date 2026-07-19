@@ -3,7 +3,7 @@ import { supabase } from "@/lib/supabase";
 import { requirePageAccess } from "@/lib/admin-guard";
 
 const KIND_STYLE: Record<string, string> = {
-  CATEGORY: "text-gold",
+  CATEGORY: "text-signal",
   SALE: "text-red-400",
   SEASONAL: "text-white/60",
   FEATURE: "text-white/60",
@@ -17,7 +17,7 @@ export default async function AdminCollections() {
     .order("position", { ascending: true });
 
   return (
-    <div className="border border-white/10 bg-[#222320]">
+    <div className="border border-white/10 bg-[#212121]">
       <div className="border-b border-white/10 px-5 py-3">
         <h2 className="font-button text-xs uppercase tracking-[0.16em]">Collections ({(collections ?? []).length})</h2>
       </div>
@@ -40,7 +40,7 @@ export default async function AdminCollections() {
                   {c.kind as string}
                 </td>
                 <td className="px-3 py-3">
-                  <Link href={`/collections/${c.handle}`} target="_blank" className="text-xs text-gold hover:underline">
+                  <Link href={`/collections/${c.handle}`} target="_blank" className="text-xs text-signal hover:underline">
                     View
                   </Link>
                 </td>

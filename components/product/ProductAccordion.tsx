@@ -28,7 +28,7 @@ export function ProductAccordion({ product }: { product: ProductDetailDTO }) {
           <div key={item.key} className="border-b border-line">
             <button
               onClick={() => setOpen(isOpen ? null : item.key)}
-              className="flex w-full items-center justify-between py-4 text-start transition-colors hover:text-gold"
+              className="flex w-full items-center justify-between py-4 text-start transition-colors hover:text-signal"
             >
               <span className="font-button text-[11px] uppercase tracking-[0.14em]">{t(item.key)}</span>
               {isOpen ? <Minus size={15} /> : <Plus size={15} />}

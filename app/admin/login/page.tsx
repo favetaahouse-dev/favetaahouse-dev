@@ -35,11 +35,11 @@ function LoginForm() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#1b1a18] px-6 text-[#EDE9E6]">
+    <div className="flex min-h-screen items-center justify-center bg-[#141414] px-6 text-[#ececec]">
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
           <div className="font-button text-lg uppercase tracking-[0.24em]">ALESSIA ABAYA</div>
-          <div className="mt-1 text-[11px] uppercase tracking-[0.2em] text-gold">Admin Panel</div>
+          <div className="mt-1 text-[11px] uppercase tracking-[0.2em] text-signal">Admin Panel</div>
         </div>
         <form onSubmit={submit} className="flex flex-col gap-4">
           <input
@@ -49,7 +49,7 @@ function LoginForm() {
             placeholder="Email or username"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="border border-white/15 bg-transparent px-4 py-3 text-sm outline-none focus:border-gold"
+            className="border border-white/15 bg-transparent px-4 py-3 text-sm outline-none focus:border-signal"
           />
           <input
             type="password"
@@ -57,13 +57,13 @@ function LoginForm() {
             placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="border border-white/15 bg-transparent px-4 py-3 text-sm outline-none focus:border-gold"
+            className="border border-white/15 bg-transparent px-4 py-3 text-sm outline-none focus:border-signal"
           />
           {err && <p className="text-xs text-red-400">{err}</p>}
           <button
             type="submit"
             disabled={busy}
-            className="mt-2 bg-gold py-3 font-button text-xs uppercase tracking-[0.16em] text-[#1b1a18] transition-opacity hover:opacity-90 disabled:opacity-50"
+            className="mt-2 bg-signal py-3 font-button text-xs uppercase tracking-[0.16em] text-white transition-opacity hover:opacity-90 disabled:opacity-50"
           >
             {busy ? "Signing in…" : "Sign in"}
           </button>

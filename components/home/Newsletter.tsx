@@ -11,7 +11,7 @@ export function Newsletter() {
   return (
     <section className="bg-paper px-6 py-20">
       <div className="mx-auto max-w-xl text-center">
-        <p className="eyebrow mb-3 text-gold">Alessia Abaya</p>
+        <p className="eyebrow mb-3 text-signal">Alessia Abaya</p>
         <h2 className="section-title mb-3">{t("newsletter")}</h2>
         <form
           onSubmit={(e) => {

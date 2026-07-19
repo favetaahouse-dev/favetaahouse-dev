@@ -82,7 +82,7 @@ export function CheckoutForm({
         </button>
       </form>
 
-      <div className="order-first bg-cream p-6 md:order-last">
+      <div className="order-first bg-mist p-6 md:order-last">
         <h2 className="mb-4 font-button text-sm uppercase tracking-[0.16em]">{t("orderSummary")}</h2>
         <div className="space-y-4">
           {items.map((it) => (
@@ -111,7 +111,7 @@ export function CheckoutForm({
             <span>{new Intl.NumberFormat("en-US", { minimumFractionDigits: 2 }).format(subtotal / 100)} QAR</span>
           </div>
           {discount > 0 && (
-            <div className="flex items-center justify-between text-sale">
+            <div className="flex items-center justify-between text-signal">
               <span>{tc("discount")}{couponCode ? ` (${couponCode})` : ""}</span>
               <span>− {new Intl.NumberFormat("en-US", { minimumFractionDigits: 2 }).format(discount / 100)} QAR</span>
             </div>

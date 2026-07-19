@@ -47,7 +47,7 @@ async function OrderContent({ params }: { params: Promise<Params> }) {
     <div className="mx-auto max-w-3xl px-6 py-14">
       {paid && (
         <div className="mb-8 flex flex-col items-center gap-3 text-center">
-          <CheckCircle2 size={48} className="text-gold" strokeWidth={1.2} />
+          <CheckCircle2 size={48} className="text-signal" strokeWidth={1.2} />
           <h1 className="section-title">{t("orderPlaced")}</h1>
         </div>
       )}
@@ -72,7 +72,7 @@ async function OrderContent({ params }: { params: Promise<Params> }) {
         <div className="divide-y divide-line px-6">
           {order.items.map((it) => (
             <div key={it.id} className="flex gap-4 py-4">
-              <div className="relative aspect-[4/5] w-16 shrink-0 bg-cream">
+              <div className="relative aspect-[4/5] w-16 shrink-0 bg-mist">
                 {it.imageUrl && <Image src={it.imageUrl} alt={it.title} fill sizes="64px" className="object-cover" />}
               </div>
               <div className="flex flex-1 flex-col justify-center">

@@ -80,7 +80,7 @@ export async function Footer() {
           <h3 className="mb-4 font-button text-[11px] uppercase tracking-[0.2em]">{t("followUs")}</h3>
           <div className="flex items-center gap-4">
             {socials.map(({ key, label, url, Icon }) => (
-              <a key={key} href={url} target="_blank" rel="noopener" aria-label={label} className="hover:text-gold">
+              <a key={key} href={url} target="_blank" rel="noopener" aria-label={label} className="hover:text-signal">
                 <Icon />
               </a>
             ))}

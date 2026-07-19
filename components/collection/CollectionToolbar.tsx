@@ -189,8 +189,8 @@ export function CollectionToolbar({
                   setSortOpen(false);
                 }}
                 className={cn(
-                  "block w-full px-4 py-2 text-start text-xs hover:bg-cream",
-                  currentSort === o.key && "font-semibold text-gold",
+                  "block w-full px-4 py-2 text-start text-xs hover:bg-mist",
+                  currentSort === o.key && "font-semibold text-signal",
                 )}
               >
                 {t(o.label)}

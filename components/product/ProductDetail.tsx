@@ -127,7 +127,7 @@ export function ProductDetail({ product }: { product: ProductDetailDTO }) {
                 key={i}
                 onClick={() => setActiveImg(i)}
                 className={cn(
-                  "relative aspect-[4/5] w-16 shrink-0 bg-cream lg:w-[74px]",
+                  "relative aspect-[4/5] w-16 shrink-0 bg-mist lg:w-[74px]",
                   i === activeImg ? "ring-1 ring-ink" : "opacity-70",
                 )}
               >
@@ -136,7 +136,7 @@ export function ProductDetail({ product }: { product: ProductDetailDTO }) {
             ))}
           </div>
           <div
-            className="relative aspect-[4/5] w-full min-w-0 flex-1 cursor-zoom-in bg-cream"
+            className="relative aspect-[4/5] w-full min-w-0 flex-1 cursor-zoom-in bg-mist"
             onClick={() => setLightbox(true)}
           >
             {images[activeImg]?.url && (
@@ -154,7 +154,7 @@ export function ProductDetail({ product }: { product: ProductDetailDTO }) {
 
         {/* Info */}
         <div className="lg:max-w-md">
-          {product.category && <p className="eyebrow mb-2.5 text-gold">{product.category}</p>}
+          {product.category && <p className="eyebrow mb-2.5 text-signal">{product.category}</p>}
           <h1 className="display text-[1.9rem] lg:text-[2.3rem]">{product.title}</h1>
           <div className="mt-3 text-lg">
             {selected && <Price cents={selected.price} compareAt={selected.compareAt} />}
@@ -189,7 +189,7 @@ export function ProductDetail({ product }: { product: ProductDetailDTO }) {
           )}
 
           {allSoldOut && (
-            <p className="mt-5 border border-line bg-cream px-3 py-2 text-center text-[12px] uppercase tracking-[0.16em] text-muted">
+            <p className="mt-5 border border-line bg-mist px-3 py-2 text-center text-[12px] uppercase tracking-[0.16em] text-muted">
               {t("soldOut")}
             </p>
           )}

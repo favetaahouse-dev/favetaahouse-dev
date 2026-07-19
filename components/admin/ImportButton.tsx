@@ -31,7 +31,7 @@ export function ImportButton() {
       <button
         onClick={() => ref.current?.click()}
         disabled={busy}
-        className="flex items-center gap-2 border border-white/15 px-3 py-1.5 text-[11px] uppercase tracking-wider hover:border-gold disabled:opacity-50"
+        className="flex items-center gap-2 border border-white/15 px-3 py-1.5 text-[11px] uppercase tracking-wider hover:border-signal disabled:opacity-50"
       >
         {busy ? <Loader2 size={13} className="animate-spin" /> : <Upload size={13} />}
         Import JSON

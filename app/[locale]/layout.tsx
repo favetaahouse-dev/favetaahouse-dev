@@ -15,6 +15,7 @@ import { WhatsappButton } from "@/components/layout/WhatsappButton";
 import { CurrencySwitcher } from "@/components/layout/CurrencySwitcher";
 import { CartDrawerMount } from "@/components/cart/CartDrawerMount";
 import { CartHydrator } from "@/components/cart/CartHydrator";
+import { fontVars } from "@/lib/fonts";
 import "../globals.css";
 
 export const metadata: Metadata = {
@@ -61,7 +62,7 @@ export default async function LocaleLayout({
   const navItems = await getNavItems(locale);
 
   return (
-    <html lang={locale} dir={locale === "ar" ? "rtl" : "ltr"} className="h-full">
+    <html lang={locale} dir={locale === "ar" ? "rtl" : "ltr"} className={`h-full ${fontVars}`}>
       <body className="flex min-h-full flex-col bg-paper text-ink">
         {/* No `session` prop: fetching it needs cookies(), which would pull the whole
             shell out of the prerender. Anonymous visitors — nearly all of them — get one

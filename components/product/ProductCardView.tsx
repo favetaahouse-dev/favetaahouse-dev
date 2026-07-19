@@ -22,7 +22,7 @@ export function ProductCardView({
 }) {
   return (
     <div className="group relative flex flex-col">
-      <div className="relative aspect-[4/5] overflow-hidden bg-cream">
+      <div className="relative aspect-[4/5] overflow-hidden bg-mist">
         <Link
           href={`/products/${product.handle}`}
           className={cn("relative block h-full w-full", !product.inStock && "opacity-60")}
@@ -56,7 +56,7 @@ export function ProductCardView({
         {!product.inStock ? (
           <span className="badge absolute start-0 top-0 bg-ink/75 text-white">{labels.outOfStock}</span>
         ) : product.onSale ? (
-          <span className="badge absolute start-0 top-0 bg-gold text-white">{labels.sale}</span>
+          <span className="badge absolute start-0 top-0 bg-signal text-white">{labels.sale}</span>
         ) : null}
 
         <div className="absolute end-2 top-2 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
@@ -67,7 +67,7 @@ export function ProductCardView({
       <div className="mt-3.5 flex flex-col items-start gap-1 text-start">
         <Link
           href={`/products/${product.handle}`}
-          className="text-[13px] tracking-[0.06em] transition-colors hover:text-gold"
+          className="text-[13px] tracking-[0.06em] transition-colors hover:text-signal"
           style={{ fontFamily: "var(--font-sans)" }}
         >
           {product.title}

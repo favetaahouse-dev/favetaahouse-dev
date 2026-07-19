@@ -32,7 +32,7 @@ export function WishlistButton({
     >
       <Heart
         size={size}
-        className={active ? "fill-gold text-gold" : "text-ink"}
+        className={active ? "fill-signal text-signal" : "text-ink"}
         strokeWidth={1.5}
       />
     </button>

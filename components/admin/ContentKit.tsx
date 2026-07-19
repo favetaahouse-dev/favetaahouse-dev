@@ -6,7 +6,7 @@ import { parseList } from "@/lib/variant-options";
 
 export function ContentSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="border border-white/10 bg-[#222320]">
+    <div className="border border-white/10 bg-[#212121]">
       <div className="border-b border-white/10 px-5 py-3">
         <h2 className="font-button text-xs uppercase tracking-[0.16em]">{title}</h2>
       </div>
@@ -16,7 +16,7 @@ export function ContentSection({ title, children }: { title: string; children: R
 }
 
 const inputCls =
-  "w-full border border-white/15 bg-transparent px-3 py-2 text-sm outline-none focus:border-gold";
+  "w-full border border-white/15 bg-transparent px-3 py-2 text-sm outline-none focus:border-signal";
 
 export function FieldRow({
   label,
@@ -87,9 +87,9 @@ export function ToggleFieldRow({
   return (
     <div>
       <button type="button" onClick={() => onChange(on ? "false" : "true")} className="flex items-center gap-3">
-        <span className={`relative inline-block h-5 w-9 rounded-full transition ${on ? "bg-gold" : "bg-white/20"}`}>
+        <span className={`relative inline-block h-5 w-9 rounded-full transition ${on ? "bg-signal" : "bg-white/20"}`}>
           <span
-            className={`absolute top-0.5 h-4 w-4 rounded-full bg-[#1b1a18] transition-all ${on ? "left-[18px]" : "left-0.5"}`}
+            className={`absolute top-0.5 h-4 w-4 rounded-full bg-[#141414] transition-all ${on ? "left-[18px]" : "left-0.5"}`}
           />
         </span>
         <span className="text-sm">{label}</span>
@@ -191,7 +191,7 @@ export function SaveButton({ onSave }: { onSave: () => Promise<void> }) {
         setTimeout(() => setState("idle"), 1800);
       }}
       disabled={state === "saving"}
-      className="flex items-center gap-2 bg-gold px-6 py-2.5 text-xs font-medium uppercase tracking-[0.14em] text-[#1b1a18] hover:opacity-90 disabled:opacity-60"
+      className="flex items-center gap-2 bg-signal px-6 py-2.5 text-xs font-medium uppercase tracking-[0.14em] text-white hover:opacity-90 disabled:opacity-60"
     >
       {state === "saving" && <Loader2 size={14} className="animate-spin" />}
       {state === "saved" && <Check size={14} />}

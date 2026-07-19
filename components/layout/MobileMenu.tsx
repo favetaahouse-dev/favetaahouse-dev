@@ -48,7 +48,7 @@ export function MobileMenu({
                 onClick={onClose}
                 className={cn(
                   "block py-3.5 font-button text-[13px] uppercase tracking-[0.14em]",
-                  item.highlight && "font-semibold text-sale",
+                  item.highlight && "font-semibold text-signal",
                 )}
               >
                 {item.label}

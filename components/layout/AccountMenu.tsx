@@ -20,27 +20,27 @@ export function AccountMenu() {
       <div className="invisible absolute end-0 top-full z-50 w-44 bg-paper py-2 text-ink opacity-0 shadow-lg transition-all group-hover/acc:visible group-hover/acc:opacity-100">
         {authed ? (
           <>
-            <Link href="/account/orders" className="block px-4 py-2 text-xs uppercase tracking-wider hover:bg-cream">
+            <Link href="/account/orders" className="block px-4 py-2 text-xs uppercase tracking-wider hover:bg-mist">
               {ta("account")}
             </Link>
             {isStaff && (
-              <Link href="/admin" className="block px-4 py-2 text-xs uppercase tracking-wider hover:bg-cream">
+              <Link href="/admin" className="block px-4 py-2 text-xs uppercase tracking-wider hover:bg-mist">
                 Admin
               </Link>
             )}
             <button
               onClick={() => signOut({ callbackUrl: "/" })}
-              className="block w-full px-4 py-2 text-start text-xs uppercase tracking-wider hover:bg-cream"
+              className="block w-full px-4 py-2 text-start text-xs uppercase tracking-wider hover:bg-mist"
             >
               {ta("logout")}
             </button>
           </>
         ) : (
           <>
-            <Link href="/account/login" className="block px-4 py-2 text-xs uppercase tracking-wider hover:bg-cream">
+            <Link href="/account/login" className="block px-4 py-2 text-xs uppercase tracking-wider hover:bg-mist">
               {ta("login")}
             </Link>
-            <Link href="/account/register" className="block px-4 py-2 text-xs uppercase tracking-wider hover:bg-cream">
+            <Link href="/account/register" className="block px-4 py-2 text-xs uppercase tracking-wider hover:bg-mist">
               {ta("register")}
             </Link>
           </>

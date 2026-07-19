@@ -19,10 +19,10 @@ export default async function AdminCustomers() {
   }
 
   return (
-    <div className="border border-white/10 bg-[#222320]">
+    <div className="border border-white/10 bg-[#212121]">
       <div className="flex items-center justify-between border-b border-white/10 px-5 py-3">
         <h2 className="font-button text-xs uppercase tracking-[0.16em]">Customers ({(users ?? []).length})</h2>
-        <a href="/api/admin/export/customers" className="text-xs text-gold hover:underline">
+        <a href="/api/admin/export/customers" className="text-xs text-signal hover:underline">
           Export CSV
         </a>
       </div>

@@ -8,7 +8,7 @@ export async function FeaturedCarousel({ products }: { products: ProductCardDTO[
   const t = await getTranslations("home");
 
   return (
-    <section className="bg-linen px-4 py-16 md:px-8">
+    <section className="bg-haze px-4 py-16 md:px-8">
       <h2 className="section-title mb-10">{t("exploreCreation")}</h2>
       <ProductGrid products={products} />
       <div className="mt-12 flex justify-center">

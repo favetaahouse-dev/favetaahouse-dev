@@ -32,7 +32,7 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
               <Image src={b.image} alt={b.title} fill sizes="50vw" className="object-cover" />
             </div>
             <div className="flex flex-col items-start gap-4 px-8 py-12 md:px-16">
-              <span className="font-button text-3xl text-gold/60">#{b.n}</span>
+              <span className="font-button text-3xl text-signal/60">#{b.n}</span>
               <h2 className="text-xl uppercase tracking-[0.14em]">{b.title}</h2>
               <p className="text-[15px] leading-relaxed text-ink/75">{b.body}</p>
             </div>

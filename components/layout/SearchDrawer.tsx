@@ -91,7 +91,7 @@ export function SearchDrawer({ open, onClose }: { open: boolean; onClose: () => 
                     onClick={onClose}
                     className="group block"
                   >
-                    <div className="relative aspect-[4/5] bg-cream">
+                    <div className="relative aspect-[4/5] bg-mist">
                       {p.image && (
                         <Image src={p.image} alt={p.title} fill sizes="25vw" className="object-cover" />
                       )}

@@ -59,7 +59,7 @@ async function OrdersContent({ params }: { params: Promise<{ locale: string }> }
             <Link
               key={o.id}
               href={`/account/orders/${o.id}`}
-              className="flex items-center justify-between gap-4 px-5 py-4 hover:bg-cream"
+              className="flex items-center justify-between gap-4 px-5 py-4 hover:bg-mist"
             >
               <div>
                 <p className="text-sm font-medium">

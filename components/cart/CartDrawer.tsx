@@ -59,7 +59,7 @@ export function CartDrawer() {
                   <Link
                     href={`/products/${it.handle}`}
                     onClick={() => setOpen(false)}
-                    className="relative aspect-[4/5] w-20 shrink-0 bg-cream"
+                    className="relative aspect-[4/5] w-20 shrink-0 bg-mist"
                   >
                     {it.image && (
                       <Image src={it.image} alt={it.title} fill sizes="80px" className="object-cover" />
@@ -70,7 +70,7 @@ export function CartDrawer() {
                       <Link
                         href={`/products/${it.handle}`}
                         onClick={() => setOpen(false)}
-                        className="text-[13px] font-medium hover:text-gold"
+                        className="text-[13px] font-medium hover:text-signal"
                       >
                         {it.title}
                       </Link>
@@ -110,8 +110,8 @@ export function CartDrawer() {
             <footer className="border-t border-line px-5 py-4">
               {/* promo code */}
               {couponCode ? (
-                <div className="mb-3 flex items-center justify-between bg-cream px-3 py-2.5 text-xs">
-                  <span className="badge text-gold">{couponCode}</span>
+                <div className="mb-3 flex items-center justify-between bg-mist px-3 py-2.5 text-xs">
+                  <span className="badge text-signal">{couponCode}</span>
                   <button onClick={removeCoupon} className="text-muted hover:text-ink">
                     {t("remove")}
                   </button>
@@ -143,7 +143,7 @@ export function CartDrawer() {
                 <span>{format(subtotal)}</span>
               </div>
               {discount > 0 && (
-                <div className="flex items-center justify-between text-sm text-sale">
+                <div className="flex items-center justify-between text-sm text-signal">
                   <span>{t("discount")}</span>
                   <span>− {format(discount)}</span>
                 </div>

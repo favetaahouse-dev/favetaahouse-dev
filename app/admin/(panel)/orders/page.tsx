@@ -10,7 +10,7 @@ export default async function AdminOrders() {
     .order("created_at", { ascending: false });
 
   return (
-    <div className="border border-white/10 bg-[#222320]">
+    <div className="border border-white/10 bg-[#212121]">
       <div className="border-b border-white/10 px-5 py-3">
         <h2 className="font-button text-xs uppercase tracking-[0.16em]">Orders ({(orders ?? []).length})</h2>
       </div>

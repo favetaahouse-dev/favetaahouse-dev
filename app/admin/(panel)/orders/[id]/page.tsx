@@ -15,10 +15,10 @@ export default async function AdminOrderDetail({ params }: { params: Promise<{ i
 
   return (
     <div className="mx-auto max-w-3xl">
-      <Link href="/admin/orders" className="text-xs text-gold hover:underline">
+      <Link href="/admin/orders" className="text-xs text-signal hover:underline">
         ← Orders
       </Link>
-      <div className="mt-4 border border-white/10 bg-[#222320]">
+      <div className="mt-4 border border-white/10 bg-[#212121]">
         <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
           <div>
             <p className="text-sm font-medium">Order #{order.number}</p>
@@ -62,7 +62,7 @@ export default async function AdminOrderDetail({ params }: { params: Promise<{ i
 
         {addr && (
           <div className="border-t border-white/10 px-5 py-4 text-sm text-white/60">
-            <p className="mb-1 font-medium text-[#EDE9E6]">{addr.fullName}</p>
+            <p className="mb-1 font-medium text-[#ececec]">{addr.fullName}</p>
             <p>{addr.address}{addr.address2 ? `, ${addr.address2}` : ""}</p>
             <p>{addr.city}, {addr.country}</p>
             <p>{addr.phone}</p>

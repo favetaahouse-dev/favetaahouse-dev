@@ -43,7 +43,7 @@ export function LoginForm() {
       </form>
       <p className="mt-6 text-center text-sm text-muted">
         {t("noAccount")}{" "}
-        <Link href="/account/register" className="text-gold hover:underline">
+        <Link href="/account/register" className="text-signal hover:underline">
           {t("register")}
         </Link>
       </p>
@@ -82,7 +82,7 @@ export function RegisterForm() {
       </form>
       <p className="mt-6 text-center text-sm text-muted">
         {t("haveAccount")}{" "}
-        <Link href="/account/login" className="text-gold hover:underline">
+        <Link href="/account/login" className="text-signal hover:underline">
           {t("login")}
         </Link>
       </p>

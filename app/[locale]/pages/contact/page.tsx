@@ -26,7 +26,7 @@ export default async function ContactPage({ params }: { params: Promise<{ locale
       <div className="mt-12 text-center text-sm text-muted">
         {contactEmail && (
           <p>
-            <a href={`mailto:${contactEmail}`} className="hover:text-gold">
+            <a href={`mailto:${contactEmail}`} className="hover:text-signal">
               {contactEmail}
             </a>
           </p>

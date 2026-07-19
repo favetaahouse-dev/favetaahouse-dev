@@ -107,8 +107,8 @@ export function Header({ navItems }: { navItems: NavItem[] }) {
                 <Link
                   href={item.href}
                   className={cn(
-                    "py-1 transition-colors hover:text-gold",
-                    item.highlight && "font-semibold text-sale",
+                    "py-1 transition-colors hover:text-signal",
+                    item.highlight && "font-semibold text-signal",
                   )}
                 >
                   {item.label}

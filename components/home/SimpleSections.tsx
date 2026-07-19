@@ -10,8 +10,8 @@ const WHY_ICONS = { shield: ShieldCheck, gem: Gem, truck: Truck };
 export async function ShopSaleButton() {
   const t = await getTranslations("home");
   return (
-    <div className="flex justify-center bg-cream py-9">
-      <Link href="/collections/sales" className="btn-brand">
+    <div className="flex justify-center bg-mist py-9">
+      <Link href="/collections/sales" className="btn-signal">
         {t("shopSale")}
       </Link>
     </div>
@@ -25,9 +25,9 @@ export async function WhyUs() {
   return (
     <section className="bg-footer px-6 py-20 md:py-28">
       <div className="mx-auto max-w-5xl">
-        <p className="eyebrow mb-4 text-center !text-gold">{t("whyEyebrow")}</p>
+        <p className="eyebrow mb-4 text-center !text-signal">{t("whyEyebrow")}</p>
         <h2 className="section-title text-footer-fg">{t("whyTitle")}</h2>
-        <span className="mx-auto mt-8 mb-14 block h-px w-12 bg-gold/50 md:mb-20" />
+        <span className="mx-auto mt-8 mb-14 block h-px w-12 bg-signal/50 md:mb-20" />
 
         <div className="grid grid-cols-1 md:grid-cols-3">
           {WHY_US.map((item) => {
@@ -41,7 +41,7 @@ export async function WhyUs() {
                 <Icon
                   size={30}
                   strokeWidth={1}
-                  className="text-gold transition-transform duration-500 group-hover:-translate-y-1"
+                  className="text-signal transition-transform duration-500 group-hover:-translate-y-1"
                   aria-hidden
                 />
                 <h3 className="display text-[1.3rem] text-footer-fg">{t(item.key)}</h3>
@@ -54,7 +54,7 @@ export async function WhyUs() {
                   <ArrowRight
                     size={16}
                     strokeWidth={1.25}
-                    className="flip-x text-gold opacity-40 transition-opacity duration-300 group-hover:opacity-100"
+                    className="flip-x text-signal opacity-40 transition-opacity duration-300 group-hover:opacity-100"
                     aria-hidden
                   />
                 </span>
@@ -71,7 +71,7 @@ export async function InstagramGallery() {
   const t = await getTranslations("home");
   const { instagram } = await getSiteSettings();
   return (
-    <section className="bg-cream px-4 py-16 md:px-8">
+    <section className="bg-mist px-4 py-16 md:px-8">
       <h2 className="section-title mb-10">{t("gallery")}</h2>
       <div className="grid grid-cols-2 gap-2 md:grid-cols-4 md:gap-3">
         {GALLERY_IMAGES.map((src, i) => (

@@ -64,14 +64,14 @@ export default async function AdminDashboard() {
     <div className="space-y-6">
       <div className="grid grid-cols-2 gap-4 md:grid-cols-6">
         {cards.map((c) => (
-          <div key={c.label} className="border border-white/10 bg-[#222320] p-4">
+          <div key={c.label} className="border border-white/10 bg-[#212121] p-4">
             <p className="text-[10px] uppercase tracking-[0.14em] text-white/40">{c.label}</p>
             <p className="mt-2 text-lg">{c.value}</p>
           </div>
         ))}
       </div>
 
-      <div className="border border-white/10 bg-[#222320] p-5">
+      <div className="border border-white/10 bg-[#212121] p-5">
         <h2 className="mb-4 font-button text-xs uppercase tracking-[0.16em]">Payments &amp; Email</h2>
         <div className="grid grid-cols-1 gap-3 text-sm md:grid-cols-3">
           <StatusRow label="Payment provider" value={skipcashEnabled ? "SkipCash" : "Demo mode"} ok={skipcashEnabled} />
@@ -87,22 +87,22 @@ export default async function AdminDashboard() {
           />
         </div>
         <p className="mt-3 text-[11px] leading-relaxed text-white/30">
-          Gateway &amp; email keys are set via environment variables (see <span className="text-gold">DEPLOY.md</span>).
+          Gateway &amp; email keys are set via environment variables (see <span className="text-signal">DEPLOY.md</span>).
           Shipping, tax and the email toggle are editable under{" "}
-          <Link href="/admin/content/commerce" className="text-gold hover:underline">
+          <Link href="/admin/content/commerce" className="text-signal hover:underline">
             Commerce &amp; Payments
           </Link>
           .
         </p>
       </div>
 
-      <div className="border border-white/10 bg-[#222320] p-5">
+      <div className="border border-white/10 bg-[#212121] p-5">
         <h2 className="mb-4 font-button text-xs uppercase tracking-[0.16em]">Revenue · last 14 days</h2>
         <RevenueChart data={series} />
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <div className="border border-white/10 bg-[#222320]">
+        <div className="border border-white/10 bg-[#212121]">
           <div className="border-b border-white/10 px-5 py-3">
             <h2 className="font-button text-xs uppercase tracking-[0.16em]">Top products</h2>
           </div>
@@ -117,7 +117,7 @@ export default async function AdminDashboard() {
           </div>
         </div>
 
-        <div className="border border-white/10 bg-[#222320]">
+        <div className="border border-white/10 bg-[#212121]">
           <div className="flex items-center justify-between border-b border-white/10 px-5 py-3">
             <h2 className="font-button text-xs uppercase tracking-[0.16em]">Quick actions</h2>
           </div>
@@ -128,7 +128,7 @@ export default async function AdminDashboard() {
               { href: "/admin/coupons", label: "Create coupon" },
               { href: "/api/admin/export/orders", label: "Export orders CSV" },
             ].map((a) => (
-              <Link key={a.href} href={a.href} className="bg-[#222320] px-5 py-6 text-sm hover:bg-white/5 hover:text-gold">
+              <Link key={a.href} href={a.href} className="bg-[#212121] px-5 py-6 text-sm hover:bg-white/5 hover:text-signal">
                 {a.label}
               </Link>
             ))}

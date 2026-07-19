@@ -28,11 +28,11 @@ export default async function CollaborationsPage({
       </p>
       <p className="mt-4 text-center text-[15px] text-ink/80">
         Email us at:{" "}
-        <a href={`mailto:${contactEmail}`} className="text-gold hover:underline">
+        <a href={`mailto:${contactEmail}`} className="text-signal hover:underline">
           {contactEmail}
         </a>{" "}
         or DM us on Instagram:{" "}
-        <a href={instagram} target="_blank" rel="noopener" className="text-gold hover:underline">
+        <a href={instagram} target="_blank" rel="noopener" className="text-signal hover:underline">
           {instagramHandle(instagram)}
         </a>
       </p>
@@ -41,7 +41,7 @@ export default async function CollaborationsPage({
       <ul className="mx-auto max-w-md space-y-2.5 text-center">
         {COLLAB_LINKS.map((l) => (
           <li key={l.label}>
-            <a href={l.href} target="_blank" rel="noopener" className="text-sm text-ink/75 hover:text-gold">
+            <a href={l.href} target="_blank" rel="noopener" className="text-sm text-ink/75 hover:text-signal">
               {l.label}
             </a>
           </li>

@@ -22,8 +22,8 @@ export function CurrencySwitcher() {
                 setOpen(false);
               }}
               className={cn(
-                "block w-full px-4 py-2 text-start text-xs uppercase tracking-wider hover:bg-cream",
-                c === currency && "bg-cream font-semibold",
+                "block w-full px-4 py-2 text-start text-xs uppercase tracking-wider hover:bg-mist",
+                c === currency && "bg-mist font-semibold",
               )}
             >
               {c}
@@ -33,7 +33,7 @@ export function CurrencySwitcher() {
       )}
       <button
         onClick={() => setOpen((o) => !o)}
-        className="flex items-center gap-2 border border-line bg-paper px-3 py-2 text-xs font-medium uppercase tracking-wider shadow-sm hover:bg-cream"
+        className="flex items-center gap-2 border border-line bg-paper px-3 py-2 text-xs font-medium uppercase tracking-wider shadow-sm hover:bg-mist"
       >
         {currency}
         <ChevronUp size={14} className={cn("transition-transform", !open && "rotate-180")} />

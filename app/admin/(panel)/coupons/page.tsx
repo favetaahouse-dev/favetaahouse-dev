@@ -54,15 +54,15 @@ export default function CouponsPage() {
     load();
   }
 
-  const inp = "border border-white/15 bg-transparent px-3 py-2 text-sm outline-none focus:border-gold";
+  const inp = "border border-white/15 bg-transparent px-3 py-2 text-sm outline-none focus:border-signal";
 
   return (
     <div className="space-y-6">
-      <form onSubmit={create} className="border border-white/10 bg-[#222320] p-5">
+      <form onSubmit={create} className="border border-white/10 bg-[#212121] p-5">
         <h2 className="mb-4 font-button text-xs uppercase tracking-[0.16em]">New coupon</h2>
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
           <input placeholder="CODE" value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value.toUpperCase() })} className={inp} required />
-          <select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })} className={`${inp} bg-[#222320]`}>
+          <select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })} className={`${inp} bg-[#212121]`}>
             <option value="PERCENT">Percent %</option>
             <option value="FIXED">Fixed QAR</option>
           </select>
@@ -70,13 +70,13 @@ export default function CouponsPage() {
           <input type="number" placeholder="Min spend QAR" value={form.minSpend} onChange={(e) => setForm({ ...form, minSpend: e.target.value })} className={inp} />
           <input type="date" placeholder="Expires" value={form.expiresAt} onChange={(e) => setForm({ ...form, expiresAt: e.target.value })} className={inp} />
           <input type="number" placeholder="Usage limit" value={form.usageLimit} onChange={(e) => setForm({ ...form, usageLimit: e.target.value })} className={inp} />
-          <button type="submit" disabled={busy} className="bg-gold px-4 py-2 text-xs font-medium text-[#1b1a18] hover:opacity-90">
+          <button type="submit" disabled={busy} className="bg-signal px-4 py-2 text-xs font-medium text-white hover:opacity-90">
             Create
           </button>
         </div>
       </form>
 
-      <div className="border border-white/10 bg-[#222320]">
+      <div className="border border-white/10 bg-[#212121]">
         <div className="border-b border-white/10 px-5 py-3">
           <h2 className="font-button text-xs uppercase tracking-[0.16em]">Coupons ({coupons.length})</h2>
         </div>

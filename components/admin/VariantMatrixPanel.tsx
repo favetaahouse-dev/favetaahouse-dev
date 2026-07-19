@@ -108,7 +108,7 @@ export function VariantMatrixPanel({
             </div>
           ))}
         </div>
-        <Button size="sm" variant="outline" className="mt-2" onClick={() => setColors((cs) => [...cs, { name: "", hex: "#c69229" }])}><Plus size={13} /> Add colour</Button>
+        <Button size="sm" variant="outline" className="mt-2" onClick={() => setColors((cs) => [...cs, { name: "", hex: "#111111" }])}><Plus size={13} /> Add colour</Button>
       </div>
 
       {/* sizes */}

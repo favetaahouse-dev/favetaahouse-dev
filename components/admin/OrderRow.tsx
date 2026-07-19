@@ -46,7 +46,7 @@ export function OrderRow({
         <select
           value={status}
           onChange={(e) => setStatus(e.target.value)}
-          className="border border-white/15 bg-[#222320] px-2 py-1 text-xs outline-none focus:border-gold"
+          className="border border-white/15 bg-[#212121] px-2 py-1 text-xs outline-none focus:border-signal"
         >
           {STATUSES.map((s) => (
             <option key={s} value={s}>
@@ -60,11 +60,11 @@ export function OrderRow({
           value={tracking}
           onChange={(e) => setTracking(e.target.value)}
           placeholder="tracking #"
-          className="w-32 border border-white/15 bg-transparent px-2 py-1 text-xs outline-none focus:border-gold"
+          className="w-32 border border-white/15 bg-transparent px-2 py-1 text-xs outline-none focus:border-signal"
         />
       </td>
       <td className="px-3 py-3">
-        <button onClick={save} disabled={busy} className="bg-gold px-3 py-1 text-xs font-medium text-[#1b1a18] hover:opacity-90">
+        <button onClick={save} disabled={busy} className="bg-signal px-3 py-1 text-xs font-medium text-white hover:opacity-90">
           Save
         </button>
       </td>

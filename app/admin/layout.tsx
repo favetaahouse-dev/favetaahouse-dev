@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { SessionProvider } from "next-auth/react";
 import { Toaster } from "sonner";
+import { fontVars } from "@/lib/fonts";
 import "../globals.css";
 
 export const metadata: Metadata = {
@@ -18,7 +19,7 @@ export const metadata: Metadata = {
  */
 export default function AdminRootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" dir="ltr" className="h-full">
+    <html lang="en" dir="ltr" className={`h-full ${fontVars}`}>
       <body className="flex min-h-full flex-col bg-paper text-ink">
         <SessionProvider>
           {children}

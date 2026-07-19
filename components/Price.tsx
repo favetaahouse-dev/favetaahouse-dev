@@ -18,7 +18,7 @@ export function Price({
   const onSale = compareAt != null && compareAt > cents;
   return (
     <span className="inline-flex items-baseline gap-2">
-      <span className={cn(onSale && "text-sale", className)}>{format(cents)}</span>
+      <span className={cn(onSale && "text-signal", className)}>{format(cents)}</span>
       {onSale && (
         <span className={cn("text-muted line-through text-[0.85em]", compareClassName)}>
           {format(compareAt!)}

@@ -1,82 +1,36 @@
 @import "tailwindcss";
 
 /* ─────────────────────────── Brand fonts ─────────────────────────── */
-@font-face {
-  font-family: "Myriad Pro";
-  src: url("/assets/fonts/myriadpro-light.woff") format("woff");
-  font-weight: 300;
-  font-display: swap;
-}
-@font-face {
-  font-family: "Myriad Pro";
-  src: url("/assets/fonts/myriadpro-regular.woff") format("woff");
-  font-weight: 400;
-  font-display: swap;
-}
-@font-face {
-  font-family: "Myriad Pro";
-  src: url("/assets/fonts/myriadpro-semibold.woff") format("woff");
-  font-weight: 600;
-  font-display: swap;
-}
-@font-face {
-  font-family: "Myriad Pro";
-  src: url("/assets/fonts/myriadpro-bold.woff") format("woff");
-  font-weight: 700;
-  font-display: swap;
-}
-@font-face {
-  font-family: "Quicksand";
-  src: url("/assets/fonts/quicksand-400.woff2") format("woff2");
-  font-weight: 400;
-  font-display: swap;
-}
-@font-face {
-  font-family: "Quicksand";
-  src: url("/assets/fonts/quicksand-500.woff2") format("woff2");
-  font-weight: 500;
-  font-display: swap;
-}
-@font-face {
-  font-family: "Quicksand";
-  src: url("/assets/fonts/quicksand-700.woff2") format("woff2");
-  font-weight: 700;
-  font-display: swap;
-}
+/* Latin type loads via next/font (lib/fonts.ts) and reaches these tokens as
+   --font-bodoni (display serif) and --font-archivo (grotesque). Arabic stays
+   self-hosted; the RTL rules below fall back to it for body + headings. */
 @font-face {
   font-family: "Janna LT";
   src: url("/assets/fonts/janna-bold.woff2") format("woff2");
   font-weight: 400 700;
   font-display: swap;
 }
-/* Editorial display serif — headings & section titles (Latin only; Arabic keeps Janna) */
-@font-face {
-  font-family: "Fraunces";
-  src: url("/assets/fonts/fraunces.woff2") format("woff2");
-  font-weight: 300 700;
-  font-display: swap;
-}
 
 /* ─────────────────────────── Design tokens ─────────────────────────── */
 @theme {
-  --color-ink: #000000;
+  /* Black / white / red. Greys are tints of black — rhythm, borders, muted text only. */
+  --color-ink: #141414;
   --color-paper: #ffffff;
-  --color-cream: #ede9e6;
-  --color-sand: #d5c5bb;
-  --color-linen: #e9e1d3;
-  --color-gold: #c69229;
-  --color-gold-soft: #d1ad5e;
-  --color-star: #f49a13;
-  --color-sale: #974326;
-  --color-footer: #222320;
-  --color-footer-fg: #faf7ee;
-  --color-line: #e3ded9;
-  --color-muted: #6b6660;
+  --color-mist: #f6f6f6;
+  --color-haze: #ededed;
+  --color-stone: #e0e0e0;
+  /* The one signature accent — used sparingly (CTAs, active/hover, sale, focus). */
+  --color-signal: #c8102e;
+  --color-signal-strong: #9e0c22;
+  --color-footer: #0a0a0a;
+  --color-footer-fg: #f4f4f4;
+  --color-line: #e5e5e5;
+  --color-muted: #6b6b6b;
 
-  --font-sans: "Myriad Pro", "Helvetica Neue", Helvetica, Arial, sans-serif;
-  --font-heading: "Myriad Pro", "Helvetica Neue", Helvetica, Arial, sans-serif;
-  --font-display: "Fraunces", "Cormorant Garamond", "Times New Roman", Georgia, serif;
-  --font-button: "Quicksand", "Myriad Pro", sans-serif;
+  --font-sans: var(--font-archivo), "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-heading: var(--font-archivo), "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-display: var(--font-bodoni), "Cormorant Garamond", "Times New Roman", Georgia, serif;
+  --font-button: var(--font-archivo), "Helvetica Neue", Helvetica, sans-serif;
   --font-arabic: "Janna LT", "Segoe UI", Tahoma, sans-serif;
 
   --radius: 0px;
@@ -112,7 +66,7 @@
     transform: scaleX(-1);
   }
   ::selection {
-    background: var(--color-gold);
+    background: var(--color-signal);
     color: #fff;
   }
 }
@@ -126,7 +80,7 @@
     letter-spacing: var(--tracking-brand);
   }
 
-  /* ── Buttons (sharp, Quicksand caps; refined hover — no layout shift) ── */
+  /* ── Buttons (sharp, Archivo caps; refined hover — no layout shift) ── */
   .btn-brand {
     font-family: var(--font-button);
     text-transform: uppercase;
@@ -165,6 +119,26 @@
     background: var(--color-ink);
     color: #fff;
   }
+  /* Red signature CTA — reserved for the one or two moments that must draw the eye
+     (Shop Sale, primary conversion). Everywhere else uses .btn-brand (black). */
+  .btn-signal {
+    font-family: var(--font-button);
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    font-weight: 500;
+    font-size: 0.72rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-signal);
+    color: #fff;
+    padding: 0.95rem 2.2rem;
+    transition: background 0.3s ease;
+    cursor: pointer;
+  }
+  .btn-signal:hover {
+    background: var(--color-signal-strong);
+  }
 
   /* ── Editorial serif headings ── */
   .section-title {
@@ -193,7 +167,7 @@
     letter-spacing: 0;
   }
 
-  /* ── Eyebrow kicker (Quicksand caps micro-label above titles) ── */
+  /* ── Eyebrow kicker (Archivo caps micro-label above titles) ── */
   .eyebrow {
     font-family: var(--font-button);
     text-transform: uppercase;
@@ -203,7 +177,7 @@
     color: var(--color-muted);
   }
 
-  /* ── Unified form field (sharp; gold underline on focus) ── */
+  /* ── Unified form field (sharp; red underline on focus) ── */
   .field {
     width: 100%;
     background: transparent;
@@ -219,7 +193,7 @@
   }
   .field:focus {
     border-color: var(--color-ink);
-    box-shadow: inset 0 -2px 0 var(--color-gold);
+    box-shadow: inset 0 -2px 0 var(--color-signal);
   }
 
   /* ── Sharp caps chip (sale / status / coupon) ── */
@@ -235,9 +209,9 @@
     padding: 0.35rem 0.6rem;
   }
 
-  /* ── Animated gold underline for text links ── */
+  /* ── Animated red underline for text links ── */
   .link-underline {
-    background-image: linear-gradient(var(--color-gold), var(--color-gold));
+    background-image: linear-gradient(var(--color-signal), var(--color-signal));
     background-repeat: no-repeat;
     background-position: 0 100%;
     background-size: 0% 1px;
@@ -251,6 +225,38 @@
 /* hide scrollbars on carousels */
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* ── Marquee (infinite testimonial strip; CSS-only, no JS) ──
+   The track holds two identical halves, so translating -50% lands exactly on the
+   seam and the loop is invisible. Duration is set inline per instance. */
+@keyframes marquee {
+  from { transform: translateX(-50%); }
+  to   { transform: translateX(0); }
+}
+.marquee-track {
+  animation: marquee linear infinite;
+  will-change: transform;
+}
+.marquee-track:hover,
+.marquee-track:focus-within {
+  animation-play-state: paused;
+}
+
+/* Red gradient hairlines (class names kept; used across the storefront) */
+.hairline-gold {
+  height: 1px;
+  background: linear-gradient(to right, color-mix(in srgb, var(--color-signal) 40%, transparent), transparent);
+}
+.hairline-gold-center {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--color-signal), transparent);
+}
+
+/* Stop the drift, but keep the strip reachable by hand rather than frozen. */
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track { animation: none; }
+  .marquee-viewport { overflow-x: auto; }
+}
 
 /* ═══════════════ Admin console theme (dark default + light) ═══════════════ */
 /* Semantic color utilities (bg-surface, text-foreground, border-edge, …) that
@@ -273,15 +279,17 @@
 }
 
 .admin-theme {
-  --admin-canvas: #171614;
-  --admin-surface: #1f1e1b;
-  --admin-elevated: #2a2825;
+  /* Neutral greys + the red brand accent. Functional status hues (positive / warn /
+     info) stay green-amber-blue on purpose — a back office needs them to stay legible. */
+  --admin-canvas: #131313;
+  --admin-surface: #1c1c1c;
+  --admin-elevated: #272727;
   --admin-edge: rgba(255, 255, 255, 0.1);
-  --admin-foreground: #ece8e3;
-  --admin-secondary: #b4ada4;
-  --admin-faint: #857e75;
-  --admin-accent: #c69229;
-  --admin-accent-fg: #171614;
+  --admin-foreground: #ececec;
+  --admin-secondary: #b0b0b0;
+  --admin-faint: #808080;
+  --admin-accent: #d8213a;
+  --admin-accent-fg: #ffffff;
   --admin-positive: #4ea674;
   --admin-warn: #d9a441;
   --admin-danger: #d1685f;
@@ -291,14 +299,14 @@
   color: var(--admin-foreground);
 }
 .admin-theme[data-theme="light"] {
-  --admin-canvas: #f5f4f1;
+  --admin-canvas: #f4f4f4;
   --admin-surface: #ffffff;
-  --admin-elevated: #efede8;
+  --admin-elevated: #efefef;
   --admin-edge: rgba(0, 0, 0, 0.1);
-  --admin-foreground: #201f1c;
-  --admin-secondary: #5c574f;
-  --admin-faint: #8b857b;
-  --admin-accent: #a9781c;
+  --admin-foreground: #1c1c1c;
+  --admin-secondary: #575757;
+  --admin-faint: #808080;
+  --admin-accent: #b00e23;
   --admin-accent-fg: #ffffff;
   --admin-positive: #2f8f57;
   --admin-warn: #b3801f;
