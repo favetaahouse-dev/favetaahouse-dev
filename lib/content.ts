@@ -4,6 +4,7 @@ import { supabase } from "@/lib/supabase";
 import { DEFAULT_CONTENT, type Section } from "@/lib/content-schema";
 import { assetUrl } from "@/lib/asset-url";
 import { parseList, parseLengths } from "@/lib/variant-options";
+import { DEFAULT_CATEGORIES, normalizeCategory, sortCategoriesForNav } from "@/lib/categories";
 
 /**
  * Read a CMS content section (content table merged over defaults).
@@ -34,6 +35,21 @@ export async function getHomeMedia() {
   return {
     heroVideo: assetUrl(c.heroVideo || "/assets/video/hero.mp4"),
   };
+}
+
+/**
+ * Homepage gallery images, admin-editable (Admin → Media). Stored as a newline-joined
+ * string in the "home" content blob — the string-only content model has no array field,
+ * so this mirrors the delimited-list convention (see the "list" field kind). assetUrl
+ * resolves "/assets/..." onto Storage and leaves pasted absolute URLs untouched.
+ */
+export async function getHomeGallery(): Promise<string[]> {
+  const c = await getContent("home");
+  return (c.gallery ?? "")
+    .split(/\r?\n/)
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .map(assetUrl);
 }
 
 export type CommerceSettings = {
@@ -83,4 +99,18 @@ export async function getWhatsappUrl(): Promise<string> {
 export async function getVariantOptions(): Promise<{ sizes: string[]; lengths: number[] }> {
   const c = await getContent("variant-options");
   return { sizes: parseList(c.sizes), lengths: parseLengths(c.lengths) };
+}
+
+/**
+ * The category options the admin product form offers. Categories are dynamic — the list is
+ * the categories products actually use, unioned with the built-in defaults so the picker is
+ * never empty. Admin-only; the storefront derives its category nav from the same product data.
+ * Order: the built-in four first (abaya-first), then any admin-added categories alphabetically.
+ */
+export async function getProductCategories(): Promise<string[]> {
+  const { data } = await supabase.from("products").select("category");
+  const used = new Set((data ?? []).map((r) => normalizeCategory(r.category as string)));
+  const defaults = DEFAULT_CATEGORIES as readonly string[];
+  const extra = sortCategoriesForNav([...used].filter((c) => c && !defaults.includes(c)));
+  return [...defaults, ...extra];
 }

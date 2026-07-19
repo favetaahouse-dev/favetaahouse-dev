@@ -7,9 +7,9 @@ import { Button, Panel, SectionLabel } from "./ui";
 import { createProduct, updateProduct, type ProductInput } from "@/lib/actions/products";
 import { VariantMatrixPanel, type MatrixSpec } from "./VariantMatrixPanel";
 import type { AdminProduct } from "@/lib/data/admin-catalog";
+import { normalizeCategory } from "@/lib/categories";
 import { cn } from "@/lib/utils";
 
-const CATEGORIES = ["ABAYA", "JALABIYA", "SHEILA", "OTHER"] as const;
 const STATUSES = ["active", "draft", "archived"] as const;
 const input =
   "w-full border border-edge bg-canvas px-3 py-2 text-[13px] text-foreground outline-none placeholder:text-faint focus:border-accent/60";
@@ -17,9 +17,11 @@ const input =
 export function ProductForm({
   product,
   options,
+  categories,
 }: {
   product?: AdminProduct;
   options: { sizes: string[]; lengths: number[] };
+  categories: string[];
 }) {
   const router = useRouter();
   const isCreate = !product;
@@ -48,7 +50,7 @@ export function ProductForm({
     title: f.title, titleAr: f.titleAr, description: f.description, descriptionAr: f.descriptionAr,
     productCode: f.productCode, materials: f.materials, materialsAr: f.materialsAr, modelSize: f.modelSize,
     details: f.details, detailsAr: f.detailsAr, packaging: f.packaging,
-    category: f.category as ProductInput["category"], status: f.status as ProductInput["status"],
+    category: normalizeCategory(f.category) as ProductInput["category"], status: f.status as ProductInput["status"],
     featured: f.featured, onSale: f.onSale,
     tags: f.tagsStr.split(",").map((t) => t.trim()).filter(Boolean),
   });
@@ -96,7 +98,7 @@ export function ProductForm({
           <label className="block"><SectionLabel>Description (AR)</SectionLabel><textarea dir="rtl" rows={3} className={cn(input, "resize-y text-right")} value={f.descriptionAr} onChange={(e) => set("descriptionAr", e.target.value)} /></label>
         </div>
         <div className="grid gap-4 md:grid-cols-3">
-          <label className="block"><SectionLabel>Category</SectionLabel><select className={input} value={f.category} onChange={(e) => set("category", e.target.value)}>{CATEGORIES.map((c) => <option key={c}>{c}</option>)}</select></label>
+          <label className="block"><SectionLabel>Category</SectionLabel><input className={input} list="category-options" value={f.category} onChange={(e) => set("category", e.target.value)} onBlur={(e) => set("category", normalizeCategory(e.target.value))} placeholder="ABAYA — or type a new one" /><datalist id="category-options">{categories.map((c) => <option key={c} value={c} />)}</datalist></label>
           <label className="block"><SectionLabel>Status</SectionLabel><select className={input} value={f.status} onChange={(e) => set("status", e.target.value)}>{STATUSES.map((c) => <option key={c}>{c}</option>)}</select></label>
           <label className="block"><SectionLabel>Product code</SectionLabel><input className={input} value={f.productCode} onChange={(e) => set("productCode", e.target.value)} /></label>
         </div>

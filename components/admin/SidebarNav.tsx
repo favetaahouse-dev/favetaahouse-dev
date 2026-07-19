@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, ShoppingCart, Package, Boxes, FolderTree, Users, CreditCard,
   TicketPercent, BarChart3, Megaphone, ShieldCheck, ScrollText, Home,
-  FileText, Palette, Phone, Settings, Film, Ruler, type LucideIcon,
+  FileText, Palette, Phone, Settings, Images, Ruler, type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { can, type Access } from "@/lib/rbac/access";
@@ -48,7 +48,7 @@ export const navGroups: NavGroup[] = [
       { href: "/admin/content/materials-colors", label: "Materials", icon: Palette, permission: "content:read" },
       { href: "/admin/content/contact", label: "Contact", icon: Phone, permission: "content:read" },
       { href: "/admin/announcements", label: "Announcements", icon: Megaphone, permission: "content:write" },
-      { href: "/admin/media", label: "Videos", icon: Film, permission: "content:write" },
+      { href: "/admin/media", label: "Media", icon: Images, permission: "content:write" },
       { href: "/admin/content/site-settings", label: "Site Settings", icon: Settings, permission: "content:read" },
     ],
   },

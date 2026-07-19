@@ -7,12 +7,16 @@ import { VariantGrid } from "@/components/admin/VariantGrid";
 import { ProductActions } from "@/components/admin/ProductActions";
 import { ImageUploader } from "@/components/admin/ImageUploader";
 import { requirePageAccess } from "@/lib/admin-guard";
-import { getVariantOptions } from "@/lib/content";
+import { getVariantOptions, getProductCategories } from "@/lib/content";
 
 export default async function AdminProductEdit({ params }: { params: Promise<{ id: string }> }) {
   await requirePageAccess("products:read");
   const { id } = await params;
-  const [product, options] = await Promise.all([getAdminProduct(id), getVariantOptions()]);
+  const [product, options, categories] = await Promise.all([
+    getAdminProduct(id),
+    getVariantOptions(),
+    getProductCategories(),
+  ]);
   if (!product) notFound();
 
   return (
@@ -27,7 +31,7 @@ export default async function AdminProductEdit({ params }: { params: Promise<{ i
           </>
         }
       />
-      <ProductForm product={product} options={options} />
+      <ProductForm product={product} options={options} categories={categories} />
       <VariantGrid productId={product.id} variants={product.variants} totalQty={product.totalQty} />
       <ImageUploader
         productId={product.id}

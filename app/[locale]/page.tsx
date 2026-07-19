@@ -5,7 +5,7 @@ import { VideoHero } from "@/components/home/VideoHero";
 import {
   ShopSaleButton,
   WhyUs,
-  InstagramGallery,
+  Gallery,
 } from "@/components/home/SimpleSections";
 import { FeaturedCarousel } from "@/components/home/FeaturedCarousel";
 import { Testimonials } from "@/components/home/Testimonials";
@@ -27,7 +27,7 @@ export default async function HomePage({
       <FeaturedCarousel products={featured} />
       <WhyUs />
       <Testimonials />
-      <InstagramGallery />
+      <Gallery />
       <Newsletter />
     </>
   );

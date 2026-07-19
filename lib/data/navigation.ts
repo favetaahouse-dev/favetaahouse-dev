@@ -2,18 +2,16 @@ import "server-only";
 import { cacheLife, cacheTag } from "next/cache";
 import { getTranslations } from "next-intl/server";
 import { supabase } from "@/lib/supabase";
+import {
+  LEGACY_CATEGORY_HANDLES,
+  categoryHandle,
+  categoryLabelFallback,
+  sortCategoriesForNav,
+} from "@/lib/categories";
 
 // A single, flat nav entry. Labels are pre-resolved for the active locale so the
 // (client) Header/MobileMenu can render them without any i18n lookup of their own.
 export type NavItem = { key: string; href: string; label: string; highlight?: boolean };
-
-// Category buckets, in the order an abaya-first store wants them. Each appears only
-// when its `products.category` has ≥1 product. `key` doubles as the `nav` i18n key.
-const CATEGORY_NAV = [
-  { key: "abayas", category: "ABAYA", href: "/collections/abayas" },
-  { key: "jalabiyas", category: "JALABIYA", href: "/collections/jalabiyas" },
-  { key: "sheilas", category: "SHEILA", href: "/collections/sheilas" },
-] as const;
 
 // FEATURE/SEASONAL collections that are just "everything" aliases — never nav items.
 const EXCLUDE_COLLECTIONS = new Set(["all", "view-all", "new-in", "shop"]);
@@ -60,11 +58,21 @@ export async function getNavItems(locale: string): Promise<NavItem[]> {
 
   const items: NavItem[] = [{ key: "home", href: "/", label: t("home") }];
 
-  // 1. Category buckets (fixed abaya-first order).
-  for (const c of CATEGORY_NAV) {
-    if ((categoryCount.get(c.category) ?? 0) > 0) {
-      items.push({ key: c.key, href: c.href, label: t(c.key) });
-    }
+  // 1. Category buckets — derived from live product categories, not a fixed list, so a
+  // brand-new category an admin adds surfaces automatically (abaya-first, then alphabetical;
+  // OTHER stays hidden). The built-in three keep their translated `nav` labels; new ones fall
+  // back to a title-cased label until/unless a translation is added.
+  const liveCategories = sortCategoriesForNav(
+    [...categoryCount.keys()].filter((c) => (categoryCount.get(c) ?? 0) > 0),
+  );
+  for (const value of liveCategories) {
+    const handle = categoryHandle(value);
+    const legacyKey = LEGACY_CATEGORY_HANDLES[value];
+    items.push({
+      key: handle,
+      href: `/collections/${handle}`,
+      label: legacyKey ? t(legacyKey) : categoryLabelFallback(value),
+    });
   }
 
   // 2. Featured/seasonal collections that have real members (e.g. Travel Collection).

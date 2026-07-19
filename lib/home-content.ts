@@ -33,13 +33,6 @@ export const TESTIMONIALS = [
   },
 ];
 
-export const GALLERY_IMAGES = [
-  "/assets/home/gallery-1.jpg",
-  "/assets/home/gallery-2.jpg",
-  "/assets/home/gallery-3.jpg",
-  "/assets/home/gallery-4.jpg",
-];
-
 // `icon` names a lucide component resolved in components/home/SimpleSections.tsx —
 // inline SVG so the glyphs can take the gold brand colour on the dark band.
 export const WHY_US = [

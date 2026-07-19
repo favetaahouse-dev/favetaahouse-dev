@@ -6,6 +6,7 @@ import { authorize } from "@/lib/admin-auth";
 import { logAudit } from "@/lib/audit";
 import { supabase } from "@/lib/supabase";
 import { getVariantOptions } from "@/lib/content";
+import { normalizeCategory } from "@/lib/categories";
 
 function slugify(s: string): string {
   return (
@@ -31,8 +32,17 @@ function revalidateAll(productId?: string) {
 }
 
 // ── validation ──────────────────────────────────────────────────────────────
-// Server actions are public endpoints; validate before touching the DB. category/status
-// enums mirror the CHECK constraints so a bad value is a clean 4xx, not a raw PG error.
+// Server actions are public endpoints; validate before touching the DB. `category` is now
+// free text (the CHECK was dropped in 20260719120000_dynamic_categories.sql): normalize to the
+// canonical UPPERCASE form and bound the charset so a stray value is a clean 4xx, not garbage.
+// `status` still mirrors its CHECK constraint.
+const categorySchema = z
+  .string()
+  .trim()
+  .min(1, "Category is required")
+  .transform(normalizeCategory)
+  .refine((v) => /^[A-Z0-9 &-]{1,40}$/.test(v), "Category may only contain letters, numbers, spaces, & and -");
+
 const productInputSchema = z.object({
   title: z.string().trim().min(1, "Title is required"),
   titleAr: z.string().nullish(),
@@ -46,7 +56,7 @@ const productInputSchema = z.object({
   details: z.string().nullish(),
   detailsAr: z.string().nullish(),
   packaging: z.string().nullish(),
-  category: z.enum(["ABAYA", "JALABIYA", "SHEILA", "OTHER"]),
+  category: categorySchema,
   status: z.enum(["active", "draft", "archived"]),
   tags: z.array(z.string()).optional(),
   featured: z.boolean().optional(),

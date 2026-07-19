@@ -84,6 +84,8 @@ export const DEFAULT_CONTENT: Record<Section, Record<string, string>> = {
     shopSale: "Shop Sale", shopSale_ar: "تسوّق التخفيضات",
     newsletterTitle: "Newsletter", newsletterTitle_ar: "النشرة البريدية",
     heroVideo: "/assets/video/hero.mp4",
+    // Homepage gallery — newline-joined image URLs (edited in Admin → Media, like heroVideo).
+    gallery: "/assets/home/gallery-1.jpg\n/assets/home/gallery-2.jpg\n/assets/home/gallery-3.jpg\n/assets/home/gallery-4.jpg",
   },
   about: {
     storyTitle: "Our Story", storyTitle_ar: "قصتنا",

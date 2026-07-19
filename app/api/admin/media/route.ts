@@ -20,11 +20,13 @@ export async function POST(req: NextRequest) {
 
   await supabase.storage.createBucket(BUCKET, { public: true }).catch(() => {});
 
-  const ext = (file.name.split(".").pop() || "mp4").toLowerCase();
-  const path = `videos/${Date.now()}.${ext}`;
+  // Homepage gallery reuses this endpoint for images — keep them in their own folder.
+  const isImage = (file.type || "").startsWith("image/");
+  const ext = (file.name.split(".").pop() || (isImage ? "jpg" : "mp4")).toLowerCase();
+  const path = `${isImage ? "images" : "videos"}/${Date.now()}.${ext}`;
   const buf = Buffer.from(await file.arrayBuffer());
   const { error } = await supabase.storage.from(BUCKET).upload(path, buf, {
-    contentType: file.type || "video/mp4",
+    contentType: file.type || (isImage ? "image/jpeg" : "video/mp4"),
     upsert: true,
   });
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

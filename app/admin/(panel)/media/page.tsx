@@ -8,7 +8,7 @@ export default async function MediaPage() {
   const home = await getContent("home");
   return (
     <div>
-      <PageHeader title="Videos" description="Control the hero & campaign videos shown on the storefront homepage" />
+      <PageHeader title="Media" description="Hero video and the homepage gallery images shown on the storefront" />
       <MediaManager initial={home} />
     </div>
   );

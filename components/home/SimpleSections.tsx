@@ -1,9 +1,9 @@
-import Image from "next/image";
 import { getTranslations } from "next-intl/server";
 import { ArrowRight, Gem, ShieldCheck, Truck } from "lucide-react";
 import { Link } from "@/lib/i18n-navigation";
-import { WHY_US, GALLERY_IMAGES } from "@/lib/home-content";
-import { getSiteSettings } from "@/lib/content";
+import { WHY_US } from "@/lib/home-content";
+import { getHomeGallery } from "@/lib/content";
+import { GalleryGrid } from "./GalleryGrid";
 
 const WHY_ICONS = { shield: ShieldCheck, gem: Gem, truck: Truck };
 
@@ -67,30 +67,19 @@ export async function WhyUs() {
   );
 }
 
-export async function InstagramGallery() {
+/* Editable image gallery (Admin → Media). Image-only cards open a full-screen lightbox;
+   the grid + lightbox are a small client island (components/home/GalleryGrid). */
+export async function Gallery() {
   const t = await getTranslations("home");
-  const { instagram } = await getSiteSettings();
+  const images = await getHomeGallery();
+  if (images.length === 0) return null;
+  const label = t("gallery");
   return (
     <section className="bg-mist px-4 py-16 md:px-8">
-      <h2 className="section-title mb-10">{t("gallery")}</h2>
-      <div className="grid grid-cols-2 gap-2 md:grid-cols-4 md:gap-3">
-        {GALLERY_IMAGES.map((src, i) => (
-          <a
-            key={src}
-            href={instagram}
-            target="_blank"
-            rel="noopener"
-            className="group relative block aspect-[3/4] overflow-hidden"
-          >
-            <Image
-              src={src}
-              alt={`Instagram ${i + 1}`}
-              fill
-              sizes="(max-width:768px) 50vw, 25vw"
-              className="object-cover transition-transform duration-[1.2s] group-hover:scale-105"
-            />
-          </a>
-        ))}
+      <h2 className="section-title">{label}</h2>
+      <div className="hairline-gold-center mx-auto mt-5 mb-10 w-24" />
+      <div className="mx-auto max-w-[1400px]">
+        <GalleryGrid images={images} label={label} />
       </div>
     </section>
   );

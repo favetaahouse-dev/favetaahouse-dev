@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { revalidateTag } from "next/cache";
 import { requirePermission } from "@/lib/admin-auth";
 import { supabase } from "@/lib/supabase";
+import { normalizeCategory } from "@/lib/categories";
 
 export const maxDuration = 60;
 
@@ -52,7 +53,7 @@ export async function POST(req: NextRequest) {
       model_size: p.modelSize ?? null,
       details: p.details ?? null,
       packaging: p.packaging ?? null,
-      category: p.category ?? "ABAYA",
+      category: p.category ? normalizeCategory(p.category) : "ABAYA",
       featured: !!p.featured,
       on_sale: !!p.onSale,
       price_min: p.priceMin ?? p.variants?.[0]?.price ?? 0,

@@ -1,5 +1,6 @@
 import { cacheLife, cacheTag } from "next/cache";
 import { supabase } from "@/lib/supabase";
+import { categoryHandle, LEGACY_HANDLE_TO_CATEGORY } from "@/lib/categories";
 import { CARD, cardImages, toCard, type ProductCardDTO } from "./catalog";
 
 export type SortKey =
@@ -11,15 +12,21 @@ export const SORT_KEYS: SortKey[] = [
   "price-ascending", "price-descending", "created-descending", "created-ascending",
 ];
 
-// Canonical category handles → `products.category` bucket. The old fake aliases
-// (view-all/daily/evening/liberty) are intentionally absent: they're retired, so
-// they fall through to an empty state instead of duplicating a category page.
-const CATEGORY_COLLECTIONS: Record<string, string> = {
-  abayas: "ABAYA",
-  jalabiyas: "JALABIYA",
-  sheilas: "SHEILA",
-};
 const ALL_HANDLES = new Set(["view-all", "all", "new-in", "shop"]);
+
+/**
+ * Resolve a collection handle to the `products.category` value it stands for, or null if it
+ * isn't a category page. The three built-in handles (abayas/jalabiyas/sheilas) always resolve —
+ * even when empty — via their legacy alias; any admin-added category resolves by matching its
+ * derived handle against the categories live products actually use.
+ */
+async function categoryForHandle(handle: string): Promise<string | null> {
+  const legacy = LEGACY_HANDLE_TO_CATEGORY[handle];
+  if (legacy) return legacy;
+  const { data } = await supabase.from("products").select("category").eq("status", "active");
+  const values = new Set((data ?? []).map((r) => r.category as string));
+  return [...values].find((value) => categoryHandle(value) === handle) ?? null;
+}
 
 /**
  * Handles prerendered at build time — the ones the nav, footer and homepage actually link
@@ -104,16 +111,17 @@ async function resolveCollectionProductIds(handle: string): Promise<string[] | n
   "use cache";
   cacheLife("hours");
   cacheTag("products");
-  const cat = CATEGORY_COLLECTIONS[handle];
-  if (cat) {
-    const { data } = await supabase.from("products").select("id").eq("category", cat).eq("status", "active");
-    return (data ?? []).map((r) => r.id as string);
-  }
+  // Reserved handles win first so a category can never shadow Sale / the everything pages.
   if (handle === "sales" || handle === "sale") {
     const { data } = await supabase.from("products").select("id").eq("on_sale", true).eq("status", "active");
     return (data ?? []).map((r) => r.id as string);
   }
   if (ALL_HANDLES.has(handle)) return null;
+  const cat = await categoryForHandle(handle);
+  if (cat) {
+    const { data } = await supabase.from("products").select("id").eq("category", cat).eq("status", "active");
+    return (data ?? []).map((r) => r.id as string);
+  }
   // Membership: only products linked to a collection with this handle. Unknown or
   // empty handles return [] here — which renders an empty state, not the full catalog.
   const { data } = await supabase

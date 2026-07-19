@@ -165,6 +165,8 @@
     "english": "English",
     "arabic": "العربية",
     "close": "Close",
+    "previous": "Previous",
+    "next": "Next",
     "loading": "Loading…",
     "searchPlaceholder": "Search products…",
     "noResults": "No results found",
