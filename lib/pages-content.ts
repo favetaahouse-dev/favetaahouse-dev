@@ -1,101 +1,90 @@
-export const ABOUT_STORY = [
-  "Founded in 1982 in the heart of Doha, Alessia Abaya has become a house of timeless elegance and cultural distinction. Born in Qatar and cherished across the GCC, the brand reflects the refined tastes and values of the Gulf's most discerning women.",
-  "Each piece is a work of art, crafted from exclusive fabrics, detailed with handmade embroidery, and inspired by the graceful strength of the modern Arab woman. Our collections embody quiet luxury, where tradition meets sophistication in every thread.",
-  "From our first boutique to a regional legacy, Alessia Abaya remains a symbol of elevated modest fashion designed for women who carry their heritage with elegance and confidence.",
-];
-
-export const ABOUT_BLOCKS = [
-  {
-    n: "01",
-    title: "Our Materials",
-    body: "At Alessia Abaya, quality begins with the fabric. We source premium textiles from Japan, Italy, Spain, and France, and threads from Germany. Crystals from Swarovski and Preciosa, along with handpicked silks, cottons, Kashmir wool, crepe, and vegan leather, define every creation.",
-    image: "/assets/home/our-material.jpg",
-  },
-  {
-    n: "02",
-    title: "Design",
-    body: "Discover modern abaya designs from Alessia Abaya. Each collection offers timeless elegance, unique craftsmanship, and exclusive styles crafted to make every woman feel effortlessly refined.",
-    image: "/assets/home/travel-1.jpg",
-  },
-  {
-    n: "03",
-    title: "Craftsmanship",
-    body: "Each Alessia Abaya abaya is handcrafted in Qatar by skilled artisans, with hours dedicated to intricate embroidery and precise design — a devotion to detail that defines every garment.",
-    image: "/assets/home/craftman.jpg",
-  },
-  {
-    n: "04",
-    title: "Seasonal Collections",
-    body: "Every season, Alessia Abaya introduces new abaya collections designed to match the weather, mood, and trends — from lightweight summer fabrics to rich winter textures.",
-    image: "/assets/home/travel-2.jpg",
-  },
-  {
-    n: "05",
-    title: "Quality",
-    body: "At Alessia Abaya, quality is not just a standard, it's a promise. We use only premium, responsibly sourced materials from Italy, Japan, Spain, and France.",
-    image: "/assets/home/lookbook.jpg",
-  },
-];
-
-export const MATERIALS_PROSE = [
-  "At Alessia Abaya, every garment begins with a carefully chosen fabric and a thoughtfully curated color — each selected not only for its beauty, but for how it feels, moves, and speaks to the woman who wears it.",
-  "We work with the finest materials: luxurious cashmere blends, soft crepe, flowing silks, and delicate lace — chosen for their breathability, elegance, and movement.",
-  "Our color palette is a reflection of the natural world and the inner spirit of the Arab woman.",
-];
-
-export const COLOR_FAMILIES = [
-  { label: "Soft neutrals", colors: "Ivory Bloom, Ash Bloom, and Sand Dune", note: "bring purity and calm." },
-  { label: "Earth tones", colors: "Citrus Blossom, Olive Allure, and Slate Serenity", note: "ground the silhouette with warmth." },
-  { label: "Bold jewel tones", colors: "Midnight Sapphire, Amethyst Dusk, Twilight Gems", note: "evoke depth and elegance." },
-  { label: "Timeless classics", colors: "Ebony & Gold, Graphite Allure, and Serene Noir", note: "embody quiet power." },
-];
-
-export const COLLAB_LINKS = [
-  { label: "Qatar Happening — Loro Piana Resort 2024", href: "https://www.alessiaabaya.com" },
-  { label: "The Peninsula — KidZania", href: "https://www.alessiaabaya.com" },
-  { label: "Doha News — Heya Fashion Show", href: "https://www.alessiaabaya.com" },
-  { label: "The Peninsula — ISO Certification", href: "https://www.alessiaabaya.com" },
-  { label: "Doha Festival City", href: "https://www.alessiaabaya.com" },
-  { label: "Lagoon Mall", href: "https://www.alessiaabaya.com" },
-  { label: "Mall of Qatar", href: "https://www.alessiaabaya.com" },
-  { label: "Place Vendôme", href: "https://www.alessiaabaya.com" },
-  { label: "Villaggio Qatar", href: "https://www.alessiaabaya.com" },
-  { label: "Qatar Duty Free", href: "https://www.alessiaabaya.com" },
-  { label: "Qatar Airways — Privilege Club", href: "https://www.alessiaabaya.com" },
-];
-
 type Section = { title: string; body: string };
 
+// ── Terms & Conditions ──────────────────────────────────────────────
+// Tailored for Alessia Abaya (Doha, State of Qatar). References the Qatari
+// E-Commerce Law (No. 16/2010) and Consumer Protection Law (No. 8/2008).
+// This is a drafted policy, not legal advice — have it reviewed by a
+// Qatar-licensed lawyer before relying on it.
+
 export const TERMS: Section[] = [
-  { title: "1. Introduction and Acceptance of Terms", body: "By accessing and using the Alessia Abaya website, you agree to be bound by these Terms and Conditions and all applicable laws and regulations." },
-  { title: "2. Eligibility", body: "You must be at least 18 years old, or accessing the site under the supervision of a parent or legal guardian, to use our services." },
-  { title: "3. Products, Content, and Specifications", body: "All products are subject to availability. We reserve the right to discontinue any product at any time. Fabric, color, and design details are described as accurately as possible." },
-  { title: "4. Accuracy of Information", body: "While we strive for accuracy, we do not warrant that product descriptions, colors, or other content are error-free. Colors may vary slightly due to screen settings." },
-  { title: "5. Intellectual Property", body: "All content on this site, including images, text, and designs, is the property of Alessia Abaya and protected by intellectual property laws." },
-  { title: "6. User Conduct", body: "You agree not to misuse the website, attempt unauthorized access, or engage in any activity that disrupts the service." },
-  { title: "7. Customer Accounts and Security", body: "You are responsible for maintaining the confidentiality of your account credentials and for all activities that occur under your account." },
-  { title: "8. Online Payments", body: "Payments are processed securely. We accept major cards and digital wallets. Orders are confirmed once payment is successfully received." },
-  { title: "9. Orders, Delivery, and Shipping", body: "Orders are processed within 3 days of confirmation. Estimated delivery is 3 to 7 days depending on destination." },
-  { title: "10. Order Cancellation Policy", body: "Cancellations before shipment incur a 5% cancellation fee. Cancellations after shipment incur a 5% fee plus shipping charges." },
-  { title: "11. Refunds and Exchange Policy", body: "Refunds and exchanges require the original invoice and must be requested within 15 days of purchase. Refunds are issued to the original payment method. Sale and promotional items are non-refundable and non-exchangeable unless defective." },
-  { title: "12. Indemnification", body: "You agree to indemnify and hold Alessia Abaya harmless from any claims arising out of your use of the website or violation of these terms." },
-  { title: "13. Limitation of Liability", body: "Alessia Abaya shall not be liable for any indirect, incidental, or consequential damages arising from the use of our products or website." },
-  { title: "14. Dispute Resolution", body: "Any disputes shall be governed by the laws of the State of Qatar and resolved in the competent courts of Doha." },
-  { title: "15. Modifications", body: "We reserve the right to modify these Terms and Conditions at any time. Continued use of the site constitutes acceptance of the updated terms." },
-  { title: "16. Exceptional Shipping Conditions", body: "Shipping fees and timelines may change under exceptional circumstances beyond our control. Returns for an invalid reason may incur a QAR 100 shipping fee." },
-  { title: "17. Contact Information", body: "For any questions regarding these terms, please contact us at customersupport@alessiaabaya.com. Doha, Qatar." },
+  { title: "1. Introduction and Acceptance", body: "By accessing or purchasing from the Alessia Abaya website (alessia.qa), you agree to these Terms and Conditions, our Privacy Policy, and all applicable laws of the State of Qatar — including the Electronic Commerce and Transactions Law (Law No. 16 of 2010) and the Consumer Protection Law (Law No. 8 of 2008). If you do not agree, please do not use the site." },
+  { title: "2. About Us", body: "Alessia Abaya is a fashion house based in Doha, State of Qatar, offering abayas and modest fashion. You can reach us at customersupport@alessiaabaya.com or on WhatsApp at +974 5009 9331." },
+  { title: "3. Eligibility", body: "You must be at least 18 years old, or use the site under the supervision of a parent or legal guardian, and be legally capable of entering into a binding contract." },
+  { title: "4. Products, Descriptions, and Availability", body: "All products are subject to availability and may be modified or discontinued at any time. We make every effort to describe fabrics, colours, measurements, and details accurately; however, actual colours may vary slightly due to screen settings and photography." },
+  { title: "5. Prices and Payment", body: "All prices are shown in Qatari Riyals (QAR) and include any taxes applicable in Qatar (no value-added tax is currently levied in the State of Qatar). Payments are processed securely through our licensed payment provider (SkipCash); accepted methods include Visa, Mastercard, American Express, Apple Pay, and Benefit. We do not store your full card details. An order is confirmed only once payment has been successfully received and you receive an order confirmation." },
+  { title: "6. Orders and Acceptance", body: "Your order is an offer to purchase. We reserve the right to accept or decline any order — including where an item is unavailable, a pricing error has occurred, or payment cannot be verified. Where we decline an order for which payment was taken, we refund the amount to the original payment method." },
+  { title: "7. Shipping and Delivery", body: "Orders are typically processed within 3 business days of confirmation, with estimated delivery of 3 to 7 days depending on destination. Delivery timeframes are estimates and are not guaranteed. Risk in the goods passes to you on delivery." },
+  { title: "8. Order Cancellation", body: "Cancellation requested before shipment is subject to a 5% processing fee. Cancellation after shipment is subject to a 5% fee plus applicable shipping charges. To request a cancellation, contact customersupport@alessiaabaya.com as soon as possible." },
+  { title: "9. Returns and Exchanges", body: "Returns and exchanges must be requested within 15 days of receipt, accompanied by the original invoice, with items unused, unworn, and in their original condition and packaging. Approved refunds are issued to the original payment method. Sale and promotional items are non-refundable and non-exchangeable unless defective. Where a return is requested for an invalid reason, a shipping fee of QAR 100 may apply. Nothing in this section limits your statutory rights as a consumer under the Consumer Protection Law (Law No. 8 of 2008)." },
+  { title: "10. Defective or Non-Conforming Goods", body: "If an item arrives damaged, defective, or not as described, please contact us within 7 days of receipt with your order number and photographs. We will arrange, at our cost, a repair, replacement, or refund as required by applicable law." },
+  { title: "11. Intellectual Property", body: "All content on this website — including the Alessia Abaya name, logos, designs, images, text, and graphics — is owned by or licensed to Alessia Abaya and protected under the intellectual property laws of the State of Qatar and international treaties. You may not copy, reproduce, or use any content without our prior written permission." },
+  { title: "12. Acceptable Use", body: "You agree not to use the website unlawfully, attempt unauthorized access, introduce malicious code, infringe our or others' rights, or interfere with the proper functioning of the site." },
+  { title: "13. Customer Accounts", body: "If you create an account, you are responsible for keeping your credentials confidential and for all activity under your account. Please notify us immediately of any unauthorized use." },
+  { title: "14. Disclaimers", body: "To the extent permitted by law, the website and products are provided “as is.” We do not warrant that the site will be uninterrupted or error-free." },
+  { title: "15. Limitation of Liability", body: "To the maximum extent permitted by the laws of the State of Qatar, Alessia Abaya shall not be liable for any indirect, incidental, or consequential loss arising from the use of the website or products. Nothing in these Terms excludes liability that cannot be excluded under Qatari law." },
+  { title: "16. Indemnification", body: "You agree to indemnify and hold Alessia Abaya harmless from claims, losses, or expenses arising from your breach of these Terms or misuse of the website." },
+  { title: "17. Force Majeure", body: "We are not liable for any delay or failure to perform caused by events beyond our reasonable control, including natural events, disruptions to transport or telecommunications, or governmental measures." },
+  { title: "18. Governing Law and Jurisdiction", body: "These Terms are governed by the laws of the State of Qatar. Any dispute arising from or in connection with them is subject to the exclusive jurisdiction of the competent courts of Doha, State of Qatar." },
+  { title: "19. Changes to These Terms", body: "We may update these Terms and Conditions from time to time. The version published on this page at the time of your purchase applies to that order. Continued use of the site after changes constitutes acceptance." },
+  { title: "20. Contact", body: "For any questions about these Terms, contact customersupport@alessiaabaya.com or WhatsApp +974 5009 9331. Alessia Abaya, Doha, State of Qatar." },
 ];
 
+export const TERMS_AR: Section[] = [
+  { title: "١. المقدمة والموافقة", body: "بدخولك إلى موقع أليسيا عباية (alessia.qa) أو الشراء منه، فإنك توافق على هذه الشروط والأحكام وسياسة الخصوصية وجميع القوانين المعمول بها في دولة قطر — بما في ذلك قانون المعاملات والتجارة الإلكترونية (القانون رقم 16 لسنة 2010) وقانون حماية المستهلك (القانون رقم 8 لسنة 2008). إذا كنت لا توافق، فيُرجى عدم استخدام الموقع." },
+  { title: "٢. من نحن", body: "أليسيا عباية دار أزياء مقرّها الدوحة، دولة قطر، متخصّصة في العبايات والأزياء المحتشمة. يمكنك التواصل معنا عبر customersupport@alessiaabaya.com أو واتساب على الرقم ‎+974 5009 9331." },
+  { title: "٣. الأهلية", body: "يجب أن يكون عمرك 18 عامًا على الأقل، أو أن تستخدم الموقع تحت إشراف أحد الوالدين أو الوصي القانوني، وأن تكون مؤهلاً قانونًا لإبرام عقد ملزم." },
+  { title: "٤. المنتجات والأوصاف والتوافر", body: "تخضع جميع المنتجات للتوافر، ويجوز تعديلها أو إيقافها في أي وقت. نبذل قصارى جهدنا لوصف الأقمشة والألوان والمقاسات والتفاصيل بدقة؛ إلا أن الألوان الفعلية قد تختلف قليلاً بسبب إعدادات الشاشة والتصوير." },
+  { title: "٥. الأسعار والدفع", body: "تُعرض جميع الأسعار بالريال القطري (QAR) وتشمل أي ضرائب مطبّقة في قطر (لا تُفرض حاليًا ضريبة قيمة مضافة في دولة قطر). تتم معالجة المدفوعات بأمان عبر مزوّد الدفع المرخّص لدينا (SkipCash)، وتشمل وسائل الدفع المقبولة فيزا وماستركارد وأمريكان إكسبريس وآبل باي وبنفت. لا نحتفظ ببيانات بطاقتك كاملةً. يُعدّ الطلب مؤكدًا فقط بعد استلام الدفع بنجاح وحصولك على تأكيد الطلب." },
+  { title: "٦. الطلبات والقبول", body: "يُعدّ طلبك عرضًا للشراء. ونحتفظ بالحق في قبول أو رفض أي طلب — بما في ذلك عند عدم توفر المنتج أو وجود خطأ في السعر أو تعذّر التحقق من الدفع. وفي حال رفضنا طلبًا تم دفع قيمته، نعيد المبلغ إلى وسيلة الدفع الأصلية." },
+  { title: "٧. الشحن والتوصيل", body: "تتم معالجة الطلبات عادةً خلال 3 أيام عمل من تأكيدها، مع مدة توصيل تقديرية من 3 إلى 7 أيام حسب الوجهة. مدد التوصيل تقديرية وغير مضمونة، وتنتقل مسؤولية البضاعة إليك عند التسليم." },
+  { title: "٨. إلغاء الطلب", body: "يخضع الإلغاء المطلوب قبل الشحن لرسوم معالجة بنسبة 5%. ويخضع الإلغاء بعد الشحن لرسوم بنسبة 5% إضافةً إلى رسوم الشحن المطبّقة. لطلب الإلغاء، تواصل مع customersupport@alessiaabaya.com في أقرب وقت ممكن." },
+  { title: "٩. الإرجاع والاستبدال", body: "يجب طلب الإرجاع أو الاستبدال خلال 15 يومًا من الاستلام، مصحوبًا بالفاتورة الأصلية، على أن تكون المنتجات غير مستخدمة وغير مرتداة وبحالتها وتغليفها الأصلي. تُردّ المبالغ المعتمدة إلى وسيلة الدفع الأصلية. والمنتجات المخفّضة والترويجية غير قابلة للاسترداد أو الاستبدال ما لم تكن معيبة. وفي حال طلب الإرجاع لسبب غير صحيح، قد تُطبَّق رسوم شحن قدرها 100 ريال قطري. ولا يحدّ أي مما ورد في هذا البند من حقوقك القانونية كمستهلك بموجب قانون حماية المستهلك (القانون رقم 8 لسنة 2008)." },
+  { title: "١٠. المنتجات المعيبة أو غير المطابقة", body: "إذا وصل المنتج تالفًا أو معيبًا أو غير مطابق للوصف، فيُرجى التواصل معنا خلال 7 أيام من الاستلام مع رقم طلبك وصور المنتج. وسنقوم، على نفقتنا، بالإصلاح أو الاستبدال أو الاسترداد وفقًا لما يقتضيه القانون المعمول به." },
+  { title: "١١. الملكية الفكرية", body: "جميع المحتويات على هذا الموقع — بما في ذلك اسم أليسيا عباية وشعاراتها وتصاميمها وصورها ونصوصها ورسوماتها — مملوكة لأليسيا عباية أو مرخّصة لها ومحمية بموجب قوانين الملكية الفكرية في دولة قطر والاتفاقيات الدولية. ولا يجوز لك نسخ أو إعادة إنتاج أو استخدام أي محتوى دون إذن كتابي مسبق منّا." },
+  { title: "١٢. الاستخدام المقبول", body: "توافق على عدم استخدام الموقع بشكل غير قانوني، أو محاولة الوصول غير المصرّح به، أو إدخال برمجيات ضارة، أو انتهاك حقوقنا أو حقوق الآخرين، أو التداخل مع الأداء السليم للموقع." },
+  { title: "١٣. حسابات العملاء", body: "إذا أنشأت حسابًا، فأنت مسؤول عن الحفاظ على سرية بيانات الدخول وعن جميع الأنشطة التي تتم عبر حسابك. يُرجى إبلاغنا فورًا بأي استخدام غير مصرّح به." },
+  { title: "١٤. إخلاء المسؤولية", body: "إلى الحد الذي يسمح به القانون، يُقدَّم الموقع والمنتجات “كما هي.” ولا نضمن أن يكون الموقع خاليًا من الانقطاع أو الأخطاء." },
+  { title: "١٥. حدود المسؤولية", body: "إلى أقصى حد يسمح به قانون دولة قطر، لن تكون أليسيا عباية مسؤولة عن أي خسارة غير مباشرة أو عرضية أو تبعية تنشأ عن استخدام الموقع أو المنتجات. ولا يستثني أي بند في هذه الشروط المسؤولية التي لا يمكن استثناؤها بموجب القانون القطري." },
+  { title: "١٦. التعويض", body: "توافق على تعويض أليسيا عباية وحمايتها من أي مطالبات أو خسائر أو نفقات تنشأ عن مخالفتك لهذه الشروط أو إساءة استخدام الموقع." },
+  { title: "١٧. القوة القاهرة", body: "لسنا مسؤولين عن أي تأخير أو إخفاق في الأداء ناتج عن أحداث خارجة عن سيطرتنا المعقولة، بما في ذلك الظواهر الطبيعية أو اضطرابات النقل أو الاتصالات أو الإجراءات الحكومية." },
+  { title: "١٨. القانون الحاكم والاختصاص القضائي", body: "تخضع هذه الشروط لقوانين دولة قطر. ويخضع أي نزاع ينشأ عنها أو يتعلق بها للاختصاص الحصري للمحاكم المختصة في الدوحة، دولة قطر." },
+  { title: "١٩. التعديلات على هذه الشروط", body: "قد نُحدّث هذه الشروط والأحكام من وقت لآخر. وتنطبق النسخة المنشورة على هذه الصفحة وقت إتمام شرائك على ذلك الطلب. ويُعدّ استمرارك في استخدام الموقع بعد التعديلات قبولاً بها." },
+  { title: "٢٠. التواصل", body: "لأي استفسارات حول هذه الشروط، تواصل مع customersupport@alessiaabaya.com أو عبر واتساب ‎+974 5009 9331. أليسيا عباية، الدوحة، دولة قطر." },
+];
+
+// ── Privacy Policy ──────────────────────────────────────────────────
+// Aligned with Qatar's Personal Data Privacy Protection Law (No. 13/2016).
+
 export const PRIVACY: Section[] = [
-  { title: "1. Introduction", body: "This Privacy Policy explains how Alessia Abaya collects, uses, and protects your personal information when you use our website." },
-  { title: "2. Information We Collect", body: "We collect information you provide directly, such as name, email, address, and payment details, as well as data collected automatically through cookies." },
-  { title: "3. Use of Information", body: "We use your information to process orders, provide customer support, personalize your experience, and improve our services." },
-  { title: "4. Cookies and Tracking", body: "We use cookies and similar technologies to enhance your browsing experience and analyze site traffic. You may control cookies through your browser settings." },
-  { title: "5. Sharing and Disclosure", body: "We do not sell your personal data. We may share information with trusted service providers who assist in operating our website and fulfilling orders." },
-  { title: "6. Children's Data", body: "Our services are not directed at children under 13, and we do not knowingly collect data from them." },
-  { title: "7. International Data Transfers", body: "Your information may be processed in countries other than your own, in accordance with applicable data protection laws." },
-  { title: "8. Data Security", body: "We implement appropriate technical and organizational measures to protect your personal information against unauthorized access." },
-  { title: "9. Your Rights", body: "You have the right to access, correct, or delete your personal data. Contact us to exercise these rights." },
-  { title: "10. Modifications", body: "We may update this Privacy Policy periodically. Changes will be posted on this page with an updated effective date." },
-  { title: "11. Contact Information", body: "For privacy-related inquiries, contact us at customersupport@alessiaabaya.com. Doha, Qatar." },
+  { title: "1. Introduction", body: "This Privacy Policy explains how Alessia Abaya (“we,” “us”) collects, uses, discloses, and protects your personal data when you visit alessia.qa or purchase from us. We process personal data in accordance with the Personal Data Privacy Protection Law of the State of Qatar (Law No. 13 of 2016)." },
+  { title: "2. Data Controller", body: "Alessia Abaya, Doha, State of Qatar, is the controller of your personal data. For privacy matters, contact customersupport@alessiaabaya.com." },
+  { title: "3. Personal Data We Collect", body: "Identity and contact details (name, email, phone, delivery and billing address); order and transaction data (items purchased, order value, payment confirmation — we do not store full card numbers, which are handled by our payment provider); account data (login credentials, where you create an account); and technical and usage data (IP address, device and browser information, pages visited), collected via cookies and similar technologies." },
+  { title: "4. How and Why We Use Your Data", body: "We use your data to process and deliver orders, provide customer support, manage your account, send order and service communications, prevent fraud and secure the site, comply with legal obligations, and — with your consent — send marketing. Our lawful bases include performance of our contract with you, our legitimate interests, compliance with legal obligations, and your consent where required." },
+  { title: "5. Cookies and Tracking", body: "We use cookies and similar technologies to operate the site, remember your cart and preferences, and understand how the site is used. You can control or disable cookies in your browser settings, though some features may not function properly without them." },
+  { title: "6. Sharing and Disclosure", body: "We do not sell your personal data. We share it only as needed with: our payment provider (SkipCash) to process payments; delivery and logistics partners to fulfil orders; IT and hosting providers that support the website; and authorities where required by law. These parties may use your data only for the purposes we specify." },
+  { title: "7. International Data Transfers", body: "Some of our service providers may process data outside the State of Qatar. Where this occurs, we take appropriate steps to ensure your data receives a level of protection consistent with the Personal Data Privacy Protection Law." },
+  { title: "8. Data Retention", body: "We keep personal data only as long as necessary for the purposes described above, including to meet accounting, tax, and legal requirements, after which it is securely deleted or anonymized." },
+  { title: "9. Data Security", body: "We apply appropriate technical and organizational measures to protect your personal data against loss, misuse, and unauthorized access, disclosure, or alteration." },
+  { title: "10. Your Rights", body: "Subject to applicable law, you have the right to access your personal data, request correction or deletion, object to or restrict certain processing, and withdraw consent at any time. To exercise these rights, contact customersupport@alessiaabaya.com; we will respond within the period required by law." },
+  { title: "11. Children's Privacy", body: "Our website is not directed at children, and we do not knowingly collect personal data from children without the consent of a parent or guardian. If you believe a child has provided us data, please contact us and we will delete it." },
+  { title: "12. Marketing Communications", body: "Where you have opted in, we may send you updates about new collections and offers. You can unsubscribe at any time using the link in our emails or by contacting us." },
+  { title: "13. Changes to This Policy", body: "We may update this Privacy Policy from time to time. The latest version will always be posted on this page with its effective date." },
+  { title: "14. Contact", body: "For any privacy questions or to exercise your rights, contact customersupport@alessiaabaya.com or WhatsApp +974 5009 9331. Alessia Abaya, Doha, State of Qatar." },
+];
+
+export const PRIVACY_AR: Section[] = [
+  { title: "١. المقدمة", body: "توضّح سياسة الخصوصية هذه كيف تجمع أليسيا عباية (“نحن”) بياناتك الشخصية وتستخدمها وتفصح عنها وتحميها عند زيارتك لموقع alessia.qa أو الشراء منّا. ونعالج البيانات الشخصية وفقًا لقانون حماية خصوصية البيانات الشخصية في دولة قطر (القانون رقم 13 لسنة 2016)." },
+  { title: "٢. المتحكم في البيانات", body: "أليسيا عباية، الدوحة، دولة قطر، هي المتحكم في بياناتك الشخصية. وللتواصل بشأن الخصوصية، راسلنا على customersupport@alessiaabaya.com." },
+  { title: "٣. البيانات الشخصية التي نجمعها", body: "بيانات الهوية والتواصل (الاسم والبريد الإلكتروني والهاتف وعنوان التوصيل والفوترة)؛ وبيانات الطلب والمعاملة (المنتجات المشتراة وقيمة الطلب وتأكيد الدفع — لا نحتفظ بأرقام البطاقات كاملةً، إذ يتولّاها مزوّد الدفع لدينا)؛ وبيانات الحساب (بيانات الدخول عند إنشائك حسابًا)؛ والبيانات التقنية والاستخدام (عنوان IP ومعلومات الجهاز والمتصفح والصفحات التي تمت زيارتها)، وتُجمع عبر ملفات تعريف الارتباط والتقنيات المماثلة." },
+  { title: "٤. كيف ولماذا نستخدم بياناتك", body: "نستخدم بياناتك لمعالجة الطلبات وتوصيلها، وتقديم دعم العملاء، وإدارة حسابك، وإرسال رسائل متعلقة بالطلبات والخدمة، ومنع الاحتيال وتأمين الموقع، والامتثال للالتزامات القانونية، وإرسال العروض التسويقية بموافقتك. وتشمل أسسنا القانونية تنفيذ العقد المبرم معك، ومصالحنا المشروعة، والامتثال للالتزامات القانونية، وموافقتك عند الاقتضاء." },
+  { title: "٥. ملفات تعريف الارتباط والتتبّع", body: "نستخدم ملفات تعريف الارتباط والتقنيات المماثلة لتشغيل الموقع، وتذكّر سلة التسوق والتفضيلات، وفهم كيفية استخدام الموقع. ويمكنك التحكم في ملفات تعريف الارتباط أو تعطيلها من إعدادات متصفحك، وقد لا تعمل بعض الميزات بشكل صحيح بدونها." },
+  { title: "٦. المشاركة والإفصاح", body: "لا نبيع بياناتك الشخصية. ونشاركها فقط عند الحاجة مع: مزوّد الدفع (SkipCash) لمعالجة المدفوعات؛ وشركاء التوصيل والخدمات اللوجستية لتنفيذ الطلبات؛ ومزوّدي تقنية المعلومات والاستضافة الذين يدعمون الموقع؛ والجهات المختصة عند اقتضاء القانون. ولا يُسمح لهذه الأطراف باستخدام بياناتك إلا للأغراض التي نحددها." },
+  { title: "٧. النقل الدولي للبيانات", body: "قد يعالج بعض مزوّدي خدماتنا البيانات خارج دولة قطر. وعند حدوث ذلك، نتخذ الخطوات المناسبة لضمان حصول بياناتك على مستوى حماية يتوافق مع قانون حماية خصوصية البيانات الشخصية." },
+  { title: "٨. الاحتفاظ بالبيانات", body: "نحتفظ بالبيانات الشخصية فقط للمدة اللازمة للأغراض الموضحة أعلاه، بما في ذلك الوفاء بالمتطلبات المحاسبية والضريبية والقانونية، ثم تُحذف أو يُزال ما يعرّف هويتها بشكل آمن." },
+  { title: "٩. أمن البيانات", body: "نطبّق تدابير تقنية وتنظيمية مناسبة لحماية بياناتك الشخصية من الفقدان وسوء الاستخدام والوصول أو الإفصاح أو التعديل غير المصرّح به." },
+  { title: "١٠. حقوقك", body: "وفقًا للقانون المعمول به، يحق لك الوصول إلى بياناتك الشخصية، وطلب تصحيحها أو حذفها، والاعتراض على معالجتها أو تقييدها، وسحب موافقتك في أي وقت. ولممارسة هذه الحقوق، تواصل مع customersupport@alessiaabaya.com، وسنردّ خلال المدة التي يقتضيها القانون." },
+  { title: "١١. خصوصية الأطفال", body: "موقعنا غير موجّه للأطفال، ولا نجمع عن قصد بيانات شخصية من الأطفال دون موافقة أحد الوالدين أو الوصي. وإذا كنت تعتقد أن طفلاً زوّدنا ببياناته، فيُرجى التواصل معنا وسنحذفها." },
+  { title: "١٢. الرسائل التسويقية", body: "عند اشتراكك، قد نرسل إليك تحديثات عن المجموعات والعروض الجديدة. ويمكنك إلغاء الاشتراك في أي وقت عبر الرابط الموجود في رسائلنا أو بالتواصل معنا." },
+  { title: "١٣. التعديلات على هذه السياسة", body: "قد نُحدّث سياسة الخصوصية هذه من وقت لآخر. وستُنشر أحدث نسخة دائمًا على هذه الصفحة مع تاريخ سريانها." },
+  { title: "١٤. التواصل", body: "لأي استفسارات تتعلق بالخصوصية أو لممارسة حقوقك، تواصل مع customersupport@alessiaabaya.com أو عبر واتساب ‎+974 5009 9331. أليسيا عباية، الدوحة، دولة قطر." },
 ];

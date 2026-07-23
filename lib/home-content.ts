@@ -37,6 +37,6 @@ export const TESTIMONIALS = [
 // inline SVG so the glyphs can take the gold brand colour on the dark band.
 export const WHY_US = [
   { icon: "shield", key: "whyGuarantee", desc: "whyGuaranteeDesc", href: "/pages/terms-and-conditions" },
-  { icon: "gem", key: "whyFabric", desc: "whyFabricDesc", href: "/pages/materials-colors" },
+  { icon: "gem", key: "whyFabric", desc: "whyFabricDesc", href: "/collections/all" },
   { icon: "truck", key: "whyShipping", desc: "whyShippingDesc", href: "/pages/terms-and-conditions" },
 ] as const;

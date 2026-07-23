@@ -34,16 +34,12 @@ export async function Footer() {
   ].filter((s) => s.url);
 
   const cols = [
-    { title: t("menu"), links: [{ label: t("search"), href: "/search" }] },
     {
       title: t("shop"),
       links: [
         { label: t("home"), href: "/" },
         { label: t("shop"), href: "/collections/all" },
-        { label: t("ourStory"), href: "/pages/about-us" },
-        { label: t("materials"), href: "/pages/materials-colors" },
         { label: t("contact"), href: "/pages/contact" },
-        { label: t("collaborations"), href: "/pages/collaborations" },
       ],
     },
     {
@@ -61,7 +57,7 @@ export async function Footer() {
         <p className="display text-3xl tracking-[0.14em] md:text-[2.75rem]">ALESSIA ABAYA</p>
         <p className="eyebrow mt-3.5 text-footer-fg/55">{t("tagline")}</p>
       </div>
-      <div className="mx-auto grid max-w-[1400px] grid-cols-2 gap-10 px-6 py-14 md:grid-cols-4">
+      <div className="mx-auto grid max-w-[1400px] grid-cols-2 gap-10 px-6 py-14 md:grid-cols-3">
         {cols.map((col) => (
           <div key={col.title}>
             <h3 className="mb-4 font-button text-[11px] uppercase tracking-[0.2em]">{col.title}</h3>

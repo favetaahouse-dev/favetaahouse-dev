@@ -96,8 +96,5 @@ export async function getNavItems(locale: string): Promise<NavItem[]> {
     items.push({ key: "sale", href: "/collections/sales", label: t("sale"), highlight: true });
   }
 
-  // 4. Our Story (editorial, always present).
-  items.push({ key: "ourStory", href: "/pages/about-us", label: t("ourStory") });
-
   return items;
 }
