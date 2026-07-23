@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Copy, Trash2 } from "lucide-react";
 import { Button, ConfirmDialog } from "./ui";
+import { Can } from "./ui/PermissionGate";
 import { duplicateProduct, deleteProduct } from "@/lib/actions/products";
 
 export function ProductActions({ id, title }: { id: string; title: string }) {
@@ -33,8 +34,12 @@ export function ProductActions({ id, title }: { id: string; title: string }) {
 
   return (
     <>
-      <Button variant="outline" onClick={dup} disabled={busy}><Copy size={14} /> Duplicate</Button>
-      <Button variant="danger" onClick={() => setConfirm(true)} disabled={busy}><Trash2 size={14} /> Delete</Button>
+      <Can permission="products:write">
+        <Button variant="outline" onClick={dup} disabled={busy}><Copy size={14} /> Duplicate</Button>
+      </Can>
+      <Can permission="products:delete">
+        <Button variant="danger" onClick={() => setConfirm(true)} disabled={busy}><Trash2 size={14} /> Delete</Button>
+      </Can>
       <ConfirmDialog
         open={confirm}
         onClose={() => setConfirm(false)}

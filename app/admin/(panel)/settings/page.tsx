@@ -1,6 +1,6 @@
 import Link from "next/link";
 import {
-  Settings as SettingsIcon, Palette, ShieldCheck, ScrollText, Megaphone, CreditCard, Download, ChevronRight,
+  Settings as SettingsIcon, Palette, ShieldCheck, ScrollText, Megaphone, CreditCard, Download, ChevronRight, UserCog,
 } from "lucide-react";
 import { getCommerceSettings } from "@/lib/content";
 import { skipcashEnabled, SKIPCASH_ENV } from "@/lib/skipcash";
@@ -13,6 +13,7 @@ const links = [
   { href: "/admin/content/materials-colors", label: "Materials & Colors", desc: "Storefront materials page content", icon: Palette },
   { href: "/admin/announcements", label: "Announcements", desc: "Storefront announcement bar & notices", icon: Megaphone },
   { href: "/admin/settings/users", label: "Staff & Roles", desc: "Team accounts and role permissions", icon: ShieldCheck },
+  { href: "/admin/settings/account", label: "My Account", desc: "Your login email & password", icon: UserCog },
   { href: "/admin/audit", label: "Activity Log", desc: "Admin activity & audit history", icon: ScrollText },
 ];
 

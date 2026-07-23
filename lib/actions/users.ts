@@ -71,6 +71,7 @@ export async function createStaffUser(input: z.input<typeof createSchema>) {
       email,
       name,
       password: await bcrypt.hash(password, 10),
+      email_verified: new Date().toISOString(), // panel-created staff are trusted; never gate their login
       ...staffRoleColumns(role.key, role.id),
     })
     .select("id")

@@ -75,6 +75,51 @@ export async function sendOrderConfirmation(orderId: string): Promise<void> {
   }
 }
 
+/**
+ * Send an email-verification code. Unlike order email, this is NOT gated by the
+ * `emailEnabled` commerce toggle — verification is essential to signup. If Resend
+ * isn't configured (no RESEND_API_KEY, e.g. local dev), the code is logged so signup
+ * still works locally.
+ */
+export async function sendVerificationEmail(email: string, code: string): Promise<void> {
+  if (!resend) {
+    console.warn(`[email] RESEND_API_KEY not set — verification code for ${email} is: ${code}`);
+    return;
+  }
+  const settings = await getCommerceSettings().catch(() => null);
+  const from = settings ? buildFrom(settings.emailSenderName, settings.emailFromAddress) : EMAIL_FROM;
+
+  const { error } = await resend.emails.send({
+    from,
+    to: email,
+    replyTo: settings?.emailReplyTo || undefined,
+    subject: "Verify your email — ALESSIA ABAYA",
+    html: renderVerificationEmail(code),
+  });
+  if (error) {
+    console.error(`[email] Resend rejected verification for ${email}`, error);
+    throw new Error("Could not send the verification email. Please try again.");
+  }
+}
+
+function renderVerificationEmail(code: string): string {
+  return `<!doctype html>
+<html><body style="margin:0;background:#f6f4f1;font-family:Georgia,'Times New Roman',serif;">
+  <div style="max-width:560px;margin:0 auto;padding:32px 20px;">
+    <div style="text-align:center;padding:8px 0 24px;">
+      <div style="font-size:22px;letter-spacing:4px;color:#1b1a18;text-transform:uppercase;">ALESSIA ABAYA</div>
+    </div>
+    <div style="background:#ffffff;border:1px solid #e7e2dc;padding:32px 28px;text-align:center;">
+      <div style="font-size:18px;color:#1b1a18;">Confirm your email</div>
+      <div style="font-size:13px;color:#8a8580;margin-top:8px;">Enter this code to activate your account.</div>
+      <div style="margin:24px 0;font-size:34px;letter-spacing:10px;font-weight:600;color:#1b1a18;">${escapeHtml(code)}</div>
+      <div style="font-size:12px;color:#a8a29c;">This code expires in 10 minutes. If you didn't create an account, you can ignore this email.</div>
+    </div>
+    <div style="text-align:center;padding:20px 0;font-size:11px;color:#a8a29c;">ALESSIA ABAYA</div>
+  </div>
+</body></html>`;
+}
+
 function renderOrderEmail(order: OrderDTO, taxLabel: string, storeLocation: string): string {
   const money = (c: number) => formatMoney(c, "QAR");
   const addr = order.shippingAddress as Record<string, string> | null;

@@ -13,9 +13,9 @@ import type { Permission } from "@/lib/rbac/permissions";
  * a session, not that the viewer may see *this* page, and `SidebarNav` merely hides
  * links. Returns the actor so pages can reuse `id` / `roleRank`.
  */
-export async function requirePageAccess(perm: Permission): Promise<SessionUser> {
+export async function requirePageAccess(perm?: Permission): Promise<SessionUser> {
   const u = sessionUser(await auth());
   if (!isStaff(u)) redirect("/admin/login");
-  if (!hasPermission(u, perm)) redirect("/admin/forbidden");
+  if (perm && !hasPermission(u, perm)) redirect("/admin/forbidden");
   return u!;
 }

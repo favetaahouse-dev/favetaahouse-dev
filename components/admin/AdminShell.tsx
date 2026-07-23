@@ -66,7 +66,13 @@ export function AdminShell({
             >
               {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
             </button>
-            <span className="hidden text-xs text-faint lg:inline">{userEmail}</span>
+            <Link
+              href="/admin/settings/account"
+              title="Account settings"
+              className="hidden text-xs text-faint transition-colors hover:text-accent lg:inline"
+            >
+              {userEmail}
+            </Link>
             <Link href="/" target="_blank" className="hidden items-center gap-1.5 text-xs text-secondary hover:text-accent sm:flex">
               <ExternalLink size={14} /> <span className="hidden lg:inline">View site</span>
             </Link>

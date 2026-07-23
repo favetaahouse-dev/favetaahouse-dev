@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { DataTable, type Column, Button, StatusPill, Money } from "./ui";
+import { Can } from "./ui/PermissionGate";
 import { bulkProductAction, type BulkAction } from "@/lib/actions/products";
 import type { AdminProductRow } from "@/lib/data/admin-catalog";
 
@@ -42,11 +43,15 @@ export function ProductsTable({ rows }: { rows: AdminProductRow[] }) {
       selectable
       bulkActions={(ids, clear) => (
         <>
-          <Button size="sm" variant="outline" onClick={() => bulk(ids, "feature", clear)}>Feature</Button>
-          <Button size="sm" variant="outline" onClick={() => bulk(ids, "activate", clear)}>Activate</Button>
-          <Button size="sm" variant="outline" onClick={() => bulk(ids, "draft", clear)}>Draft</Button>
-          <Button size="sm" variant="outline" onClick={() => bulk(ids, "archive", clear)}>Archive</Button>
-          <Button size="sm" variant="danger" onClick={() => bulk(ids, "delete", clear)}>Delete</Button>
+          <Can permission="products:write">
+            <Button size="sm" variant="outline" onClick={() => bulk(ids, "feature", clear)}>Feature</Button>
+            <Button size="sm" variant="outline" onClick={() => bulk(ids, "activate", clear)}>Activate</Button>
+            <Button size="sm" variant="outline" onClick={() => bulk(ids, "draft", clear)}>Draft</Button>
+            <Button size="sm" variant="outline" onClick={() => bulk(ids, "archive", clear)}>Archive</Button>
+          </Can>
+          <Can permission="products:delete">
+            <Button size="sm" variant="danger" onClick={() => bulk(ids, "delete", clear)}>Delete</Button>
+          </Can>
         </>
       )}
       pageSize={25}

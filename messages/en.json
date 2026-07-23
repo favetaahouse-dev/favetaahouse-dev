@@ -141,7 +141,18 @@
     "haveAccount": "Already have an account?",
     "noAccount": "Don't have an account?",
     "welcome": "Welcome back",
-    "orderPlaced": "Order placed"
+    "orderPlaced": "Order placed",
+    "phone": "Phone number",
+    "verifyTitle": "Verify your email",
+    "verifyIntro": "We sent a 6-digit code to {email}. Enter it below to activate your account.",
+    "code": "6-digit code",
+    "verify": "Verify",
+    "resendCode": "Resend code",
+    "codeResent": "A new code has been sent.",
+    "verifiedLogin": "Email verified — please log in.",
+    "invalidCode": "That code is incorrect.",
+    "expiredCode": "That code has expired. Request a new one.",
+    "tooManyAttempts": "Too many attempts. Request a new code."
   },
   "footer": {
     "menu": "Menu",

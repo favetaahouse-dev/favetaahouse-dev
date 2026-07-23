@@ -92,7 +92,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (!email || !password) return null;
         const { data: user } = await supabase
           .from("users")
-          .select("id, email, name, password, role, role_id")
+          .select("id, email, name, password, role, role_id, email_verified")
           .eq("email", email)
           .maybeSingle();
         if (!user?.password) {
@@ -101,6 +101,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         }
         const ok = await bcrypt.compare(password, user.password);
         if (!ok) {
+          await logLogin({ user_id: user.id, email, success: false }, req);
+          return null;
+        }
+        // Customers must verify their email before their first login. Staff/admin are
+        // panel-created and auto-verified, so this gate never applies to them.
+        if (user.role === CUSTOMER_ROLE && !user.email_verified) {
           await logLogin({ user_id: user.id, email, success: false }, req);
           return null;
         }

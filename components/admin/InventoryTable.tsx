@@ -7,10 +7,12 @@ import { DataTable, type Column, Badge, Button } from "./ui";
 import { adjustStock } from "@/lib/actions/inventory";
 import type { InventoryRow } from "@/lib/data/admin-catalog";
 import { variantLabel } from "@/lib/variant-options";
+import { usePermissions } from "@/lib/rbac/use-permissions";
 
 export function InventoryTable({ rows }: { rows: InventoryRow[] }) {
   const [data, setData] = useState(rows);
   const [busy, setBusy] = useState<string | null>(null);
+  const canWrite = usePermissions().can("inventory:write");
 
   const apply = async (variantId: string, opts: { delta?: number; set?: number }) => {
     setBusy(variantId);
@@ -49,7 +51,10 @@ export function InventoryTable({ rows }: { rows: InventoryRow[] }) {
     },
     {
       key: "adjust", header: "Adjust", align: "right",
-      cell: (r) => (
+      cell: (r) =>
+        !canWrite ? (
+          <span className="text-faint">—</span>
+        ) : (
         <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
           <Button size="sm" variant="outline" aria-label="Decrease" disabled={busy === r.variantId} onClick={() => apply(r.variantId, { delta: -1 })}>
             <Minus size={13} />

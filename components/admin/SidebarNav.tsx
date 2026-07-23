@@ -55,6 +55,7 @@ export const navGroups: NavGroup[] = [
   {
     label: "System",
     items: [
+      { href: "/admin/users", label: "Users", icon: Users, permission: "customers:read" },
       { href: "/admin/settings/users", label: "Staff & Roles", icon: ShieldCheck, permission: "users:read" },
       { href: "/admin/audit", label: "Activity Log", icon: ScrollText, permission: "audit:read" },
       { href: "/admin/settings", label: "Settings", icon: Settings, permission: "settings:manage" },

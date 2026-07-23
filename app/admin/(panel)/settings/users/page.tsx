@@ -84,7 +84,7 @@ export default async function StaffRolesPage() {
 
       <StaffTable
         staff={staff}
-        roles={roles.map((r) => ({ id: r.id, name: r.name, rank: r.rank }))}
+        roles={roles.map((r) => ({ id: r.id, key: r.key, name: r.name, rank: r.rank }))}
         actorId={actor.id}
         actorRank={actor.roleRank}
         actorIsSuper={actorIsSuper}

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Trash2 } from "lucide-react";
 import { formatMoney } from "@/lib/money";
+import { usePermissions } from "@/lib/rbac/use-permissions";
 
 type Coupon = {
   id: string;
@@ -21,6 +22,7 @@ export default function CouponsPage() {
   const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [form, setForm] = useState({ code: "", type: "PERCENT", value: "", minSpend: "", expiresAt: "", usageLimit: "" });
   const [busy, setBusy] = useState(false);
+  const canWrite = usePermissions().can("coupons:write");
 
   const load = () => fetch("/api/admin/coupons").then((r) => r.json()).then(setCoupons);
   useEffect(() => { load(); }, []);
@@ -58,6 +60,7 @@ export default function CouponsPage() {
 
   return (
     <div className="space-y-6">
+      {canWrite && (
       <form onSubmit={create} className="border border-white/10 bg-[#212121] p-5">
         <h2 className="mb-4 font-button text-xs uppercase tracking-[0.16em]">New coupon</h2>
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
@@ -75,6 +78,7 @@ export default function CouponsPage() {
           </button>
         </div>
       </form>
+      )}
 
       <div className="border border-white/10 bg-[#212121]">
         <div className="border-b border-white/10 px-5 py-3">
@@ -102,14 +106,20 @@ export default function CouponsPage() {
                   <td className="px-3 py-3">{c.used_count}{c.usage_limit ? ` / ${c.usage_limit}` : ""}</td>
                   <td className="px-3 py-3 text-white/50">{c.expires_at ? new Date(c.expires_at).toLocaleDateString("en-US") : "—"}</td>
                   <td className="px-3 py-3">
-                    <button onClick={() => toggle(c)} className={c.active ? "text-emerald-400" : "text-white/40"}>
-                      {c.active ? "Active" : "Inactive"}
-                    </button>
+                    {canWrite ? (
+                      <button onClick={() => toggle(c)} className={c.active ? "text-emerald-400" : "text-white/40"}>
+                        {c.active ? "Active" : "Inactive"}
+                      </button>
+                    ) : (
+                      <span className={c.active ? "text-emerald-400" : "text-white/40"}>{c.active ? "Active" : "Inactive"}</span>
+                    )}
                   </td>
                   <td className="px-3 py-3">
-                    <button onClick={() => remove(c.id)} className="text-white/40 hover:text-red-400" aria-label="Delete">
-                      <Trash2 size={15} />
-                    </button>
+                    {canWrite && (
+                      <button onClick={() => remove(c.id)} className="text-white/40 hover:text-red-400" aria-label="Delete">
+                        <Trash2 size={15} />
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))}

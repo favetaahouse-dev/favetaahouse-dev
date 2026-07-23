@@ -15,7 +15,7 @@ export type StaffEditTarget = {
   roleId: string | null;
 } | null;
 
-export type RoleOption = { id: string; name: string; rank: number };
+export type RoleOption = { id: string; key: string; name: string; rank: number };
 
 // Blank password means "keep the current one" on edit; onSubmit rejects it on create.
 const schema = z.object({
@@ -40,10 +40,12 @@ export function StaffFormModal({
   roles: RoleOption[];
 }) {
   const isEdit = !!target;
+  // New staff default to the least-privileged read-only role, per policy.
+  const defaultRoleId = roles.find((r) => r.key === "read_only")?.id ?? roles[0]?.id ?? "";
   const form = useZodForm<Values>(schema, {
     name: target?.name ?? "",
     email: target?.email ?? "",
-    roleId: target?.roleId ?? roles[0]?.id ?? "",
+    roleId: target?.roleId ?? defaultRoleId,
     password: "",
   });
 
@@ -53,7 +55,7 @@ export function StaffFormModal({
       form.reset({
         name: target?.name ?? "",
         email: target?.email ?? "",
-        roleId: target?.roleId ?? roles[0]?.id ?? "",
+        roleId: target?.roleId ?? defaultRoleId,
         password: "",
       });
     }
