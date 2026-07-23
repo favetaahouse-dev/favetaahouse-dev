@@ -505,6 +505,7 @@ export type Database = {
           currency: string
           discount: number
           email: string
+          email_sent_at: string | null
           id: string
           number: number
           paid_at: string | null
@@ -525,6 +526,7 @@ export type Database = {
           currency?: string
           discount?: number
           email: string
+          email_sent_at?: string | null
           id?: string
           number?: never
           paid_at?: string | null
@@ -545,6 +547,7 @@ export type Database = {
           currency?: string
           discount?: number
           email?: string
+          email_sent_at?: string | null
           id?: string
           number?: never
           paid_at?: string | null
@@ -774,6 +777,24 @@ export type Database = {
           total_qty?: number
           updated_at?: string
           vendor?: string
+        }
+        Relationships: []
+      }
+      rate_limits: {
+        Row: {
+          bucket: string
+          count: number
+          expires_at: string
+        }
+        Insert: {
+          bucket: string
+          count?: number
+          expires_at: string
+        }
+        Update: {
+          bucket?: string
+          count?: number
+          expires_at?: string
         }
         Relationships: []
       }
@@ -1040,6 +1061,14 @@ export type Database = {
           p_order_id: string
           p_provider?: string
           p_reference?: string
+        }
+        Returns: boolean
+      }
+      rate_limit_hit: {
+        Args: {
+          p_key: string
+          p_limit: number
+          p_window_seconds: number
         }
         Returns: boolean
       }

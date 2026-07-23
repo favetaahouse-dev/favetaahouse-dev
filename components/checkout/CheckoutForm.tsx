@@ -55,7 +55,13 @@ export function CheckoutForm({
       window.location.href = res.url;
     } else {
       setBusy(false);
-      toast.error(res.error === "stock" ? "Some items are out of stock." : "Something went wrong.");
+      toast.error(
+        res.error === "stock"
+          ? "Some items are out of stock."
+          : res.error === "rate"
+            ? "Too many attempts — please wait a moment and try again."
+            : "Something went wrong.",
+      );
     }
   }
 

@@ -9,6 +9,7 @@ import {
   type SkipcashWebhookFields,
 } from "@/lib/skipcash";
 import { markOrderPaid } from "@/lib/actions/checkout";
+import { rateLimit, ipFrom } from "@/lib/rate-limit";
 
 function str(v: unknown): string | undefined {
   return v === undefined || v === null ? undefined : String(v);
@@ -16,6 +17,11 @@ function str(v: unknown): string | undefined {
 
 export async function POST(req: NextRequest) {
   if (!skipcashEnabled) return new Response("skipcash disabled", { status: 200 });
+
+  // Generous per-IP cap (legit SkipCash callbacks come from a few trusted IPs and never hit it).
+  if (!(await rateLimit(`skipcash_webhook:${ipFrom(req.headers)}`, 300, 60))) {
+    return new Response("rate limited", { status: 429 });
+  }
 
   const raw = await req.text();
   let payload: Record<string, unknown>;
@@ -58,8 +64,28 @@ export async function POST(req: NextRequest) {
       .update({ ...(paid ? { status: "paid" } : {}), status_id: statusId, raw: payload as unknown as Json })
       .eq("provider_payment_id", paymentId);
 
-    if (paid && pay?.order_id) {
-      await markOrderPaid(pay.order_id, pay.cart_id ?? null, "skipcash", paymentId);
+    if (paid) {
+      // Resolve the order: prefer OUR payments row, then the authoritative getPayment
+      // TransactionId, then the signed webhook TransactionId — so a missing payments row
+      // (e.g. a failed checkout insert) can't strand a genuinely-paid charge as PENDING.
+      const orderId = pay?.order_id ?? verified?.transactionId ?? fields.TransactionId ?? null;
+      if (orderId) {
+        const { data: order } = await supabase.from("orders").select("total").eq("id", orderId).maybeSingle();
+        // Defense-in-depth: the authoritative payment must reference THIS order and its amount.
+        const txnOk = !verified?.transactionId || verified.transactionId === orderId;
+        const amountOk =
+          !verified?.amount || !order || Math.round(parseFloat(String(verified.amount)) * 100) === order.total;
+        if (order && txnOk && amountOk) {
+          await markOrderPaid(orderId, pay?.cart_id ?? null, "skipcash", paymentId);
+        } else {
+          console.error("[skipcash webhook] payment/order mismatch — not fulfilling", {
+            orderId,
+            verifiedTxn: verified?.transactionId,
+            verifiedAmount: verified?.amount,
+            orderTotal: order?.total,
+          });
+        }
+      }
     }
   } catch (e) {
     console.error("[skipcash webhook] handler error", e);

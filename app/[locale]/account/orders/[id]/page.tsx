@@ -5,6 +5,7 @@ import { CheckCircle2 } from "lucide-react";
 import { setRequestLocale, getTranslations } from "next-intl/server";
 import { Link } from "@/lib/i18n-navigation";
 import { getOrder } from "@/lib/data/orders";
+import { auth } from "@/lib/auth";
 import { getCommerceSettings } from "@/lib/content";
 import { formatMoney } from "@/lib/money";
 import { variantLabel } from "@/lib/variant-options";
@@ -26,6 +27,12 @@ async function OrderContent({ params }: { params: Promise<Params> }) {
   setRequestLocale(locale);
   const order = await getOrder(id);
   if (!order) notFound();
+  // Ownership: a customer-owned order is visible only to that signed-in customer. Guest
+  // orders (no user_id) stay reachable via their unguessable UUID for post-payment confirmation.
+  if (order.userId) {
+    const session = await auth().catch(() => null);
+    if (session?.user?.id !== order.userId) notFound();
+  }
   const t = await getTranslations("account");
   const commerce = await getCommerceSettings();
   const L = locale === "ar";

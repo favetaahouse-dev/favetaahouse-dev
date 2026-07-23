@@ -1,5 +1,6 @@
 import "server-only";
 import { Resend } from "resend";
+import { supabase } from "@/lib/supabase";
 import { getOrder, type OrderDTO } from "@/lib/data/orders";
 import { getCommerceSettings, getSiteSettings } from "@/lib/content";
 import { variantLabel } from "@/lib/variant-options";
@@ -22,28 +23,54 @@ function buildFrom(senderName: string, fromAddress: string): string {
   return senderName ? `${senderName} <${addr}>` : addr || EMAIL_FROM;
 }
 
-/** Send the order-confirmation email. No-op (logged) when disabled or unconfigured. */
+/**
+ * Send the order-confirmation email exactly once, idempotently and retriably.
+ *
+ * An atomic "claim" on orders.email_sent_at is the concurrency gate: only the caller that flips
+ * it NULL→now() (for a PAID order not yet emailed) sends, so concurrent webhook + browser-return
+ * can't double-send. If Resend rejects or the process throws after claiming, the claim is
+ * RELEASED (→NULL) so the next paid webhook/return retry resends — closing the at-most-once gap.
+ * No-op (logged) when disabled or unconfigured.
+ */
 export async function sendOrderConfirmation(orderId: string): Promise<void> {
+  const settings = await getCommerceSettings().catch(() => null);
+  if (!settings || !settings.emailEnabled) return;
+  if (!resend) {
+    console.warn(`[email] RESEND_API_KEY not set — skipping confirmation for order ${orderId}`);
+    return;
+  }
+
+  // Atomic claim: flip email_sent_at NULL→now() for a payable, not-yet-emailed order.
+  const { data: claimed } = await supabase
+    .from("orders")
+    .update({ email_sent_at: new Date().toISOString() })
+    .eq("id", orderId)
+    .is("email_sent_at", null)
+    .in("status", ["PAID", "FULFILLED"])
+    .select("id")
+    .maybeSingle();
+  if (!claimed) return; // already sent/claimed, or not in a payable state
+
+  const release = () => supabase.from("orders").update({ email_sent_at: null }).eq("id", orderId);
+
   try {
-    const settings = await getCommerceSettings();
-    if (!settings.emailEnabled) return;
-    if (!resend) {
-      console.warn(`[email] RESEND_API_KEY not set — skipping confirmation for order ${orderId}`);
-      return;
-    }
     const order = await getOrder(orderId);
-    if (!order) return;
-    // cache()d and already awaited by the layout on any page render — no extra query.
+    if (!order) return; // can't build the email; leave the claim rather than spin on a ghost order
     const site = await getSiteSettings();
 
-    await resend.emails.send({
+    const { error } = await resend.emails.send({
       from: buildFrom(settings.emailSenderName, settings.emailFromAddress),
       to: order.email,
       replyTo: settings.emailReplyTo || undefined,
       subject: `Order #${order.number} confirmed — ALESSIA ABAYA`,
       html: renderOrderEmail(order, settings.taxLabel, site.storeLocation ?? ""),
     });
+    if (error) {
+      await release(); // Resend rejected (unverified domain, transient 5xx…) — allow a retry
+      console.error(`[email] Resend rejected confirmation for ${orderId}`, error);
+    }
   } catch (e) {
+    await release(); // crash/throw after claim — release so a later retry can resend
     console.error(`[email] order confirmation failed for ${orderId}`, e);
   }
 }

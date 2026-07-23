@@ -1,12 +1,13 @@
 "use server";
 
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { randomUUID } from "crypto";
 import { z } from "zod";
 import { supabase } from "@/lib/supabase";
 import { getCart, getCartCoupon, CART_COOKIE } from "@/lib/data/cart";
 import { skipcashEnabled, createPayment } from "@/lib/skipcash";
 import { sendOrderConfirmation } from "@/lib/email";
+import { rateLimit, ipFrom } from "@/lib/rate-limit";
 import { auth } from "@/lib/auth";
 
 const CheckoutSchema = z.object({
@@ -30,6 +31,12 @@ export async function createCheckout(
   const parsed = CheckoutSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: "invalid" };
   const data = parsed.data;
+
+  // Per-IP rate limit before any DB work — curbs order-table + SkipCash createPayment spam.
+  // Fails open (a limiter blip never blocks a real checkout).
+  if (!(await rateLimit(`checkout:${ipFrom(await headers())}`, 20, 60))) {
+    return { ok: false, error: "rate" };
+  }
 
   const cart = await getCart();
   if (!cart.items.length) return { ok: false, error: "empty" };
@@ -89,7 +96,7 @@ export async function createCheckout(
         transactionId: order.id,
         custom1: cart.id ?? "",
       });
-      await supabase.from("payments").insert({
+      const { error: payErr } = await supabase.from("payments").insert({
         order_id: order.id,
         cart_id: cart.id,
         provider: "skipcash",
@@ -100,6 +107,13 @@ export async function createCheckout(
         currency: "QAR",
         status: "new",
       });
+      if (payErr) {
+        // The charge isn't live until the shopper opens payUrl, so fail the checkout rather
+        // than redirect with no payment→order mapping row. (The webhook's TransactionId
+        // fallback is the backstop for a crash that happens after this point.)
+        console.error("[checkout] payments insert failed", payErr);
+        return { ok: false, error: "payment" };
+      }
       await supabase
         .from("orders")
         .update({ payment_provider: "skipcash", payment_ref: paymentId })
@@ -127,7 +141,9 @@ export async function createCheckout(
 
 /**
  * Idempotent mark-paid via RPC (also used by the SkipCash webhook + return handler).
- * Sends the confirmation email exactly once, on the real PENDING→PAID transition.
+ * The confirmation email is triggered on every paid invocation, not just the PENDING→PAID
+ * transition: sendOrderConfirmation self-dedupes via an atomic claim, so a webhook/return retry
+ * re-sends a confirmation that was lost on an earlier attempt without ever double-sending.
  */
 export async function markOrderPaid(
   orderId: string,
@@ -142,7 +158,7 @@ export async function markOrderPaid(
     p_reference: reference ?? undefined,
   });
   const transitioned = data === true;
-  if (transitioned) await sendOrderConfirmation(orderId);
+  await sendOrderConfirmation(orderId);
   return transitioned;
 }
 
