@@ -3,10 +3,11 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { Minus, Plus } from "lucide-react";
-import { DataTable, type Column, Badge, Button } from "./ui";
+import { DataTable, type Column, Badge, Button, fieldInput } from "./ui";
 import { adjustStock } from "@/lib/actions/inventory";
 import type { InventoryRow } from "@/lib/data/admin-catalog";
 import { variantLabel } from "@/lib/variant-options";
+import { cn } from "@/lib/utils";
 
 export function InventoryTable({ rows }: { rows: InventoryRow[] }) {
   const [data, setData] = useState(rows);
@@ -58,7 +59,7 @@ export function InventoryTable({ rows }: { rows: InventoryRow[] }) {
             type="number"
             defaultValue={r.stock}
             key={r.stock}
-            className="w-16 border border-edge bg-canvas px-2 py-1 text-center text-[13px] text-foreground outline-none focus:border-accent/60"
+            className={cn(fieldInput, "w-16 px-2 py-1 text-center")}
             onKeyDown={(e) => {
               if (e.key === "Enter") {
                 const val = Number((e.target as HTMLInputElement).value);

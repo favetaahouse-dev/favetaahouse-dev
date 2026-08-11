@@ -21,8 +21,9 @@ export function WhatsappLink({ href }: { href: string }) {
       rel="noopener noreferrer"
       aria-label="Chat on WhatsApp"
       onClick={() => trackMeta("Contact")}
-      // Mirrors CurrencySwitcher on the opposite gutter, clearing the fixed bottom bar.
-      className="fixed bottom-[calc(1rem+var(--bottom-bar-clear))] end-5 z-30 transition-transform hover:scale-105"
+      // Mirrors CurrencySwitcher on the opposite gutter, clearing the fixed bottom bar —
+      // including the --pdp-bar-h lift when a product page's mobile buy bar is up.
+      className="fixed bottom-[calc(1rem+var(--bottom-bar-clear)+var(--pdp-bar-h))] end-5 z-30 transition-[transform,bottom] duration-300 ease-[cubic-bezier(0.24,0.25,0,1)] hover:scale-105 motion-reduce:transition-none"
     >
       <Image
         src="/assets/brand/whatsapp.png"

@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { RotateCcw } from "lucide-react";
 import { Modal } from "@/components/admin/ui/Modal";
-import { Button, Spinner } from "@/components/admin/ui/primitives";
+import { Button, Spinner, fieldInput } from "@/components/admin/ui/primitives";
+import { cn } from "@/lib/utils";
 
 /**
  * Dashboard "Reset stats" control. Opens a modal that requires the admin to re-enter
@@ -72,7 +73,7 @@ export function ResetStatsButton() {
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Your admin password"
               autoComplete="current-password"
-              className="w-full rounded-[3px] border border-edge bg-elevated px-3 py-2 text-[13px] text-foreground outline-none transition-colors focus:border-accent/60"
+              className={cn(fieldInput, "rounded-[3px] bg-elevated")}
             />
           </label>
 

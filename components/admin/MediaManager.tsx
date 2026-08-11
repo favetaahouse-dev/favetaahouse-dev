@@ -3,9 +3,10 @@
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { Upload, Loader2, X, Trash2 } from "lucide-react";
-import { Button, Panel, SectionLabel } from "./ui";
+import { Button, Panel, SectionLabel, fieldInput } from "./ui";
+import { cn } from "@/lib/utils";
 
-const input = "flex-1 border border-edge bg-canvas px-3 py-2 text-[13px] text-foreground outline-none placeholder:text-faint focus:border-accent/60";
+const input = cn(fieldInput, "flex-1");
 
 const MB = 1024 * 1024;
 

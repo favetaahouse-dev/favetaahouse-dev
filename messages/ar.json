@@ -59,7 +59,15 @@
     "delivery": "التوصيل المتوقع من ٣ إلى ٧ أيام",
     "sku": "رمز",
     "from": "يبدأ من",
-    "viewProduct": "عرض المنتج"
+    "viewProduct": "عرض المنتج",
+    "gallery": "معرض صور المنتج",
+    "counter": "{n} من {total}",
+    "image": "صورة {n} من {total}",
+    "zoom": "تكبير الصورة {n} من {total}",
+    "previousImage": "الصورة السابقة",
+    "nextImage": "الصورة التالية",
+    "goToImage": "الانتقال إلى الصورة {n}",
+    "noImage": "لا توجد صورة"
   },
   "collection": {
     "results": "{count} منتج",
@@ -138,7 +146,9 @@
   "footer": {
     "menu": "القائمة",
     "policies": "السياسات",
-    "followUs": "تابعينا على",
+    "followUs": "تابعينا",
+    "location": "الموقع",
+    "contact": "تواصلي معنا",
     "home": "الرئيسية",
     "terms": "الشروط والأحكام",
     "privacy": "سياسة الخصوصية",

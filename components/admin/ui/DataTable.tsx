@@ -3,7 +3,7 @@
 import { useMemo, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronUp, ChevronDown, Search, ChevronLeft, ChevronRight } from "lucide-react";
-import { EmptyState, Spinner } from "./primitives";
+import { EmptyState, Spinner, fieldInput } from "./primitives";
 import { cn } from "@/lib/utils";
 
 export type Column<T> = {
@@ -101,7 +101,7 @@ export function DataTable<T>({
                 value={q}
                 onChange={(e) => { setQ(e.target.value); setPage(0); }}
                 placeholder={searchPlaceholder}
-                className="w-56 border border-edge bg-canvas py-1.5 ps-8 pe-3 text-[13px] text-foreground outline-none placeholder:text-faint focus:border-accent/60"
+                className={cn(fieldInput, "w-56 py-1.5 ps-8 pe-3")}
               />
             </div>
           )}

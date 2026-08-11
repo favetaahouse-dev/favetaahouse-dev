@@ -1,16 +1,18 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import Image from "next/image";
-import { X, Plus, Minus, Truck, PackageCheck } from "lucide-react";
+import { Plus, Minus, Truck, PackageCheck } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { useRouter } from "@/lib/i18n-navigation";
 import { Price } from "@/components/Price";
 import { WishlistButton } from "@/components/wishlist/WishlistButton";
 import { ProductAccordion } from "@/components/product/ProductAccordion";
+import { ProductGallery } from "@/components/product/ProductGallery";
+import { ProductLightbox } from "@/components/product/ProductLightbox";
+import { StickyBuyBar } from "@/components/product/StickyBuyBar";
 import { useCart } from "@/components/providers/cart-context";
-import { sortSizes } from "@/lib/variant-options";
+import { sortSizes, variantLabel } from "@/lib/variant-options";
 import { trackMeta, newEventId } from "@/lib/meta/fbq";
 import { viewContentPayload, addToCartPayload } from "@/lib/meta/events";
 import { icon } from "@/lib/icon";
@@ -84,12 +86,14 @@ export function ProductDetail({ product }: { product: ProductDetailDTO }) {
   const [tackTack, setTackTack] = useState(false); // "No" by default
   const [length, setLength] = useState<number | null>(lengths[0] ?? null);
   const [qty, setQty] = useState(1);
-  /** Which image the lightbox is showing — the gallery itself renders all of them. */
-  const [activeImg, setActiveImg] = useState(0);
+  /** One index for the gallery, the lightbox and the colour jump, so closing the zoomed
+   *  view on the third shot leaves the gallery on the third shot. */
+  const [imageIndex, setImageIndex] = useState(0);
   const [lightbox, setLightbox] = useState(false);
   const [adding, setAdding] = useState(false);
-  /** One per gallery tile, so choosing a colour can scroll its shot into view. */
-  const tileRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  /** The two sentinels that bound the mobile buy bar — see StickyBuyBar. */
+  const ctaRef = useRef<HTMLDivElement>(null);
+  const detailsEndRef = useRef<HTMLDivElement>(null);
 
   const inColor = variants.filter((v) => v.color === color);
   const sizes = useMemo(() => sortSizes([...new Set(inColor.map((v) => v.size))]), [inColor]);
@@ -127,25 +131,25 @@ export function ProductDetail({ product }: { product: ProductDetailDTO }) {
   const sizeSoldOut = (s: string) => !inColor.some((v) => v.size === s && stocked(v));
 
   function openLightbox(i: number) {
-    setActiveImg(i);
+    setImageIndex(i);
     setLightbox(true);
   }
 
   /**
-   * Every shot is on the page now, so picking a colour scrolls to its image rather than
-   * swapping a single frame. Honours the reduced-motion setting: a smooth scroll the
-   * visitor did not ask for is exactly the kind of movement that preference is about.
+   * Colour → image. Every variants.image_url in the catalogue is currently NULL and the
+   * admin has no field that writes one, so this is a deliberate no-op rather than an
+   * accidental one: attach an image to a variant and picking that colour moves the gallery
+   * to it, with no code change here.
+   *
+   * What it replaces scrolled a parallel array of tile refs into view — the same no-op,
+   * plus an array that had to stay in step with the render. Moving the controlled index
+   * instead means one line does the work at every width, and honouring reduced motion
+   * becomes the carousel's problem rather than this function's.
    */
   function jumpGallery(v?: VariantDTO) {
     if (!v?.imageUrl) return;
-    const idx = product.images.findIndex((im) => im.url === v.imageUrl);
-    if (idx < 0) return;
-    setActiveImg(idx);
-    const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-    tileRefs.current[idx]?.scrollIntoView({
-      behavior: reduce ? "auto" : "smooth",
-      block: "center",
-    });
+    const i = product.images.findIndex((im) => im.url === v.imageUrl);
+    if (i >= 0) setImageIndex(i);
   }
 
   function selectColor(c: string) {
@@ -199,214 +203,175 @@ export function ProductDetail({ product }: { product: ProductDetailDTO }) {
     if (!ok) toast.error(t("outOfStock"));
   }
 
-  const images = product.images.length ? product.images : [{ url: "", alt: product.title }];
-
   return (
-    <div className="px-4 py-8 md:px-8">
-      <div className="mx-auto max-w-[1200px]">
-        {/* Gallery — the whole set, stacked down the page.
-            The thumbnail rail this replaces made every shot compete for one 45%-wide frame
-            beside the buying controls. A garment shot full-length deserves the container's
-            full width, and a shopper who wants the third angle should be able to scroll to
-            it rather than hunt for a 74px chip. The first image leads at full width; the
-            rest follow in a grid, and any of them opens the lightbox. */}
-        <div className="flex flex-col gap-3">
-          {images[0]?.url && (
-            <button
-              type="button"
-              ref={(el) => { tileRefs.current[0] = el; }}
-              onClick={() => openLightbox(0)}
-              aria-label={t("viewProduct")}
-              // 4:5 on desktop, not a landscape band: the photography is 2:3, so a 16:10
-              // lead cropped nearly 60% of the frame's height and cut the model off at the
-              // knees. 4:5 trims ~17% and keeps the garment whole, which is the entire job
-              // of the opening shot.
-              className="relative aspect-[3/4] w-full cursor-zoom-in bg-mist md:aspect-[4/5]"
-            >
-              <Image
-                src={images[0].url}
-                alt={product.title}
-                fill
-                priority
-                sizes="(max-width:1200px) 100vw, 1200px"
-                className="object-cover"
-              />
-            </button>
-          )}
+    <div className="px-4 py-8 md:px-8 xl:px-10">
+      <div className="mx-auto max-w-[1440px]">
+        {/* One band: photography beside the buying controls, rather than the full-width
+            stack that pushed the price four screens down the page and stranded ~640px of
+            empty cream beside the panel underneath it. Single column until xl, because
+            below that the two halves would each be too narrow to be worth having. */}
+        <div className="grid gap-10 xl:grid-cols-[minmax(0,1fr)_clamp(340px,30%,420px)] xl:gap-12">
+          <ProductGallery
+            images={product.images}
+            title={product.title}
+            index={imageIndex}
+            onIndexChange={setImageIndex}
+            onZoom={openLightbox}
+          />
 
-          {images.length > 1 && (
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
-              {images.slice(1).map((im, i) => (
-                <button
-                  key={i + 1}
-                  type="button"
-                  ref={(el) => { tileRefs.current[i + 1] = el; }}
-                  onClick={() => openLightbox(i + 1)}
-                  aria-label={t("viewProduct")}
-                  className="relative aspect-[2/3] w-full cursor-zoom-in bg-mist"
-                >
-                  {im.url && (
-                    <Image
-                      src={im.url}
-                      alt=""
-                      fill
-                      sizes="(max-width:768px) 50vw, 33vw"
-                      className="object-cover"
-                    />
-                  )}
-                </button>
-              ))}
+          <div className="max-w-[560px] xl:max-w-none">
+            <h1 className="display text-[28px] md:text-[33px]">{product.title}</h1>
+            <div className="mt-3 text-lg">
+              {selected && <Price cents={selected.price} compareAt={selected.compareAt} />}
             </div>
-          )}
+            {selected?.sku && (
+              <p className="mt-1 text-xs text-muted">
+                {t("sku")}: {selected.sku}
+              </p>
+            )}
+
+            {/* Colors */}
+            {colors.length > 0 && (
+              <div className="mt-7">
+                <p className="mb-2.5 font-button text-[13px] font-medium text-strong">
+                  {t("color")}: <span className="font-normal text-muted">{color}</span>
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {colors.map((c) => (
+                    <button
+                      key={c.color}
+                      onClick={() => selectColor(c.color)}
+                      title={c.color}
+                      aria-label={c.color}
+                      aria-pressed={color === c.color}
+                      className={cn(
+                        "h-8 w-8 border transition-all",
+                        color === c.color ? "ring-1 ring-strong ring-offset-2" : "border-line",
+                      )}
+                      style={{ backgroundColor: c.hex ?? "var(--color-mist)" }}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {allSoldOut && (
+              <p className="mt-5 border border-line bg-mist px-3 py-2 text-center text-[12px] tracking-[0.16em] text-muted uppercase">
+                {t("soldOut")}
+              </p>
+            )}
+
+            {/* Sizes */}
+            <div className="mt-6">
+              <p className="mb-2.5 font-button text-[13px] font-medium text-strong">{t("size")}</p>
+              <div className="flex flex-wrap gap-2">
+                {sizes.map((s) => {
+                  const disabled = sizeSoldOut(s);
+                  return (
+                    <button
+                      key={s}
+                      disabled={disabled}
+                      onClick={() => setSize(s)}
+                      aria-pressed={size === s}
+                      className={cn(chip, size === s ? chipOn : chipOff, disabled && chipDead)}
+                    >
+                      {s}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Length — a made-to-order choice, always selectable */}
+            {lengths.length > 0 && (
+              <div className="mt-6">
+                <p className="mb-2.5 font-button text-[13px] font-medium text-strong">{t("length")}</p>
+                <div className="flex flex-wrap gap-2">
+                  {lengths.map((l) => (
+                    <button
+                      key={l}
+                      onClick={() => setLength(l)}
+                      aria-pressed={length === l}
+                      className={cn(chip, length === l ? chipOn : chipOff)}
+                    >
+                      {l}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Tack Tack — a made-to-order choice, always selectable; sits under length */}
+            <div className="mt-6">
+              <p className="mb-2.5 font-button text-[13px] font-medium text-strong">{t("tackTack")}</p>
+              <div className="flex flex-wrap gap-2">
+                {[false, true].map((tt) => (
+                  <button
+                    key={String(tt)}
+                    onClick={() => setTackTack(tt)}
+                    aria-pressed={tackTack === tt}
+                    className={cn(chip, "px-5", tackTack === tt ? chipOn : chipOff)}
+                  >
+                    {tt ? t("tackTackYes") : t("tackTackNo")}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Quantity + actions */}
+            <div className="mt-8 flex items-center gap-3">
+              <div className="flex items-center border border-strong">
+                <button
+                  className="focus-ring px-3 py-3 transition-opacity hover:opacity-60"
+                  onClick={() => setQty((q) => Math.max(1, q - 1))}
+                  aria-label="decrease"
+                >
+                  <Minus {...icon.inline} />
+                </button>
+                <span className="min-w-8 text-center text-sm">{qty}</span>
+                <button
+                  className="focus-ring px-3 py-3 transition-opacity hover:opacity-60"
+                  onClick={() => setQty((q) => Math.min(selected?.stock ?? 1, q + 1))}
+                  aria-label="increase"
+                >
+                  <Plus {...icon.inline} />
+                </button>
+              </div>
+              <WishlistButton handle={product.handle} className="h-12 w-12 border border-strong" />
+            </div>
+
+            {/* Add to cart leads — it is the action most shoppers want, and Buy now is the
+                shortcut for the ones who have already decided. Side by side once there is
+                room for both to stay legible; px-5 because the panel is now a 340-420px
+                column rather than the 560px measure these were tuned against. */}
+            <div ref={ctaRef} className="mt-4 flex flex-col gap-3 sm:flex-row">
+              <button onClick={() => handleAdd(false)} disabled={adding} className="btn-brand flex-1 px-5 py-4">
+                {t("addToCart")}
+              </button>
+              <button onClick={() => handleAdd(true)} disabled={adding} className="btn-outline flex-1 px-5 py-4">
+                {t("buyNow")}
+              </button>
+            </div>
+
+            {/* These two lines are a reassurance, and a 15px hairline glyph beside 12px grey type
+                was too quiet to do that job. 18px marks against 13px ink read at a glance without
+                turning the block into a feature. */}
+            <div className="mt-6 space-y-2.5 border-y border-line py-4 text-[13px] text-ink">
+              <p className="flex items-center gap-2.5">
+                <PackageCheck {...icon.inline} /> {t("freeShipping")}
+              </p>
+              <p className="flex items-center gap-2.5">
+                <Truck {...icon.inline} /> {t("delivery")}
+              </p>
+            </div>
+          </div>
         </div>
 
-        {/* Info — below the gallery now, and held to a readable measure rather than
-            stretched across the full 1200px. */}
-        <div className="mt-12 max-w-[560px]">
-          <h1 className="display text-[28px] md:text-[33px]">{product.title}</h1>
-          <div className="mt-3 text-lg">
-            {selected && <Price cents={selected.price} compareAt={selected.compareAt} />}
-          </div>
-          {selected?.sku && (
-            <p className="mt-1 text-xs text-muted">
-              {t("sku")}: {selected.sku}
-            </p>
-          )}
-
-          {/* Colors */}
-          {colors.length > 0 && (
-            <div className="mt-7">
-              <p className="mb-2.5 font-button text-[13px] font-medium text-strong">
-                {t("color")}: <span className="font-normal text-muted">{color}</span>
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {colors.map((c) => (
-                  <button
-                    key={c.color}
-                    onClick={() => selectColor(c.color)}
-                    title={c.color}
-                    aria-label={c.color}
-                    aria-pressed={color === c.color}
-                    className={cn(
-                      "h-8 w-8 border transition-all",
-                      color === c.color ? "ring-1 ring-strong ring-offset-2" : "border-line",
-                    )}
-                    style={{ backgroundColor: c.hex ?? "var(--color-mist)" }}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-
-          {allSoldOut && (
-            <p className="mt-5 border border-line bg-mist px-3 py-2 text-center text-[12px] tracking-[0.16em] text-muted uppercase">
-              {t("soldOut")}
-            </p>
-          )}
-
-          {/* Sizes */}
-          <div className="mt-6">
-            <p className="mb-2.5 font-button text-[13px] font-medium text-strong">{t("size")}</p>
-            <div className="flex flex-wrap gap-2">
-              {sizes.map((s) => {
-                const disabled = sizeSoldOut(s);
-                return (
-                  <button
-                    key={s}
-                    disabled={disabled}
-                    onClick={() => setSize(s)}
-                    aria-pressed={size === s}
-                    className={cn(chip, size === s ? chipOn : chipOff, disabled && chipDead)}
-                  >
-                    {s}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Length — a made-to-order choice, always selectable */}
-          {lengths.length > 0 && (
-            <div className="mt-6">
-              <p className="mb-2.5 font-button text-[13px] font-medium text-strong">{t("length")}</p>
-              <div className="flex flex-wrap gap-2">
-                {lengths.map((l) => (
-                  <button
-                    key={l}
-                    onClick={() => setLength(l)}
-                    aria-pressed={length === l}
-                    className={cn(chip, length === l ? chipOn : chipOff)}
-                  >
-                    {l}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Tack Tack — a made-to-order choice, always selectable; sits under length */}
-          <div className="mt-6">
-            <p className="mb-2.5 font-button text-[13px] font-medium text-strong">{t("tackTack")}</p>
-            <div className="flex flex-wrap gap-2">
-              {[false, true].map((tt) => (
-                <button
-                  key={String(tt)}
-                  onClick={() => setTackTack(tt)}
-                  aria-pressed={tackTack === tt}
-                  className={cn(chip, "px-5", tackTack === tt ? chipOn : chipOff)}
-                >
-                  {tt ? t("tackTackYes") : t("tackTackNo")}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Quantity + actions */}
-          <div className="mt-8 flex items-center gap-3">
-            <div className="flex items-center border border-strong">
-              <button
-                className="focus-ring px-3 py-3 transition-opacity hover:opacity-60"
-                onClick={() => setQty((q) => Math.max(1, q - 1))}
-                aria-label="decrease"
-              >
-                <Minus {...icon.inline} />
-              </button>
-              <span className="min-w-8 text-center text-sm">{qty}</span>
-              <button
-                className="focus-ring px-3 py-3 transition-opacity hover:opacity-60"
-                onClick={() => setQty((q) => Math.min(selected?.stock ?? 1, q + 1))}
-                aria-label="increase"
-              >
-                <Plus {...icon.inline} />
-              </button>
-            </div>
-            <WishlistButton handle={product.handle} className="h-12 w-12 border border-strong" />
-          </div>
-
-          {/* Add to cart leads — it is the action most shoppers want, and Buy now is the
-              shortcut for the ones who have already decided. Side by side once there is
-              room for both to stay legible. */}
-          <div className="mt-4 flex flex-col gap-3 sm:flex-row">
-            <button onClick={() => handleAdd(false)} disabled={adding} className="btn-brand flex-1 py-4">
-              {t("addToCart")}
-            </button>
-            <button onClick={() => handleAdd(true)} disabled={adding} className="btn-outline flex-1 py-4">
-              {t("buyNow")}
-            </button>
-          </div>
-
-          {/* These two lines are a reassurance, and a 15px hairline glyph beside 12px grey type
-              was too quiet to do that job. 18px marks against 13px ink read at a glance without
-              turning the block into a feature. */}
-          <div className="mt-6 space-y-2.5 border-y border-line py-4 text-[13px] text-ink">
-            <p className="flex items-center gap-2.5">
-              <PackageCheck {...icon.inline} /> {t("freeShipping")}
-            </p>
-            <p className="flex items-center gap-2.5">
-              <Truck {...icon.inline} /> {t("delivery")}
-            </p>
-          </div>
-
+        {/* The written detail, lifted out of the buying column. Prose wants a measure it
+            can be read at, not whatever is left over beside a photograph — and taking
+            ~450px off the panel is also what lets the panel and the gallery finish at
+            roughly the same place. */}
+        <div className="mt-14 max-w-[720px] xl:mt-20">
           <ProductAccordion product={product} />
 
           {/* The category, demoted from a kicker above the title to a footnote below the
@@ -417,23 +382,33 @@ export function ProductDetail({ product }: { product: ProductDetailDTO }) {
               {product.category}
             </p>
           )}
+          {/* Marks where the product's own copy ends, for the mobile buy bar. h-px, not
+              zero-height: a degenerate rect is not something every engine agrees to
+              intersect. */}
+          <div ref={detailsEndRef} aria-hidden className="h-px" />
         </div>
       </div>
 
+      {selected && (
+        <StickyBuyBar
+          price={selected.price}
+          compareAt={selected.compareAt}
+          label={variantLabel({ color, size, length, tackTack })}
+          disabled={adding}
+          onAdd={() => handleAdd(false)}
+          ctaRef={ctaRef}
+          endRef={detailsEndRef}
+        />
+      )}
+
       {lightbox && (
-        <div
-          className="fixed inset-0 z-[70] flex items-center justify-center bg-black/90 p-4"
-          onClick={() => setLightbox(false)}
-        >
-          <button className="focus-ring absolute end-6 top-6 -m-2 p-2 text-white" aria-label="Close">
-            <X {...icon.overlay} />
-          </button>
-          <div className="relative h-[85vh] w-full max-w-3xl" onClick={(e) => e.stopPropagation()}>
-            {images[activeImg]?.url && (
-              <Image src={images[activeImg].url} alt={product.title} fill className="object-contain" />
-            )}
-          </div>
-        </div>
+        <ProductLightbox
+          images={product.images}
+          title={product.title}
+          index={imageIndex}
+          onIndexChange={setImageIndex}
+          onClose={() => setLightbox(false)}
+        />
       )}
     </div>
   );

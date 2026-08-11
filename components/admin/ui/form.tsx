@@ -8,11 +8,10 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { ZodType } from "zod";
 import { X } from "lucide-react";
-import { Button, Spinner } from "./primitives";
+import { Button, Spinner, fieldInput } from "./primitives";
 import { cn } from "@/lib/utils";
 
-const inputCls =
-  "w-full border border-edge bg-canvas px-3 py-2 text-[13px] text-foreground outline-none placeholder:text-faint focus:border-accent/60";
+const inputCls = fieldInput;
 
 /**
  * useForm preconfigured with a zod resolver. The return type is pinned because
@@ -60,10 +59,12 @@ function FieldShell({
   children: ReactNode;
 }) {
   return (
+    // secondary, not faint: --admin-faint is 3.09:1 (light) / 3.98:1 (dark) against bg-elevated,
+    // so an 11px label written in it fails AA in both themes. Secondary is 4.99 / 6.58 at worst.
     <label className="block">
-      {label && <span className="mb-1 block text-[11px] uppercase tracking-[0.12em] text-faint">{label}</span>}
+      {label && <span className="mb-1 block text-[11px] font-medium uppercase tracking-[0.12em] text-secondary">{label}</span>}
       {children}
-      {hint && !error && <span className="mt-1 block text-[11px] text-faint">{hint}</span>}
+      {hint && !error && <span className="mt-1 block text-[11px] text-secondary">{hint}</span>}
       {error && <span className="mt-1 block text-[11px] text-danger">{error}</span>}
     </label>
   );

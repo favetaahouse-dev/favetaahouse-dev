@@ -59,7 +59,15 @@
     "delivery": "Estimated delivery 3 to 7 days",
     "sku": "SKU",
     "from": "From",
-    "viewProduct": "View product"
+    "viewProduct": "View product",
+    "gallery": "Product gallery",
+    "counter": "{n} / {total}",
+    "image": "Image {n} of {total}",
+    "zoom": "Zoom image {n} of {total}",
+    "previousImage": "Previous image",
+    "nextImage": "Next image",
+    "goToImage": "Go to image {n}",
+    "noImage": "No image available"
   },
   "collection": {
     "results": "{count} results",
@@ -138,7 +146,9 @@
   "footer": {
     "menu": "Menu",
     "policies": "Policies",
-    "followUs": "Follow Us on",
+    "followUs": "Follow Us",
+    "location": "Location",
+    "contact": "Contact",
     "home": "Home",
     "terms": "Terms & Conditions",
     "privacy": "Privacy Policy",

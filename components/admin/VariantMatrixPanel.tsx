@@ -1,17 +1,17 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { X, Plus } from "lucide-react";
-import { Button, Panel, SectionLabel } from "./ui";
+import { X, Plus, Check } from "lucide-react";
+import { Button, IconButton, Panel, PanelHeader, SubsectionHeader, FieldLabel, fieldInput } from "./ui";
 import { generateVariants } from "@/lib/actions/products";
 import { sortSizes } from "@/lib/variant-options";
 import { parsePriceStrict, PRICE_INPUT_HINT } from "@/lib/money";
 import { cn } from "@/lib/utils";
 
-const input =
-  "w-full border border-edge bg-canvas px-3 py-2 text-[13px] text-foreground outline-none placeholder:text-faint focus:border-accent/60";
+const input = fieldInput;
 
 export type MatrixSpec = {
   colors: { name: string; hex: string }[];
@@ -93,77 +93,126 @@ export function VariantMatrixPanel({
     }
   };
 
+  // Read-only. Derived from the SAME three conditions as the button's `disabled` below, so the
+  // two can't drift — but the disabled expression itself is untouched. A `title` would not do:
+  // most browsers fire no events at all on a disabled button, so the tooltip never appears, and
+  // it never appears on touch either. This is the one thing that made the panel feel broken:
+  // the button greys out and nothing anywhere says why.
+  const disabledReason =
+    busy ? null
+      : spec.price === null ? "Enter a price to enable this."
+      : willCreate === 0
+        ? sizes.length === 0 ? "Pick at least one size to enable this."
+          : "Every one of these combinations already exists."
+        : null;
+
   return (
-    <Panel className="space-y-6 p-5">
-      <div>
-        <SectionLabel className="mb-1">{mode === "create" ? "Variants" : "Add colours / sizes"}</SectionLabel>
-        <p className="text-[11px] text-faint">
-          A variant is one colour + size, with its own quantity. Length and Tack Tack are choices the
-          customer picks on the product page — they aren&apos;t stocked separately.
-        </p>
-      </div>
-
-      {/* colours */}
-      <div>
-        <SectionLabel className="mb-2">Colours</SectionLabel>
-        <div className="space-y-2">
-          {colors.map((c, i) => (
-            <div key={i} className="flex items-center gap-2">
-              <input type="color" value={c.hex} onChange={(e) => setColors((cs) => cs.map((x, idx) => (idx === i ? { ...x, hex: e.target.value } : x)))} className="h-8 w-11 cursor-pointer border border-edge bg-canvas p-0.5" aria-label="Pick colour" />
-              <input value={c.name} onChange={(e) => setColors((cs) => cs.map((x, idx) => (idx === i ? { ...x, name: e.target.value } : x)))} placeholder="Colour name (e.g. Black, Olive)" className={cn(input, "flex-1")} />
-              <button type="button" onClick={() => setColors((cs) => cs.filter((_, idx) => idx !== i))} className="text-faint hover:text-danger" aria-label="Remove colour"><X size={15} /></button>
-            </div>
-          ))}
-        </div>
-        <Button size="sm" variant="outline" className="mt-2" onClick={() => setColors((cs) => [...cs, { name: "", hex: "#111111" }])}><Plus size={13} /> Add colour</Button>
-      </div>
-
-      {/* sizes */}
-      <div>
-        <SectionLabel className="mb-2">Sizes</SectionLabel>
-        {options.sizes.length === 0 ? (
-          <p className="text-[11px] text-danger">No sizes defined. Add them under Content → Sizes &amp; Lengths.</p>
-        ) : (
-          <div className="flex flex-wrap gap-1.5">
-            {sortSizes(options.sizes).map((s) => (
-              <button key={s} type="button" onClick={() => toggle(s)}
-                className={cn("border px-3 py-1.5 text-[13px]", sizes.includes(s) ? "border-accent bg-accent/15 text-foreground" : "border-edge text-secondary hover:border-accent/50")}>
-                {s}
-              </button>
+    <Panel>
+      <PanelHeader
+        title={mode === "create" ? "Colours & sizes" : "Add colours & sizes"}
+        description={
+          <>
+            A variant is one colour + size, with its own quantity. Length and Tack Tack are choices the
+            customer picks on the product page — they aren&apos;t stocked separately.
+            {mode === "edit" && " New combinations appear in Prices & quantities below."}
+          </>
+        }
+      />
+      <div className="space-y-6 p-5">
+        {/* colours */}
+        <div>
+          <SubsectionHeader step={1} title="Colours" />
+          <div className="space-y-2">
+            {colors.map((c, i) => (
+              <div key={i} className="flex items-center gap-2">
+                {/* Each control names the row it belongs to. They all used to read "Pick colour" /
+                    "Remove colour", so a screen-reader element list was N identical entries. */}
+                <input type="color" value={c.hex} onChange={(e) => setColors((cs) => cs.map((x, idx) => (idx === i ? { ...x, hex: e.target.value } : x)))} className="h-9 w-11 shrink-0 cursor-pointer border border-field bg-canvas p-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent" aria-label={`Swatch for ${c.name.trim() || `colour ${i + 1}`}`} />
+                <input value={c.name} onChange={(e) => setColors((cs) => cs.map((x, idx) => (idx === i ? { ...x, name: e.target.value } : x)))} placeholder="Colour name (e.g. Black, Olive)" aria-label={`Name of colour ${i + 1}`} className={cn(input, "flex-1")} />
+                <IconButton type="button" onClick={() => setColors((cs) => cs.filter((_, idx) => idx !== i))} className="shrink-0 hover:text-danger" aria-label={`Remove ${c.name.trim() || `colour ${i + 1}`}`}><X size={16} /></IconButton>
+              </div>
             ))}
+          </div>
+          <Button size="sm" variant="outline" className="mt-2.5" onClick={() => setColors((cs) => [...cs, { name: "", hex: "#111111" }])}><Plus size={14} /> Add colour</Button>
+        </div>
+
+        {/* sizes */}
+        <div>
+          <SubsectionHeader step={2} title="Sizes" description="Every size you pick is created for every colour above." />
+          {options.sizes.length === 0 ? (
+            <p className="text-[12px] text-secondary">
+              No sizes defined yet.{" "}
+              <Link href="/admin/content/variant-options" className="text-accent underline underline-offset-2">
+                Add them under Content → Sizes &amp; Lengths
+              </Link>
+              , then come back here.
+            </p>
+          ) : (
+            // A pressed chip used to differ from an unpressed one by a 15%-alpha tint and nothing
+            // else — and carried no state at all for a screen reader. Now: a check glyph, a solid
+            // fill, and aria-pressed. `toggle` is untouched.
+            <div role="group" aria-label="Sizes to create" className="flex flex-wrap gap-1.5">
+              {sortSizes(options.sizes).map((s) => {
+                const on = sizes.includes(s);
+                return (
+                  <button key={s} type="button" onClick={() => toggle(s)} aria-pressed={on}
+                    className={cn(
+                      "inline-flex items-center gap-1.5 border px-3 py-1.5 text-[13px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent",
+                      on ? "border-accent bg-accent font-medium text-accent-fg" : "border-field text-secondary hover:border-accent hover:text-foreground",
+                    )}>
+                    {on && <Check size={13} aria-hidden="true" />}
+                    {s}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* price + stock */}
+        <div>
+          <SubsectionHeader step={3} title="Price & starting quantity" description="Applied to every variant created. Both can be edited per size afterwards." />
+          <div className="grid gap-4 md:grid-cols-2">
+            <label className="block">
+              <FieldLabel required hint="450 for QAR 450.00, or 450.50 to include fils.">Price (QAR)</FieldLabel>
+              {/* text, not number: a number input hands back "" for anything the browser dislikes, which
+                  is indistinguishable from an empty box — and both used to generate variants at QAR 0. */}
+              <input type="text" inputMode="decimal"
+                className={cn(input, price.trim() && spec.price === null && "border-danger")}
+                aria-invalid={price.trim() && spec.price === null ? true : undefined}
+                value={price} onChange={(e) => setPrice(e.target.value)} placeholder="450" />
+              {price.trim() && spec.price === null && (
+                <span role="alert" className="mt-1 block text-[11px] text-danger">{PRICE_INPUT_HINT}</span>
+              )}
+            </label>
+            <label className="block">
+              <FieldLabel hint="Leave at 0 and add stock later.">Starting quantity per size</FieldLabel>
+              <input type="number" min={0} className={input} value={stock} onChange={(e) => setStock(e.target.value)} placeholder="0" />
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-edge px-5 py-3">
+        <p className="text-[12px] text-secondary">
+          {mode === "edit" && existingKeys
+            ? <>Requested <b className="font-medium text-foreground">{requested}</b> · already exist <b className="font-medium text-foreground">{requested - willCreate}</b> · will create <b className="font-medium text-foreground">{willCreate}</b>.</>
+            : <><b className="font-medium text-foreground">{requested}</b> variant(s) will be created when you save.</>}
+        </p>
+        {mode === "edit" && (
+          <div className="flex flex-wrap items-center justify-end gap-3">
+            {disabledReason && <span id="generate-reason" className="text-[12px] text-secondary">{disabledReason}</span>}
+            <Button
+              variant="primary"
+              aria-describedby={disabledReason ? "generate-reason" : undefined}
+              disabled={busy || willCreate === 0 || spec.price === null}
+              onClick={generate}
+            >
+              {busy ? "Generating…" : `Generate ${willCreate} variant${willCreate === 1 ? "" : "s"}`}
+            </Button>
           </div>
         )}
       </div>
-
-      {/* price + stock */}
-      <div className="grid gap-4 md:grid-cols-2">
-        <label className="block">
-          <SectionLabel>Price (QAR)</SectionLabel>
-          {/* text, not number: a number input hands back "" for anything the browser dislikes, which
-              is indistinguishable from an empty box — and both used to generate variants at QAR 0. */}
-          <input type="text" inputMode="decimal"
-            className={cn(input, price.trim() && spec.price === null && "border-danger")}
-            value={price} onChange={(e) => setPrice(e.target.value)} placeholder="e.g. 450 or 450.50" />
-          {price.trim() && spec.price === null && (
-            <span className="mt-1 block text-[11px] text-danger">{PRICE_INPUT_HINT}</span>
-          )}
-        </label>
-        <label className="block"><SectionLabel>Starting quantity per size</SectionLabel><input type="number" min={0} className={input} value={stock} onChange={(e) => setStock(e.target.value)} placeholder="0" /></label>
-      </div>
-
-      <p className="text-[11px] text-faint">
-        {mode === "edit" && existingKeys
-          ? <>Requested <b className="text-secondary">{requested}</b> · already exist <b className="text-secondary">{requested - willCreate}</b> · will create <b className="text-secondary">{willCreate}</b>.</>
-          : <><b className="text-secondary">{requested}</b> variant(s) will be created. Prices are in QAR — type <b className="text-secondary">450</b> for QAR 450.00, or <b className="text-secondary">450.50</b> to include fils.</>}
-      </p>
-
-      {mode === "edit" && (
-        <div className="flex justify-end">
-          <Button variant="primary" disabled={busy || willCreate === 0 || spec.price === null} onClick={generate}>
-            {busy ? "Generating…" : `Generate ${willCreate} variant${willCreate === 1 ? "" : "s"}`}
-          </Button>
-        </div>
-      )}
     </Panel>
   );
 }

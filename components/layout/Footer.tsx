@@ -6,6 +6,7 @@ import { Link } from "@/lib/i18n-navigation";
 import { PAYMENT_ICONS } from "@/lib/constants";
 import { getSiteSettings } from "@/lib/content";
 import { getNavItems } from "@/lib/data/navigation";
+import { cn } from "@/lib/utils";
 import { LocaleSwitcher } from "./LocaleSwitcher";
 import { InstagramIcon, FacebookIcon, YoutubeIcon, TiktokIcon, WhatsAppIcon } from "@/components/icons/social";
 
@@ -20,6 +21,33 @@ async function copyrightYear(): Promise<number> {
   cacheLife("days");
   return new Date().getFullYear();
 }
+
+/**
+ * "97450099331" → "+974 5009 9331".
+ *
+ * The CMS stores the number as bare digits because that is what wa.me takes; an eleven-digit
+ * run is unreadable as a printed contact detail, so it is grouped for display only.
+ *
+ * Grouped in fours FROM THE RIGHT, which needs no table of dialling codes: the subscriber
+ * part falls into 4+4 and whatever is left over at the front is the country code, so +974,
+ * +971 and +44 all come out right without this function knowing any of them exist.
+ */
+function formatPhone(digits: string): string {
+  const groups: string[] = [];
+  let head = digits;
+  while (head.length > 4) {
+    groups.unshift(head.slice(-4));
+    head = head.slice(0, -4);
+  }
+  return `+${[head, ...groups].join(" ")}`;
+}
+
+/** Tailwind needs the class as a literal, so the count maps to one rather than interpolating. */
+const CONTACT_COLS: Record<number, string> = {
+  1: "",
+  2: "md:grid-cols-2",
+  3: "md:grid-cols-3",
+};
 
 /**
  * A centred burgundy footer, in two bands: the main slab carries the lockup, the links and
@@ -40,6 +68,14 @@ export async function Footer() {
   // Mirror the header navigation so the footer stays in sync as categories/collections change.
   const navItems = await getNavItems(locale);
 
+  // Every one of these is admin-editable and every one may be blank, so each group below
+  // renders only if it has something to say — an empty "Contact" heading over nothing is
+  // worse than no heading. The house has no accounts on some networks yet, which is why the
+  // social defaults ship empty rather than pointing at a placeholder profile.
+  const email = (settings.contactEmail ?? "").trim();
+  const phone = (settings.whatsapp ?? "").replace(/[^0-9]/g, "");
+  const location = (settings.storeLocation ?? "").trim();
+
   // Blanking a social in the admin should hide its icon, not render href="".
   const socials = [
     { key: "instagram", label: "Instagram", url: settings.instagram, Icon: InstagramIcon },
@@ -49,10 +85,14 @@ export async function Footer() {
     {
       key: "whatsapp",
       label: "WhatsApp",
-      url: settings.whatsapp ? `https://wa.me/${settings.whatsapp.replace(/[^0-9]/g, "")}` : "",
+      url: phone ? `https://wa.me/${phone}` : "",
       Icon: WhatsAppIcon,
     },
   ].filter((s) => s.url);
+
+  // How many of the three groups have content — the grid takes its column count from this so
+  // a house with no socials gets two centred halves, not two-thirds of a row and a hole.
+  const groups = [location, email || phone, socials.length ? "x" : ""].filter(Boolean).length;
 
   const links = [
     ...navItems.map((n) => ({ label: n.label, href: n.href })),
@@ -108,22 +148,87 @@ export async function Footer() {
           ))}
         </nav>
 
-        {/* gap-2 + p-2 rather than gap-5 and no padding: the marks keep the same 16px of air
-            between them, but each link is now a 38px target instead of a 22px glyph. */}
-        {socials.length > 0 && (
-          <div className="mt-8 flex items-center justify-center gap-2">
-            {socials.map(({ key, label, url, Icon }) => (
-              <a
-                key={key}
-                href={url}
-                target="_blank"
-                rel="noopener"
-                aria-label={label}
-                className="focus-ring p-2 text-footer-link transition-colors hover:text-footer-accent"
-              >
-                <Icon />
-              </a>
-            ))}
+        {/* ── Where to find the house ──
+            Three labelled groups on one rule rather than a stack of loose rows: WHERE it is,
+            HOW to reach it, WHERE to follow it. Each carries an eyebrow because a bare
+            "Doha, Qatar" floating under a nav row is decoration — the label is what turns
+            three details into a directory, and it is the whole difference between organised
+            and merely present.
+            Columns only from md up. On a phone they stack, still centred, which is the right
+            reading order anyway: place, then contact, then socials. */}
+        {groups > 0 && (
+          <div
+            className={cn(
+              "mt-10 grid gap-8 border-t border-footer-line pt-10 text-center",
+              CONTACT_COLS[groups],
+            )}
+          >
+            {location && (
+              <div>
+                <h2 className="eyebrow">{t("location")}</h2>
+                <p className="mt-2.5 text-[13px] text-footer-link">{location}</p>
+              </div>
+            )}
+
+            {(email || phone) && (
+              <div>
+                <h2 className="eyebrow">{t("contact")}</h2>
+                <ul className="mt-2.5 space-y-1.5 text-[13px]">
+                  {email && (
+                    <li>
+                      <a
+                        href={`mailto:${email}`}
+                        className="focus-ring text-footer-link transition-colors hover:text-footer-accent"
+                      >
+                        {email}
+                      </a>
+                    </li>
+                  )}
+                  {phone && (
+                    <li>
+                      {/* dir="ltr" is not optional on an Arabic page: a phone number is a
+                          neutral-run of digits and a leading "+", and the bidi algorithm
+                          drags that plus to the far end of the line in an RTL paragraph —
+                          "974 5009 9331+". The number is the same in both languages, so it
+                          is pinned to the one direction it is ever written in. */}
+                      <a
+                        href={`https://wa.me/${phone}`}
+                        target="_blank"
+                        rel="noopener"
+                        dir="ltr"
+                        className="focus-ring inline-block text-footer-link transition-colors hover:text-footer-accent"
+                      >
+                        {formatPhone(phone)}
+                      </a>
+                    </li>
+                  )}
+                </ul>
+              </div>
+            )}
+
+            {/* gap-2 + p-2 rather than gap-5 and no padding: the marks keep the same 16px of
+                air between them, but each link is a 38px target instead of a 22px glyph. The
+                -mx-2 pulls the row's outer padding back off the column edge so the icons stay
+                optically centred under their label. */}
+            {socials.length > 0 && (
+              <div>
+                <h2 className="eyebrow">{t("followUs")}</h2>
+                <div className="-mx-2 mt-1 flex flex-wrap items-center justify-center gap-x-2">
+                  {socials.map(({ key, label, url, Icon }) => (
+                    <a
+                      key={key}
+                      href={url}
+                      target="_blank"
+                      rel="noopener"
+                      aria-label={label}
+                      className="focus-ring p-2 text-footer-link transition-colors hover:text-footer-accent"
+                    >
+                      <Icon />
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -133,9 +238,14 @@ export async function Footer() {
           and the champagne hairline sitting on that edge does the work the old cream
           border-line was doing far too loudly. */}
       <div className="border-t border-footer-line bg-footer-deep">
-        {/* The bottom bar is fixed over this edge, so the last row buys itself clearance —
-            without it the copyright line sits permanently underneath the bar. */}
-        <div className="mx-auto flex max-w-[1200px] flex-col items-center justify-between gap-4 px-6 py-5 pb-[calc(1.25rem+var(--bottom-bar-clear))] md:flex-row">
+        {/* TWO fixed layers overhang this row, so it buys clearance for both: the bottom bar,
+            and the currency chip floating a gutter above it at the start edge
+            (components/layout/CurrencySwitcher.tsx). The chip's band is 16px of offset plus a
+            38px control — 4rem with air — and the row's start item is the language switcher,
+            so without this the chip parks squarely on top of it at every width, in both
+            directions (`start-5` follows the writing direction, and so does this row). The
+            leftover burgundy is not empty space: it is where those two controls sit. */}
+        <div className="mx-auto flex max-w-[1200px] flex-col items-center justify-between gap-4 px-6 py-5 pb-[calc(4rem+var(--bottom-bar-clear))] md:flex-row">
           {/* Needs the current pathname to switch locale in place, which is runtime data on
               routes whose params aren't enumerated. Suspending just this control keeps the
               rest of the footer in the static shell. */}

@@ -81,10 +81,17 @@ export function TiktokIcon({ size = SOCIAL_SIZE, className }: IconProps) {
 export function WhatsAppIcon({ size = SOCIAL_SIZE, className }: IconProps) {
   return (
     <LineIcon size={size} className={className}>
-      {/* speech bubble with a tail at the lower-leading corner */}
-      <path d="M5 19l1.1-3.2A7.6 7.6 0 1 1 8.9 18.6z" />
-      {/* simplified handset sweep */}
-      <path d="M9.2 9.6c-.2 0-.5.08-.66.33-.16.25-.6.86-.6 1.6 0 .74.62 1.7.9 2.05.28.35 1.2 1.5 2.7 2.05.9.33 1.3.28 1.55.2.28-.08.86-.4 1-.78.14-.38.14-.7.1-.78" />
+      {/* A full r=9 circle centred on the grid — the same footprint as the Facebook and
+          YouTube marks — opened at the lower left for a short tail nub. That silhouette,
+          not the handset, is what identifies the mark at 22px, so it gets the room.
+          The tail stays bottom-left in Arabic: it is a trademark, and a mirrored bubble
+          reads as some other product. */}
+      <path d="M3 21l1.65-3.8A9 9 0 1 1 8.05 20.1z" />
+      {/* The receiver as a centreline hook — stub, quarter turn, stub — rather than the
+          usual outlined handset. Outlining it means ear and mouth pieces about 1 unit
+          across while the hairline here is 1.75, so they flood solid and the glyph turns
+          to mush; one round-capped stroke keeps the sweep and stays open. */}
+      <path d="M8.2 8.2v1.6a6 6 0 0 0 6 6h1.6" />
     </LineIcon>
   );
 }

@@ -14,7 +14,9 @@ export function CurrencySwitcher() {
   return (
     // Sits a gutter above the fixed bottom bar. --bottom-bar-clear already folds in the
     // device's own safe-area inset, so this is the one number to change if the bar resizes.
-    <div className="fixed bottom-[calc(1rem+var(--bottom-bar-clear))] start-5 z-30">
+    // --pdp-bar-h is 0 everywhere except a product page while its mobile buy bar is up,
+    // which is anchored to the same edge and would otherwise sit right on top of this.
+    <div className="fixed bottom-[calc(1rem+var(--bottom-bar-clear)+var(--pdp-bar-h))] start-5 z-30 transition-[bottom] duration-300 ease-[cubic-bezier(0.24,0.25,0,1)] motion-reduce:transition-none">
       {open && (
         <div className="mb-2 overflow-hidden border border-line bg-paper shadow-lg">
           {CURRENCY_CODES.map((c) => (

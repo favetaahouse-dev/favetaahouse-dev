@@ -95,6 +95,11 @@
   --bottom-bar-h: 61px;
   --bottom-bar-clear: calc(61px + env(safe-area-inset-bottom, 0px));
 
+  /* Height of the product page's mobile buy bar while it is showing, published by
+     StickyBuyBar and 0 everywhere else. The floating currency and WhatsApp buttons add it
+     to their own offset so the three never end up stacked in the same 72px band. */
+  --pdp-bar-h: 0px;
+
   /* Editorial container. 1440 rather than 1200: the wider measure is what lets a
      two-column band breathe on a large display instead of stranding it mid-screen. */
   --container-lux: 1440px;
@@ -109,10 +114,16 @@
   --dur-fast: 200ms;
   --dur: 300ms;
   --dur-slow: 500ms;
+
+  /* The fixed header's height, for anything that has to size itself against the space
+     left under it. Mirrors the h-[60px] md:h-[72px] in Header.tsx — change both or
+     neither. The announcement bar is deliberately NOT in this sum: it scrolls away, and
+     the things reading this only care once the page has moved. */
+  --pdp-top: calc(env(safe-area-inset-top, 0px) + 60px);
 }
 
 @media (min-width: 768px) {
-  :root { --gutter: 2rem; }
+  :root { --gutter: 2rem; --pdp-top: calc(env(safe-area-inset-top, 0px) + 72px); }
 }
 @media (min-width: 1024px) {
   :root { --gutter: 4rem; }
@@ -585,6 +596,41 @@
   }
   .group:hover .img-zoom img,
   .img-zoom:hover img { scale: 1.04; }
+
+  /* ── PDP main image ──
+     The whole width story for the gallery frame, deliberately in one place rather than
+     split across Tailwind max-w-* utilities: utilities sit in a later cascade layer than
+     this one, so a single `xl:max-w-none` silently beats anything declared here and the
+     frame collapses. Margins stay on the element — different property, no contest.
+
+     Below sm the frame is full-bleed (the element's own -mx-4). From sm it is a centred
+     440px. From 80rem the WIDTH is derived from the height the viewport can actually
+     spare: the photography is 2:3, so at the ~790px its column could give it the frame
+     would be 1183px tall and the garment would never be whole on screen. Inverting that
+     is what puts the header, the full garment and the entire buying panel in one screen.
+
+     The height budget is the viewport less BOTH pieces of fixed chrome — the header on
+     top and the bottom bar under it, which is easy to forget because it never scrolls
+     into view while you are looking at the top of the page — plus 4rem for the page's
+     own py-8 and the counter line beneath the frame.
+
+     A definite width (not just a cap) is also what stops the flex item it sits in from
+     shrinking to nothing — the images are `fill`, so they lend the column no intrinsic
+     size of their own. */
+  .pdp-stage { width: auto; }
+  @media (min-width: 40rem) {
+    .pdp-stage { width: 100%; max-width: 440px; }
+  }
+  @media (min-width: 80rem) {
+    .pdp-stage {
+      width: clamp(
+        340px,
+        calc((100svh - var(--pdp-top) - var(--bottom-bar-clear) - 4rem) * 2 / 3),
+        620px
+      );
+      max-width: 100%;
+    }
+  }
 }
 
 /* hide scrollbars on carousels */
@@ -678,7 +724,7 @@ body:has([data-hero-full]) [data-announce] {
    to the runtime `--admin-*` variables, so toggling data-theme reskins the whole panel.
    Only the admin console uses these classes.
 
-   NOTE for the storefront: this block claims --color-{canvas,surface,elevated,edge,
+   NOTE for the storefront: this block claims --color-{canvas,surface,elevated,edge,field,
    foreground,secondary,faint,accent,accent-fg,positive,warn,danger,info}. Two @theme
    blocks defining one key means last-one-wins, so storefront tokens must never reuse
    those names — which is why the palette above says `brand` and `gold`, not `accent`. */
@@ -687,6 +733,7 @@ body:has([data-hero-full]) [data-announce] {
   --color-surface: var(--admin-surface);
   --color-elevated: var(--admin-elevated);
   --color-edge: var(--admin-edge);
+  --color-field: var(--admin-field);
   --color-foreground: var(--admin-foreground);
   --color-secondary: var(--admin-secondary);
   --color-faint: var(--admin-faint);
@@ -709,6 +756,14 @@ body:has([data-hero-full]) [data-announce] {
   --admin-surface: #ffffff;
   --admin-elevated: #efe9de;
   --admin-edge: rgb(91 30 45 / 0.14);
+  /* Form fields need a boundary that --admin-edge cannot give them. Edge is deliberately a
+     14% wash (~1.3:1) because it draws panel outlines and table row dividers — decorative
+     separators, where a hard line across eight pages of dense tables would be worse than no
+     line. But WCAG 1.4.11 asks 3:1 of anything that identifies a CONTROL, and an input whose
+     border is invisible is a value floating under a caption. Hence a second, opaque token
+     used only by inputs: 3.61 / 4.03 / 3.34 against canvas / surface / elevated. Mauve-grey,
+     so it stays in the wine family rather than reading as a neutral grey box. */
+  --admin-field: #92787e;
   --admin-foreground: #222222;
   --admin-secondary: #6b615a;
   --admin-faint: #8e8279;
@@ -730,6 +785,8 @@ body:has([data-hero-full]) [data-announce] {
   --admin-surface: #201a1b;
   --admin-elevated: #2b2325;
   --admin-edge: rgb(246 242 234 / 0.12);
+  /* 3.96 / 3.68 / 3.29 against the dark canvas / surface / elevated. */
+  --admin-field: #7a736f;
   --admin-foreground: #ece7e0;
   --admin-secondary: #b3a89f;
   --admin-faint: #8b8078;

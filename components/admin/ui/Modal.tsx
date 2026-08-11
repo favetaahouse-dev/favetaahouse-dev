@@ -1,25 +1,11 @@
 "use client";
 
-import { useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import { Button, IconButton, Spinner } from "./primitives";
+import { useMounted, useEscape } from "@/lib/overlay";
 import { cn } from "@/lib/utils";
-
-const noop = () => () => {};
-/** false during SSR + first client render, true after mount (portal-safe, no effect setState). */
-function useMounted() {
-  return useSyncExternalStore(noop, () => true, () => false);
-}
-
-function useEscape(onClose: () => void, open: boolean) {
-  useEffect(() => {
-    if (!open) return;
-    const h = (e: KeyboardEvent) => e.key === "Escape" && onClose();
-    document.addEventListener("keydown", h);
-    return () => document.removeEventListener("keydown", h);
-  }, [open, onClose]);
-}
 
 const SIZES = { sm: "max-w-sm", md: "max-w-lg", lg: "max-w-2xl", xl: "max-w-4xl" };
 
