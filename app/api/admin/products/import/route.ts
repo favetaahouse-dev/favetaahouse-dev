@@ -3,6 +3,7 @@ import { revalidateTag } from "next/cache";
 import { requirePermission } from "@/lib/admin-auth";
 import { supabase } from "@/lib/supabase";
 import { normalizeCategory } from "@/lib/categories";
+import { BRAND_NAME } from "@/lib/brand";
 import { recomputePrices } from "@/lib/data/product-pricing";
 
 export const maxDuration = 60;
@@ -62,6 +63,9 @@ export async function POST(req: NextRequest) {
       details: p.details ?? null,
       packaging: p.packaging ?? null,
       category: p.category ? normalizeCategory(p.category) : "ABAYA",
+      // Never trust an imported vendor — a JSON file exported from another store would
+      // otherwise carry that store's brand straight back into the catalogue.
+      vendor: BRAND_NAME,
       featured: !!p.featured,
       on_sale: !!p.onSale,
       price_min: p.priceMin ?? (vPrices.length ? Math.min(...vPrices) : 0),

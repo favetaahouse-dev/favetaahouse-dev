@@ -17,6 +17,7 @@ import bcrypt from "bcryptjs";
 import { createClient } from "@supabase/supabase-js";
 import { PERMISSIONS, DEFAULT_ROLE_PERMISSIONS } from "../lib/rbac/permissions";
 import { assetUrl } from "../lib/asset-url";
+import { BRAND_NAME } from "../lib/brand";
 
 const url = process.env.SUPABASE_URL!;
 const key = process.env.SUPABASE_SERVICE_KEY!;
@@ -91,7 +92,7 @@ async function main() {
       products.map((p) => ({
         handle: p.handle, title: p.title, description: p.description, product_code: p.productCode,
         materials: p.materials, model_size: p.modelSize, details: p.details, packaging: p.packaging,
-        category: p.category, vendor: p.vendor, featured: p.featured, on_sale: p.onSale,
+        category: p.category, vendor: BRAND_NAME, featured: p.featured, on_sale: p.onSale,
         price_min: p.priceMin, price_max: p.priceMax,
       })),
     )

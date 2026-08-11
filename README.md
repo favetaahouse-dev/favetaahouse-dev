@@ -1,8 +1,8 @@
-# ALESSIA ABAYA — Full-stack storefront (Supabase + ryzo conventions)
+# FAVETAA — Full-stack storefront (Supabase + ryzo conventions)
 
-A production-grade rebuild of [alessiaabaya.com](https://www.alessiaabaya.com) (a Qatari modest-fashion
-house — abayas & jalabiyas) as a real, self-owned store, aligned to the **ryzo-website** project's
-structure, translation method, and admin-panel style.
+A production-grade, self-owned store for **FAVETAA**, a Qatari modest-fashion house (abayas &
+jalabiyas), aligned to the **ryzo-website** project's structure, translation method, and
+admin-panel style.
 
 ## Stack
 
@@ -19,10 +19,6 @@ structure, translation method, and admin-panel style.
 
 ## Getting started
 
-Windows: a few scraped image filenames run to ~146 characters, so clone somewhere short (or
-`git config --global core.longpaths true` first) — a deep clone path trips the 260-char `MAX_PATH`
-limit and the checkout fails.
-
 ```bash
 npm install
 
@@ -33,10 +29,10 @@ npx supabase db reset            # applies supabase/migrations (schema + RPCs)
 npm run db:types                 # regenerate lib/database.types.ts
 
 # 2. Upload product media to Supabase Storage (idempotent; --dry-run to preview)
-npm run upload-assets            # 531 files / ~79MB -> product-images + media buckets
+npm run upload-assets            # -> product-images + media buckets
 
-# 3. Seed (reuses prisma/seed-data/*.json from the scrape → Supabase)
-npm run seed                     # 99 products, 448 variants, 19 collections, admin + demo users
+# 3. Seed (reads prisma/seed-data/*.json → Supabase)
+npm run seed                     # 25 products, 150 variants, 19 collections, admin + demo users
 
 # 4. Run
 npm run dev                      # http://localhost:3000  (/ = English, /ar = Arabic)
@@ -44,7 +40,7 @@ npm run dev                      # http://localhost:3000  (/ = English, /ar = Ar
 
 ### Where media lives
 Product imagery is **not in this repo** — it lives in Supabase Storage. Seed data keeps
-project-agnostic `/assets/files/…` keys; `lib/asset-url.ts` resolves them onto the current project's
+brand-agnostic `/assets/files/…` keys; `lib/asset-url.ts` resolves them onto the current project's
 Storage URL, and `npm run seed` writes the resolved URL into the DB. Point `.env` at a different
 Supabase project and re-run `upload-assets` + `seed` and everything re-points itself.
 
@@ -105,7 +101,7 @@ lib/  supabase.ts database.types.ts auth.ts admin-auth.ts skipcash.ts email.ts m
       coupons.ts content.ts content-schema.ts data/* actions/*
 components/  layout · home · product · collection · cart · checkout · account · admin · providers · DirSync
 supabase/migrations/  20260704120000_commerce.sql  20260704120100_rpc.sql
-scripts/  extract.ts  seed-supabase.ts
+scripts/  seed-supabase.ts  upload-assets.ts  set-admin-password.ts  generate-favicon.ts  meta-test-event.ts
 ```
 
 ## What works (all verified via Playwright)

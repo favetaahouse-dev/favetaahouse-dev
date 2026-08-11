@@ -1,4 +1,4 @@
--- ALESSIA ABAYA commerce schema (relational). snake_case columns, text+CHECK enums.
+-- FAVETAA commerce schema (relational). snake_case columns, text+CHECK enums.
 -- RLS enabled with no policies => only the service_role (server) can read/write.
 
 create extension if not exists pgcrypto;
@@ -37,7 +37,7 @@ create table public.products (
   details_ar     text,
   packaging      text,
   category       text not null default 'ABAYA' check (category in ('ABAYA','JALABIYA','SHEILA','OTHER')),
-  vendor         text not null default 'ALESSIA ABAYA',
+  vendor         text not null default 'FAVETAA',
   featured       boolean not null default false,
   on_sale        boolean not null default false,
   price_min      integer not null default 0,

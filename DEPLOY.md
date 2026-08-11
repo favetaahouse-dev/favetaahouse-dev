@@ -1,4 +1,4 @@
-# Deploying ALESSIA ABAYA (Vercel + cloud Supabase + SkipCash)
+# Deploying FAVETAA (Vercel + cloud Supabase + SkipCash)
 
 This app runs feature-complete **locally in demo mode** with no external accounts. To go live you connect
 four things: a cloud **Supabase** database, the **SkipCash** payment gateway, **Resend** for order emails,
@@ -122,8 +122,11 @@ AddPaymentInfo and Purchase — Browser-only for the rest, which is intended.
 
 ## 4. Vercel (hosting)
 
-Vercel auto-detects Next.js — no `vercel.json`/`vercel.ts` needed. Security headers ship from
-`next.config.ts`.
+Security headers ship from `next.config.ts`. **Do not rely on framework auto-detection** — it has
+silently resolved to preset "Other" on this project, which skips the Next.js build entirely and
+publishes `public/` as a static folder. The deploy still reports **Ready** (in ~1s, with no routes),
+so nothing warns you. `vercel.json` pins `"framework": "nextjs"` and overrides the dashboard preset;
+keep it committed. Verify with `vercel project inspect` — Framework Settings must read `Next.js`.
 
 1. Import the repo into Vercel (or `vercel link`).
 2. Add every variable from [`.env.production.example`](./.env.production.example) under Settings →

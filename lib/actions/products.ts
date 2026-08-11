@@ -7,6 +7,7 @@ import { logAudit } from "@/lib/audit";
 import { supabase } from "@/lib/supabase";
 import { getVariantOptions } from "@/lib/content";
 import { normalizeCategory } from "@/lib/categories";
+import { BRAND_NAME } from "@/lib/brand";
 import { MAX_PRICE_FILS } from "@/lib/money";
 // A plain server module, not an action — see the note at the top of that file for why this one
 // cannot live in this "use server" file.
@@ -172,6 +173,8 @@ export async function createProduct(input: ProductInput, spec?: VariantSpec) {
       packaging: parsed.packaging ?? null, category: parsed.category, status: parsed.status,
       tags: parsed.tags ?? [], featured: !!parsed.featured, on_sale: !!parsed.onSale,
       price_min: 0, price_max: 0,
+      // Written explicitly rather than left to the column default — see lib/brand.ts.
+      vendor: BRAND_NAME,
     })
     .select("id")
     .single();
