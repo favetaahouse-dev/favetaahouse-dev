@@ -1,0 +1,75 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# local secrets and env files
+.env*
+!.env*.example
+*.key
+*.pem
+*.p12
+*.pfx
+# SSH keys carry no extension, so *.key above does not catch them.
+id_rsa
+id_ecdsa
+id_ed25519
+secrets.json
+*.sqlite
+*.db
+*.log
+
+# local data and caches
+/.cache/
+/.pnpm-store/
+/tmp/
+/temp/
+/logs/
+/uploads/
+/media/
+
+# editor and OS files
+.vscode/
+.idea/
+# playwright-mcp scratch output (screenshots, page snapshots, console logs)
+.playwright-mcp/
+.DS_Store
+Thumbs.db
+
+# product media — lives in Supabase Storage, not in git (see README "Where media lives").
+# Restore from backup here only to re-run `npm run upload-assets` against a new project.
+/public/assets/files/
+
+# vercel
+.vercel
+
+# supabase local cli state
+/supabase/.temp/
+/supabase/.branches/
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts

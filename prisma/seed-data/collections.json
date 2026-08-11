@@ -1,0 +1,337 @@
+[
+  {
+    "handle": "all",
+    "title": "Shop",
+    "kind": "FEATURE",
+    "productHandles": [
+      "quiet-ember",
+      "amber-hour",
+      "mulberry-veil",
+      "open-sky",
+      "dusk-velvet",
+      "second-nature",
+      "first-light",
+      "still-water",
+      "nightfall-lace",
+      "soft-static",
+      "pomegranate-dark",
+      "saffron-light",
+      "champagne-hour",
+      "ash-rose",
+      "dove-grey",
+      "winter-bloom",
+      "dark-roast",
+      "faded-lilac",
+      "harbour-blue",
+      "overcast",
+      "black-organza",
+      "rose-ash",
+      "deep-emerald",
+      "midnight-line",
+      "desert-stone"
+    ],
+    "position": 0
+  },
+  {
+    "handle": "view-all",
+    "title": "View All",
+    "kind": "FEATURE",
+    "productHandles": [
+      "quiet-ember",
+      "amber-hour",
+      "mulberry-veil",
+      "open-sky",
+      "dusk-velvet",
+      "second-nature",
+      "first-light",
+      "still-water",
+      "nightfall-lace",
+      "soft-static",
+      "pomegranate-dark",
+      "saffron-light",
+      "champagne-hour",
+      "ash-rose",
+      "dove-grey",
+      "winter-bloom",
+      "dark-roast",
+      "faded-lilac",
+      "harbour-blue",
+      "overcast",
+      "black-organza",
+      "rose-ash",
+      "deep-emerald",
+      "midnight-line",
+      "desert-stone"
+    ],
+    "position": 1
+  },
+  {
+    "handle": "new-in",
+    "title": "New In",
+    "kind": "FEATURE",
+    "productHandles": [
+      "quiet-ember",
+      "amber-hour",
+      "mulberry-veil",
+      "open-sky",
+      "dusk-velvet",
+      "second-nature",
+      "first-light",
+      "still-water",
+      "nightfall-lace",
+      "soft-static",
+      "pomegranate-dark",
+      "saffron-light"
+    ],
+    "position": 2
+  },
+  {
+    "handle": "abayas",
+    "title": "Abayas",
+    "kind": "CATEGORY",
+    "productHandles": [
+      "quiet-ember",
+      "amber-hour",
+      "mulberry-veil",
+      "open-sky",
+      "dusk-velvet",
+      "second-nature",
+      "first-light",
+      "still-water",
+      "nightfall-lace",
+      "soft-static",
+      "pomegranate-dark",
+      "saffron-light",
+      "champagne-hour",
+      "ash-rose",
+      "dove-grey",
+      "winter-bloom",
+      "dark-roast",
+      "faded-lilac",
+      "harbour-blue",
+      "overcast",
+      "black-organza",
+      "rose-ash",
+      "deep-emerald",
+      "midnight-line",
+      "desert-stone"
+    ],
+    "position": 3
+  },
+  {
+    "handle": "jalabiyas",
+    "title": "Jalabiyas",
+    "kind": "CATEGORY",
+    "productHandles": [],
+    "position": 4
+  },
+  {
+    "handle": "sheilas",
+    "title": "Sheilas",
+    "kind": "CATEGORY",
+    "productHandles": [],
+    "position": 5
+  },
+  {
+    "handle": "sales",
+    "title": "Sale",
+    "kind": "SALE",
+    "productHandles": [
+      "mulberry-veil",
+      "harbour-blue"
+    ],
+    "position": 6
+  },
+  {
+    "handle": "travel-collection",
+    "title": "Travel Collection",
+    "kind": "FEATURE",
+    "productHandles": [
+      "mulberry-veil",
+      "second-nature",
+      "first-light",
+      "still-water",
+      "nightfall-lace",
+      "saffron-light",
+      "champagne-hour",
+      "ash-rose",
+      "black-organza"
+    ],
+    "position": 7
+  },
+  {
+    "handle": "liberty",
+    "title": "Liberty",
+    "kind": "FEATURE",
+    "productHandles": [
+      "champagne-hour",
+      "ash-rose",
+      "dove-grey",
+      "winter-bloom",
+      "dark-roast",
+      "faded-lilac",
+      "harbour-blue",
+      "overcast"
+    ],
+    "position": 8
+  },
+  {
+    "handle": "daily-abayas",
+    "title": "Daily Abayas",
+    "kind": "CATEGORY",
+    "productHandles": [
+      "quiet-ember",
+      "amber-hour",
+      "mulberry-veil",
+      "open-sky",
+      "second-nature",
+      "first-light",
+      "still-water",
+      "soft-static",
+      "pomegranate-dark",
+      "dove-grey",
+      "dark-roast",
+      "faded-lilac",
+      "harbour-blue",
+      "overcast",
+      "rose-ash",
+      "deep-emerald",
+      "midnight-line",
+      "desert-stone"
+    ],
+    "position": 9
+  },
+  {
+    "handle": "evening-abayas",
+    "title": "Evening Abayas",
+    "kind": "CATEGORY",
+    "productHandles": [
+      "dusk-velvet",
+      "nightfall-lace",
+      "saffron-light",
+      "champagne-hour",
+      "ash-rose",
+      "winter-bloom",
+      "black-organza"
+    ],
+    "position": 10
+  },
+  {
+    "handle": "daily-jalabiyas",
+    "title": "Daily Jalabiyas",
+    "kind": "CATEGORY",
+    "productHandles": [],
+    "position": 11
+  },
+  {
+    "handle": "evening-jalabiyas",
+    "title": "Evening Jalabiyas",
+    "kind": "CATEGORY",
+    "productHandles": [],
+    "position": 12
+  },
+  {
+    "handle": "pre-winter",
+    "title": "Pre-Winter",
+    "kind": "SEASONAL",
+    "productHandles": [
+      "quiet-ember",
+      "dusk-velvet",
+      "soft-static",
+      "pomegranate-dark",
+      "winter-bloom",
+      "dark-roast",
+      "faded-lilac",
+      "harbour-blue",
+      "overcast",
+      "rose-ash"
+    ],
+    "position": 13
+  },
+  {
+    "handle": "winter-2025",
+    "title": "Winter",
+    "kind": "SEASONAL",
+    "productHandles": [
+      "quiet-ember",
+      "dusk-velvet",
+      "soft-static",
+      "pomegranate-dark",
+      "winter-bloom",
+      "dark-roast",
+      "faded-lilac",
+      "harbour-blue"
+    ],
+    "position": 14
+  },
+  {
+    "handle": "ramadan-2026",
+    "title": "Ramadan Collection",
+    "kind": "SEASONAL",
+    "productHandles": [
+      "quiet-ember",
+      "amber-hour",
+      "mulberry-veil",
+      "open-sky",
+      "dusk-velvet",
+      "second-nature",
+      "first-light",
+      "still-water",
+      "nightfall-lace",
+      "soft-static",
+      "pomegranate-dark",
+      "saffron-light",
+      "champagne-hour",
+      "ash-rose"
+    ],
+    "position": 15
+  },
+  {
+    "handle": "eid-collection",
+    "title": "Eid Collection",
+    "kind": "SEASONAL",
+    "productHandles": [
+      "dusk-velvet",
+      "nightfall-lace",
+      "saffron-light",
+      "champagne-hour",
+      "ash-rose",
+      "winter-bloom",
+      "black-organza"
+    ],
+    "position": 16
+  },
+  {
+    "handle": "black-collection",
+    "title": "Black Collection",
+    "kind": "SEASONAL",
+    "productHandles": [
+      "second-nature",
+      "pomegranate-dark",
+      "dark-roast",
+      "black-organza",
+      "midnight-line"
+    ],
+    "position": 17
+  },
+  {
+    "handle": "eid-al-adha-collection-2026",
+    "title": "Eid Al-Adha 2026",
+    "kind": "SEASONAL",
+    "productHandles": [
+      "first-light",
+      "still-water",
+      "nightfall-lace",
+      "soft-static",
+      "pomegranate-dark",
+      "saffron-light",
+      "champagne-hour",
+      "ash-rose",
+      "dove-grey",
+      "winter-bloom",
+      "dark-roast",
+      "faded-lilac"
+    ],
+    "position": 18
+  }
+]

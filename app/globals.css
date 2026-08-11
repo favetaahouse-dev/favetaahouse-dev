@@ -1,0 +1,744 @@
+@import "tailwindcss";
+
+/* ─────────────────────────── Design tokens ─────────────────────────── */
+@theme {
+  /* ── Raw palette ──
+     The house colours. Burgundy is the voice, cream is the room it speaks in, and
+     champagne is the jewellery — used at the scale of jewellery, never as a surface.
+     Nothing below is meant to be reached for directly in a component: the semantic
+     tokens underneath are what the markup names. These exist so the semantics have
+     something to point at, and so a palette change happens in one place. */
+  --color-burgundy: #5b1e2d;
+  --color-wine: #7a2838;
+  --color-rose: #b38a8f;
+  --color-blush: #d9b4b4;
+  --color-gold: #c89a6a;      /* champagne */
+  --color-gold-soft: #e6cfa0;
+  --color-cream: #f6f2ea;
+  --color-warm-beige: #e8e1d6;
+  --color-charcoal: #222222;
+
+  /* ── Semantic surface + text ──
+     These names predate the palette and are deliberately unchanged: ~240 call sites
+     across the storefront already say bg-paper / text-ink / border-line, so retuning
+     the VALUES here reskins the whole site without touching the markup. The greys are
+     gone — every neutral now carries a little of the burgundy's warmth, which is what
+     stops cream from reading as "unstyled white". */
+  --color-paper: #f6f2ea;      /* page background */
+  --color-mist: #e8e1d6;       /* alternating band + image placeholder */
+  --color-haze: #efe9de;       /* one step between paper and mist */
+  --color-line: #e0d6c6;       /* hairlines, warm rather than grey */
+  --color-ink: #4a423d;        /* body copy */
+  --color-strong: #222222;     /* headings — charcoal, NOT the brand colour */
+  --color-muted: #8e8279;      /* meta, placeholders, inactive */
+  /* ── Footer (a dark surface, so it needs its own scale) ──
+     The footer is burgundy, which means NONE of the light-surface tokens above are
+     legal inside it: text-ink/-muted are dark browns and vanish against it. These four
+     are the on-burgundy equivalents, pre-blended against --color-footer rather than
+     left as alpha, so a nested element cannot double up the transparency.
+     Contrast against #5b1e2d: link 11.2:1, accent 8.3:1, muted 6.3:1 — all past AA.
+     -deep is one step down from the base and carries the legal bar, so the footer
+     reads as two bands rather than one undifferentiated wall of red. */
+  --color-footer: #5b1e2d;     /* the footer is a burgundy slab now */
+  --color-footer-deep: #4a1824; /* legal bar — a shade below the main band */
+  --color-footer-fg: #f6f2ea;
+  --color-footer-link: #f6f2ea; /* full cream: links are the reason the footer exists */
+  --color-footer-accent: #e6cfa0; /* champagne — hover + tagline, the jewellery note */
+  --color-footer-muted: #c9b3b4; /* copyright and other genuinely secondary meta */
+  --color-footer-line: #7a413e;  /* champagne at low alpha over burgundy, pre-blended */
+
+  /* ── Brand ──
+     --color-strong used to do two jobs: heading text AND button fills, because both
+     were black. They diverge now — text is charcoal, fills are burgundy — so the fills
+     get their own token. signal/-strong are the ORIGINAL accent tokens: they were red,
+     were neutered to black when the palette went monochrome, and are restored here, so
+     the ~22 call sites still pointing at them come back to life as brand-coloured
+     rather than needing an edit each. */
+  --color-brand: #5b1e2d;
+  --color-brand-hover: #7a2838;
+  --color-signal: #5b1e2d;
+  --color-signal-strong: #7a2838;
+  --color-on-brand: #f6f2ea;   /* cream, never #fff — pure white on burgundy glares */
+  --color-card: #ffffff;       /* the one true white, for cards that must lift off cream */
+
+  /* ── Type ──
+     Three Latin faces with three jobs and no overlap: Playfair carries the editorial
+     voice (and ONLY headings — it is unreadable at paragraph length), Lato carries
+     prose, Poppins carries anything that behaves like an interface control. Arabic is
+     Cairo throughout; the RTL rules below swap it in for all three roles, because a
+     serif/sans split has no equivalent in the script. */
+  --font-display: var(--font-playfair), "Playfair Display", Georgia, serif;
+  --font-heading: var(--font-playfair), "Playfair Display", Georgia, serif;
+  --font-sans: var(--font-lato), "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-button: var(--font-poppins), "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-arabic: var(--font-cairo), "Segoe UI", Tahoma, sans-serif;
+
+  /* ── Geometry ──
+     Was 0px everywhere. 2px is not "rounded" — at this scale the eye reads it as a cut
+     edge rather than a corner, which is the difference between a printed card and a
+     browser default. Anything larger starts to look like software. */
+  --radius: 2px;
+  --radius-control: 2px;
+  --radius-card: 4px;
+
+  /* Slow out, no overshoot. Luxury motion decelerates; it never bounces. */
+  --ease-lux: cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+/* ── Layout constants ──
+   Not design tokens — they are arithmetic that several unrelated things have to agree
+   on, so they live on :root and deliberately generate no Tailwind utility. */
+:root {
+  /* One source of truth for the 61px bottom bar plus whatever the device reserves for
+     its home indicator. The page's bottom padding, the floating currency/WhatsApp
+     buttons and the toast stack all read this. */
+  --bottom-bar-h: 61px;
+  --bottom-bar-clear: calc(61px + env(safe-area-inset-bottom, 0px));
+
+  /* Editorial container. 1440 rather than 1200: the wider measure is what lets a
+     two-column band breathe on a large display instead of stranding it mid-screen. */
+  --container-lux: 1440px;
+  --container-text: 68ch;
+
+  /* Section rhythm. The large values are the point — this is where the luxury lives,
+     far more than in any colour or border. */
+  --space-section: clamp(4.5rem, 9vw, 8.5rem);
+  --space-section-sm: clamp(3rem, 6vw, 5rem);
+  --gutter: 1.25rem;
+
+  --dur-fast: 200ms;
+  --dur: 300ms;
+  --dur-slow: 500ms;
+}
+
+@media (min-width: 768px) {
+  :root { --gutter: 2rem; }
+}
+@media (min-width: 1024px) {
+  :root { --gutter: 4rem; }
+}
+@media (min-width: 1440px) {
+  :root { --gutter: 6rem; }
+}
+
+/* ─────────────────────────── Base ─────────────────────────── */
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  body {
+    background-color: var(--color-paper);
+    /* Paper grain, at the threshold of perception. A single 120px tile of greyscale
+       fractal noise at 3.5% — enough that a large cream field reads as stock rather
+       than as an empty div, not enough to be nameable as a texture. It is a background
+       IMAGE over the background COLOUR, so any section with its own fill covers it. */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    /* 16px. The old 14.5px existed only because Jost runs small for its em; Lato has a
+       normal x-height, so the compensation would now just make the page small. */
+    font-size: 1rem;
+    font-weight: 400;
+    letter-spacing: normal;
+    line-height: 1.75;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
+    font-weight: 500;
+    /* Playfair is a high-contrast didone: it sets tight and wants slightly negative
+       tracking at display sizes, where the default spacing reads as gappy. */
+    letter-spacing: -0.01em;
+    line-height: 1.15;
+    color: var(--color-strong);
+  }
+  /* Arabic swaps the whole stack to Cairo — headings included. There is no serif/sans
+     distinction to preserve in the script, so the hierarchy is carried by weight and
+     scale instead. */
+  [dir="rtl"] body,
+  [lang="ar"] body {
+    font-family: var(--font-arabic);
+    letter-spacing: normal;
+  }
+  [dir="rtl"] h1, [lang="ar"] h1,
+  [dir="rtl"] h2, [lang="ar"] h2,
+  [dir="rtl"] h3, [lang="ar"] h3,
+  [dir="rtl"] h4, [lang="ar"] h4,
+  [dir="rtl"] h5, [lang="ar"] h5,
+  [dir="rtl"] h6, [lang="ar"] h6 {
+    font-family: var(--font-arabic);
+    font-weight: 700;
+    letter-spacing: 0;
+  }
+  [dir="rtl"] .flip-x {
+    transform: scaleX(-1);
+  }
+  ::selection {
+    background: var(--color-brand);
+    color: var(--color-on-brand);
+  }
+}
+
+@layer components {
+  /* Interface type — nav, labels, buttons, anything that is a control rather than prose. */
+  .font-button {
+    font-family: var(--font-button);
+  }
+
+  /* ── Container ──
+     One editorial measure. The gutter is a custom property rather than a set of
+     breakpoint paddings so that a section can widen its own margin without having to
+     restate four media queries. */
+  .container-lux {
+    width: 100%;
+    max-width: var(--container-lux);
+    margin-inline: auto;
+    padding-inline: var(--gutter);
+  }
+  .container-narrow {
+    width: 100%;
+    max-width: 1200px;
+    margin-inline: auto;
+    padding-inline: var(--gutter);
+  }
+
+  /* ── Buttons ──
+     A burgundy slab with wide-tracked caps at a deliberately small size, so the CTA
+     reads as a typographic mark rather than a coloured chip. Hover steps to wine and
+     lifts a single pixel — the lift is what makes it feel like an object rather than a
+     rectangle, and one pixel is the whole budget. */
+  .btn-brand,
+  .btn-outline {
+    font-family: var(--font-button);
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    font-weight: 500;
+    font-size: 0.75rem;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;                 /* anchors the .btn-arrow ::after */
+    border-radius: var(--radius-control);
+    padding: 1.05rem 2.25rem;
+    cursor: pointer;
+    transition:
+      background-color var(--dur) var(--ease-lux),
+      color var(--dur) var(--ease-lux),
+      border-color var(--dur) var(--ease-lux),
+      translate var(--dur) var(--ease-lux);
+  }
+
+  .btn-brand {
+    background-color: var(--color-brand);
+    color: var(--color-on-brand);
+    border: 1px solid var(--color-brand);
+  }
+  .btn-brand:hover {
+    background-color: var(--color-brand-hover);
+    border-color: var(--color-brand-hover);
+    translate: 0 -1px;
+  }
+
+  /* Secondary: a hairline box that fills on hover. */
+  .btn-outline {
+    background-color: transparent;
+    color: var(--color-brand);
+    border: 1px solid var(--color-brand);
+  }
+  .btn-outline:hover {
+    background-color: var(--color-brand);
+    color: var(--color-on-brand);
+    translate: 0 -1px;
+  }
+
+  /* On a burgundy band the two buttons invert: the outline becomes the cream one. */
+  .surface-brand .btn-outline,
+  .btn-outline-invert {
+    color: var(--color-on-brand);
+    border-color: rgb(246 242 234 / 0.45);
+  }
+  .surface-brand .btn-outline:hover,
+  .btn-outline-invert:hover {
+    background-color: var(--color-on-brand);
+    color: var(--color-brand);
+    border-color: var(--color-on-brand);
+  }
+
+  .btn-brand:focus-visible,
+  .btn-outline:focus-visible {
+    outline: 2px solid var(--color-brand);
+    outline-offset: 3px;
+  }
+  .surface-brand .btn-outline:focus-visible,
+  .btn-outline-invert:focus-visible {
+    outline-color: var(--color-gold);
+  }
+
+  /* Opt-in directional arrow for CTAs that move the user forward (Add to Cart,
+     Checkout, Buy Now). Absolutely positioned so appearing shifts nothing; the extra
+     inline-end padding reserves its lane. Glyph + side flip for RTL. */
+  .btn-arrow {
+    padding-inline-end: 3.25rem;
+  }
+  .btn-arrow::after {
+    content: "\2192";
+    position: absolute;
+    inset-inline-end: 1.75rem;
+    top: 50%;
+    translate: -6px -50%;
+    opacity: 0;
+    transition: translate var(--dur) var(--ease-lux), opacity var(--dur) var(--ease-lux);
+  }
+  .btn-arrow:hover::after {
+    translate: 0 -50%;
+    opacity: 1;
+  }
+  [dir="rtl"] .btn-arrow::after {
+    content: "\2190";
+    translate: 6px -50%;
+  }
+  [dir="rtl"] .btn-arrow:hover::after {
+    translate: 0 -50%;
+  }
+
+  /* Keyboard-focus ring for the ad-hoc icon buttons/links that carry no .btn-* base.
+     Raw CSS (not Tailwind outline utilities) so the solid style is guaranteed to
+     render; the outline hugs whatever border-radius the element already has. */
+  .focus-ring:focus-visible {
+    outline: 2px solid var(--color-brand);
+    outline-offset: 2px;
+  }
+  /* On burgundy the burgundy ring is invisible — champagne is the only thing with
+     enough contrast that is still in the palette. */
+  .surface-brand .focus-ring:focus-visible,
+  .focus-ring-invert:focus-visible {
+    outline-color: var(--color-gold);
+  }
+
+  /* ── Editorial headings ──
+     Playfair, and only here. The scale is deliberately restrained: an editorial title
+     announces itself by the whitespace around it, not by filling the viewport. */
+  .section-title {
+    font-family: var(--font-display);
+    text-transform: none;
+    font-weight: 500;
+    letter-spacing: -0.015em;
+    font-size: clamp(1.75rem, 3.2vw, 2.75rem);
+    line-height: 1.15;
+    color: var(--color-strong);
+    text-align: center;
+  }
+  .display {
+    font-family: var(--font-display);
+    font-weight: 500;
+    letter-spacing: -0.015em;
+    line-height: 1.12;
+    color: var(--color-strong);
+  }
+  /* The hero/statement scale — larger than .section-title and left-aligned by default. */
+  .display-xl {
+    font-family: var(--font-display);
+    font-weight: 400;
+    letter-spacing: -0.02em;
+    font-size: clamp(2.25rem, 5.2vw, 4.25rem);
+    line-height: 1.06;
+    color: var(--color-strong);
+  }
+  /* An italic serif fragment inside a heading — the single most effective editorial
+     move available, and the reason to restrict it to one phrase per composition. */
+  .display em,
+  .display-xl em,
+  .section-title em {
+    font-style: italic;
+    font-weight: 400;
+  }
+  /* Arabic headings take Cairo at 700; the Latin tracking would pull apart the joined
+     letters of the script, so it resets to zero. Must live in this layer (same as
+     .section-title/.display) so it wins by source order. */
+  [dir="rtl"] .section-title, [lang="ar"] .section-title,
+  [dir="rtl"] .display, [lang="ar"] .display,
+  [dir="rtl"] .display-xl, [lang="ar"] .display-xl {
+    font-family: var(--font-arabic);
+    font-weight: 700;
+    letter-spacing: 0;
+  }
+
+  /* ── Eyebrow kicker (caps micro-label above a title) ──
+     Champagne, because this is exactly the scale at which gold belongs: a line of
+     11px type, never a fill. */
+  .eyebrow {
+    font-family: var(--font-button);
+    display: block;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    font-size: 0.6875rem;
+    font-weight: 500;
+    line-height: 1.4;
+    color: var(--color-gold);
+  }
+  .eyebrow-muted { color: var(--color-muted); }
+  .surface-brand .eyebrow { color: var(--color-gold-soft); }
+  /* Same reason as .surface-brand above: --color-gold is mixed for cream surfaces and
+     goes muddy on burgundy, so the footer tagline takes the lighter champagne. */
+  .site-footer .eyebrow { color: var(--color-footer-accent); }
+
+  /* ── Editorial text link ──
+     Uppercase micro-typography with a rule that wipes in from the leading edge.
+     background-size animates on the compositor and needs no pseudo-element, and
+     `background-position` is set with a logical keyword so RTL mirrors for free. */
+  .editorial-link {
+    font-family: var(--font-button);
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    font-size: 0.6875rem;
+    font-weight: 500;
+    color: var(--color-strong);
+    display: inline-block;
+    padding-bottom: 0.35rem;
+    background-image: linear-gradient(var(--color-brand), var(--color-brand));
+    background-repeat: no-repeat;
+    background-position: 0 100%;
+    background-size: 100% 1px;
+    transition:
+      background-size var(--dur-slow) var(--ease-lux),
+      color var(--dur) var(--ease-lux);
+  }
+  [dir="rtl"] .editorial-link { background-position: 100% 100%; }
+  .editorial-link:hover {
+    color: var(--color-brand);
+    background-size: 0% 1px;
+  }
+  .surface-brand .editorial-link {
+    color: var(--color-on-brand);
+    background-image: linear-gradient(var(--color-gold), var(--color-gold));
+  }
+  .surface-brand .editorial-link:hover { color: var(--color-gold-soft); }
+
+  /* ── Nav link — a centre-out rule ──
+     Grows from the middle so it is symmetric and needs no [dir=rtl] origin flip. The
+     active link sits at the same full width as hover, so "you are here" and a passing
+     hover read alike. */
+  .nav-underline {
+    background-image: linear-gradient(var(--color-brand), var(--color-brand));
+    background-repeat: no-repeat;
+    background-position: 50% 100%;
+    background-size: 0% 1px;
+    transition: background-size var(--dur) var(--ease-lux), color var(--dur) var(--ease-lux);
+  }
+  .nav-underline:hover,
+  .nav-underline[aria-current="page"] {
+    background-size: 100% 1px;
+    color: var(--color-brand);
+  }
+  .surface-brand .nav-underline {
+    background-image: linear-gradient(var(--color-gold), var(--color-gold));
+  }
+  .surface-brand .nav-underline:hover,
+  .surface-brand .nav-underline[aria-current="page"] { color: var(--color-gold-soft); }
+
+  /* ── Tab / filter label ── */
+  .tab-label {
+    font-family: var(--font-button);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-muted);
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid transparent;
+    transition: color var(--dur-fast) var(--ease-lux), border-color var(--dur-fast) var(--ease-lux);
+  }
+  .tab-label:hover { color: var(--color-ink); }
+  .tab-label[aria-selected="true"] {
+    color: var(--color-brand);
+    border-bottom-color: var(--color-brand);
+  }
+  [dir="rtl"] .tab-label,
+  [lang="ar"] .tab-label {
+    letter-spacing: 0;
+    text-transform: none;
+  }
+
+  /* ── Unified form field ──
+     Transparent over whatever the section is, a warm hairline, and a champagne rule
+     that lands under the field on focus. No grey box, no shadow: the focus state is
+     obvious because the colour changes and a second line appears, not because the
+     control grows a halo. */
+  .field {
+    width: 100%;
+    background: transparent;
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-control);
+    padding: 0.9rem 1.05rem;
+    font-family: var(--font-sans);
+    font-size: 0.9375rem;
+    color: var(--color-ink);
+    outline: none;
+    transition: border-color var(--dur-fast) var(--ease-lux), box-shadow var(--dur-fast) var(--ease-lux);
+  }
+  .field::placeholder { color: var(--color-muted); }
+  .field:focus,
+  .field:focus-visible {
+    border-color: var(--color-brand);
+    box-shadow: inset 0 -2px 0 var(--color-gold);
+  }
+  .field:disabled { opacity: 0.55; cursor: not-allowed; }
+  /* Label above a .field. */
+  .field-label {
+    font-family: var(--font-button);
+    display: block;
+    font-size: 0.6875rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--color-muted);
+    margin-bottom: 0.5rem;
+  }
+  [dir="rtl"] .field-label, [lang="ar"] .field-label { letter-spacing: 0; }
+
+  /* ── Caps chip (sale / status / coupon) ── */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    font-family: var(--font-button);
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    font-size: 0.6rem;
+    font-weight: 500;
+    line-height: 1;
+    padding: 0.4rem 0.7rem;
+    border-radius: var(--radius-control);
+  }
+  .badge-brand {
+    background-color: var(--color-brand);
+    color: var(--color-on-brand);
+  }
+  .badge-quiet {
+    background-color: rgb(246 242 234 / 0.92);
+    color: var(--color-ink);
+    border: 1px solid var(--color-line);
+  }
+
+  /* ── Champagne rules ──
+     A hairline is the cheapest luxury signal there is, and the only place a metallic
+     belongs. Kept at 1px and low opacity so it reads as a ruled line on paper rather
+     than as a gold bar. */
+  .rule-gold {
+    height: 1px;
+    border: 0;
+    background: linear-gradient(to right, var(--color-gold), transparent);
+  }
+  .rule-gold-center {
+    height: 1px;
+    border: 0;
+    background: linear-gradient(90deg, transparent, var(--color-gold), transparent);
+  }
+
+  /* ── Ornament ──
+     A centred lozenge between two rules — the house's own linework, derived from the
+     hairline vocabulary already in use, not from any monogram. Used once or twice a
+     page, as a breath between movements. */
+  .ornament {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    color: var(--color-gold);
+  }
+  .ornament::before,
+  .ornament::after {
+    content: "";
+    height: 1px;
+    width: clamp(2.5rem, 8vw, 5rem);
+    background: currentColor;
+    opacity: 0.55;
+  }
+  /* The lozenge itself: a 6px square on its corner. */
+  .ornament > span {
+    width: 6px;
+    height: 6px;
+    rotate: 45deg;
+    background: currentColor;
+  }
+
+  /* ── Burgundy band ──
+     Sets cream-on-burgundy defaults so its children do not each have to restate them,
+     and is the hook the inverted button/link/eyebrow rules above select on. */
+  .surface-brand {
+    background-color: var(--color-brand);
+    color: var(--color-on-brand);
+  }
+  .surface-brand .section-title,
+  .surface-brand .display,
+  .surface-brand .display-xl,
+  .surface-brand h1, .surface-brand h2, .surface-brand h3 {
+    color: var(--color-on-brand);
+  }
+
+  /* ── Editorial image frame ──
+     Overflow-hidden with a slow scale on hover. 700ms and 1.04 — any faster or larger
+     and it stops reading as a photograph being looked at. */
+  .img-zoom { overflow: hidden; }
+  .img-zoom img {
+    transition: scale var(--dur-slow) var(--ease-lux), opacity var(--dur-slow) var(--ease-lux);
+  }
+  .group:hover .img-zoom img,
+  .img-zoom:hover img { scale: 1.04; }
+}
+
+/* hide scrollbars on carousels */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* ── Arabic control-label rendering ──
+   Nav links, the mobile menu and the locale switcher all carry .font-button (a
+   Latin-only face) plus a Tailwind tracking-* utility. In Arabic that combination is
+   what looks broken: Poppins has no Arabic glyphs so the text falls back to a system
+   font, and the letter-spacing pulls apart the joined letters of the cursive script.
+   Reset both to Cairo with zero tracking — the same fix the headings get above.
+   This MUST be unlayered: Tailwind's tracking-* utilities live in the utilities layer,
+   which wins over @layer components by CSS layer order regardless of specificity, so a
+   components-layer rule would lose. Unlayered rules outrank every layered rule. */
+[dir="rtl"] .font-button,
+[lang="ar"] .font-button,
+[dir="rtl"] .eyebrow,
+[lang="ar"] .eyebrow,
+[dir="rtl"] .editorial-link,
+[lang="ar"] .editorial-link,
+[dir="rtl"] .btn-brand,
+[lang="ar"] .btn-brand,
+[dir="rtl"] .btn-outline,
+[lang="ar"] .btn-outline,
+[dir="rtl"] .badge,
+[lang="ar"] .badge {
+  font-family: var(--font-arabic);
+  letter-spacing: 0;
+}
+/* Cairo reads a touch small next to Latin caps — nudge the nav links up for legibility. */
+[dir="rtl"] nav .nav-underline {
+  font-size: 0.875rem;
+}
+
+/* ── Fixed header offset ──
+   In CSS rather than an inline style so scrolling never re-renders a fixed layer:
+   Header.tsx writes --sy (window.scrollY, clamped to the bar height) from a
+   rAF-throttled listener and the browser recomputes `top` itself. env() keeps the bar
+   clear of the notch once viewport-fit=cover lets the page bleed under the status bar.
+   .site-header--bar is applied only while the announcement bar is showing; it resolves
+   to inset + max(0, 34 - scrollY), i.e. the header rides the bar out of view.
+   The 34px here, BAR_H in Header.tsx and the bar's own h-[34px] are three views of ONE
+   number — change all three or none. */
+.site-header {
+  top: env(safe-area-inset-top, 0px);
+}
+.site-header--bar {
+  top: max(
+    env(safe-area-inset-top, 0px),
+    calc(env(safe-area-inset-top, 0px) + 34px - var(--sy, 0) * 1px)
+  );
+}
+
+/* ── Homepage: float the announcement over the hero ──
+   The hero is full-bleed, so the bar overlays the footage instead of pushing it down —
+   34px of video reclaimed at the top of every phone. The text-shadow is what carries
+   legibility: the hero paints no scrim, so this bar sits directly on the raw frame.
+   Driven by :has() because app/[locale]/layout.tsx is a Server Component in the
+   prerendered shell and cannot read the pathname without pulling the route out of it;
+   [data-hero-full] exists only on a hero that actually has media, so removing the video
+   in the admin puts the bar back in flow on its own.
+   `absolute`, not fixed, so it still scrolls away. inset-inline keeps it RTL-correct.
+   Where :has() is unsupported the bar simply stays in flow — a 34px degradation. */
+body:has([data-hero-full]) [data-announce] {
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  z-index: 41;
+  background: transparent;
+  color: #fff;
+  text-shadow: 0 1px 2px rgb(0 0 0 / 0.55);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Freeze the decorative motion only. Colour steps stay — they carry state, not
+     decoration, and removing them would cost hover/focus affordance. */
+  .btn-brand:hover,
+  .btn-outline:hover,
+  .btn-outline-invert:hover { translate: none; }
+  .btn-arrow::after,
+  .nav-underline,
+  .editorial-link,
+  .img-zoom img { transition: none; }
+  .group:hover .img-zoom img,
+  .img-zoom:hover img { scale: 1; }
+}
+
+/* ═══════════════ Admin console theme (light default + dark) ═══════════════ */
+/* Semantic color utilities (bg-surface, text-foreground, border-edge, …) that resolve
+   to the runtime `--admin-*` variables, so toggling data-theme reskins the whole panel.
+   Only the admin console uses these classes.
+
+   NOTE for the storefront: this block claims --color-{canvas,surface,elevated,edge,
+   foreground,secondary,faint,accent,accent-fg,positive,warn,danger,info}. Two @theme
+   blocks defining one key means last-one-wins, so storefront tokens must never reuse
+   those names — which is why the palette above says `brand` and `gold`, not `accent`. */
+@theme inline {
+  --color-canvas: var(--admin-canvas);
+  --color-surface: var(--admin-surface);
+  --color-elevated: var(--admin-elevated);
+  --color-edge: var(--admin-edge);
+  --color-foreground: var(--admin-foreground);
+  --color-secondary: var(--admin-secondary);
+  --color-faint: var(--admin-faint);
+  --color-accent: var(--admin-accent);
+  --color-accent-fg: var(--admin-accent-fg);
+  --color-positive: var(--admin-positive);
+  --color-warn: var(--admin-warn);
+  --color-danger: var(--admin-danger);
+  --color-info: var(--admin-info);
+}
+
+/* Light is the default now, so the back office reads as the same house as the shop.
+   The canvas is cream and cards are white — inverted from the storefront, where cream
+   IS the card, because a dense data table needs its rows to sit on something flatter
+   than its surroundings. Status hues stay functionally distinct (a back office must
+   keep green/amber/red legible) but are desaturated into the warm family so they sit
+   beside burgundy without arguing with it. */
+.admin-theme {
+  --admin-canvas: #f6f2ea;
+  --admin-surface: #ffffff;
+  --admin-elevated: #efe9de;
+  --admin-edge: rgb(91 30 45 / 0.14);
+  --admin-foreground: #222222;
+  --admin-secondary: #6b615a;
+  --admin-faint: #8e8279;
+  --admin-accent: #5b1e2d;
+  --admin-accent-fg: #f6f2ea;
+  --admin-positive: #4a7c5d;
+  --admin-warn: #a8762c;
+  --admin-danger: #a8412f;
+  --admin-info: #4a6b8a;
+  color-scheme: light;
+  background: var(--admin-canvas);
+  color: var(--admin-foreground);
+}
+/* Dark is retained as the alternate for anyone working at night. Wine rather than the
+   old red: it is the same hue family as the storefront, lifted just enough to stay
+   legible on a near-black surface. */
+.admin-theme[data-theme="dark"] {
+  --admin-canvas: #171313;
+  --admin-surface: #201a1b;
+  --admin-elevated: #2b2325;
+  --admin-edge: rgb(246 242 234 / 0.12);
+  --admin-foreground: #ece7e0;
+  --admin-secondary: #b3a89f;
+  --admin-faint: #8b8078;
+  --admin-accent: #a8455c;
+  --admin-accent-fg: #ffffff;
+  --admin-positive: #5f9e78;
+  --admin-warn: #cfa155;
+  --admin-danger: #c9736a;
+  --admin-info: #7ba0c4;
+  color-scheme: dark;
+}
+.admin-theme:not([data-theme]) { color-scheme: light; }
