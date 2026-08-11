@@ -25,7 +25,7 @@ Local prerequisites: `npm install`, the Supabase CLI, and a Supabase account.
    SUPABASE_SERVICE_KEY="YOUR_SERVICE_ROLE_KEY" \
    npm run upload-assets
    ```
-   Creates the public `product-images` bucket if absent and uploads ~79MB (well inside the
+   Creates the public `product-images` bucket if absent and uploads ~17MB (well inside the
    1GB free tier). Idempotent — re-run it freely. Needs a checkout that still has `public/assets/files`;
    if yours doesn't, restore it from the media backup first.
 4. Seed the catalog + logins into the cloud DB. Point the seed at the cloud project, then run it:
@@ -39,7 +39,7 @@ Local prerequisites: `npm install`, the Supabase CLI, and a Supabase account.
    DEMO_PASSWORD="ANOTHER_STRONG_PASSWORD" \
    npm run seed
    ```
-   (99 products / 448 variants / 19 collections / admin + demo users.) The seed **fails** rather than
+   (25 products / 150 variants / 19 collections / admin + demo users.) The seed **fails** rather than
    fall back to a default if `ADMIN_PASSWORD` / `DEMO_PASSWORD` are unset — the admin it creates is a
    full super-admin on an internet-facing `/admin`, so give it a strong, unique password here.
 
