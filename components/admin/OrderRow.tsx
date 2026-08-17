@@ -19,6 +19,7 @@ export function OrderRow({
     trackingNumber: string;
     itemCount: number;
     mtoCount: number;
+    rtwCount: number;
     date: string;
   };
 }) {
@@ -35,22 +36,32 @@ export function OrderRow({
 
   return (
     <tr className="border-b border-white/5 align-top">
-      <td className="px-5 py-3">
-        #{order.number}
-        {/* The atelier has work on this order — the one thing that changes how it is handled. */}
-        {order.mtoCount > 0 && (
-          <span
-            title={`${order.mtoCount} made-to-order item(s)`}
-            className="ms-2 inline-block border border-white/20 px-1.5 py-0.5 text-[10px] tracking-[0.08em] text-white/60 uppercase"
-          >
-            MTO {order.mtoCount}
-          </span>
-        )}
-      </td>
+      <td className="px-5 py-3">#{order.number}</td>
       <td className="px-3 py-3 text-xs">
         <div>{order.email}</div>
-        <div className="text-white/40">
-          {order.date} · {order.itemCount} items
+        <div className="text-white/40">{order.date}</div>
+      </td>
+      {/* Which KIND of work an order carries decides who touches it next: made-to-order goes to
+          the atelier to be cut, ready-to-wear goes to whoever picks and packs. Two labelled
+          chips say that at a glance; a bare item count never did. */}
+      <td className="px-3 py-3">
+        <div className="flex flex-wrap gap-1">
+          {order.mtoCount > 0 && (
+            <span
+              title={`${order.mtoCount} made-to-order item(s) — needs the atelier`}
+              className="border border-signal/50 bg-signal/10 px-1.5 py-0.5 text-[10px] tracking-[0.08em] text-white/80 uppercase"
+            >
+              {order.mtoCount} made-to-order
+            </span>
+          )}
+          {order.rtwCount > 0 && (
+            <span
+              title={`${order.rtwCount} ready-to-wear item(s) — pick and pack`}
+              className="border border-white/20 px-1.5 py-0.5 text-[10px] tracking-[0.08em] text-white/60 uppercase"
+            >
+              {order.rtwCount} ready-to-wear
+            </span>
+          )}
         </div>
       </td>
       <td className="px-3 py-3">{formatMoney(order.total, "QAR")}</td>

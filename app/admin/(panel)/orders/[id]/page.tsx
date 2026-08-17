@@ -5,7 +5,9 @@ import { requirePageAccess } from "@/lib/admin-guard";
 import { getOrder } from "@/lib/data/orders";
 import { getMadeToOrderSettings } from "@/lib/content";
 import { formatMoney } from "@/lib/money";
-import { variantLabel } from "@/lib/variant-options";
+// variantLabel is gone from this page on purpose: it collapses a line into "Black / M / 56" /
+// Tack Tack", which is right for a cart drawer but hides exactly what the atelier needs. The
+// fields are now labelled individually below.
 import { Can } from "@/components/admin/ui/PermissionGate";
 import { ResendReceiptButton } from "@/components/admin/OrderReceiptActions";
 
@@ -50,39 +52,94 @@ export default async function AdminOrderDetail({ params }: { params: Promise<{ i
         </div>
 
         <div className="divide-y divide-white/5 px-5">
-          {order.items.map((it) => (
-            <div key={it.id} className="flex gap-4 py-4">
-              <div className="relative aspect-[4/5] w-14 shrink-0 bg-black/20">
-                {it.imageUrl && <Image src={it.imageUrl} alt={it.title} fill sizes="56px" className="object-cover" />}
-              </div>
-              <div className="flex-1 text-sm">
-                <p>{it.title}</p>
-                <p className="text-xs text-white/40">
-                  {variantLabel({ ...it, madeToOrder: it.fulfillment === "MTO" })} · × {it.quantity}
-                </p>
-                {/* Inline, so staff can answer the phone without opening the print view. */}
-                {it.fulfillment === "MTO" && (
-                  <div className="mt-2 border border-white/10 p-2.5">
-                    <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs sm:grid-cols-3">
-                      {Object.entries(it.measurements ?? {}).map(([k, v]) => (
-                        <div key={k} className="flex justify-between gap-2">
-                          <dt className="text-white/40">{measureLabel(k)}</dt>
-                          <dd dir="ltr">{v}{it.measureUnit}</dd>
-                        </div>
-                      ))}
-                    </dl>
-                    {it.notes && <p className="mt-2 text-xs text-white/60">Note: {it.notes}</p>}
-                    {it.leadMinDays != null && it.leadMaxDays != null && (
-                      <p className="mt-1 text-[11px] text-white/40">
-                        Promised in {it.leadMinDays}–{it.leadMaxDays} days
-                      </p>
-                    )}
+          {order.items.map((it) => {
+            const mto = it.fulfillment === "MTO";
+            return (
+              <div key={it.id} className="flex gap-4 py-4">
+                <div className="relative aspect-[4/5] w-14 shrink-0 bg-black/20">
+                  {it.imageUrl && <Image src={it.imageUrl} alt={it.title} fill sizes="56px" className="object-cover" />}
+                </div>
+                <div className="flex-1 text-sm">
+                  {/* The kind of line leads, because it decides who handles it: an atelier cuts
+                      a made-to-order piece from measurements, a packer pulls a stocked size off
+                      the rail. Reading that off a "/"-joined label was guesswork. */}
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span
+                      className={
+                        mto
+                          ? "border border-signal/50 bg-signal/10 px-1.5 py-0.5 text-[10px] tracking-[0.08em] text-white/80 uppercase"
+                          : "border border-white/20 px-1.5 py-0.5 text-[10px] tracking-[0.08em] text-white/60 uppercase"
+                      }
+                    >
+                      {mto ? "Made to order" : "Ready to wear"}
+                    </span>
+                    <span>{it.title}</span>
+                    <span className="text-xs text-white/40">× {it.quantity}</span>
                   </div>
-                )}
+
+                  <dl className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-xs">
+                    <div className="flex gap-1.5">
+                      <dt className="text-white/40">Colour</dt>
+                      <dd>{it.color || "—"}</dd>
+                    </div>
+                    {/* Ready-to-wear detail: what came off the rail. */}
+                    {!mto && (
+                      <>
+                        <div className="flex gap-1.5">
+                          <dt className="text-white/40">Size</dt>
+                          <dd>{it.size || "—"}</dd>
+                        </div>
+                        {it.length != null && it.length > 0 && (
+                          <div className="flex gap-1.5">
+                            <dt className="text-white/40">Length</dt>
+                            <dd dir="ltr">{it.length}&quot;</dd>
+                          </div>
+                        )}
+                      </>
+                    )}
+                    <div className="flex gap-1.5">
+                      <dt className="text-white/40">Tack Tack</dt>
+                      <dd>{it.tackTack ? "Yes" : "No"}</dd>
+                    </div>
+                    {it.sku && (
+                      <div className="flex gap-1.5">
+                        <dt className="text-white/40">SKU</dt>
+                        <dd>{it.sku}</dd>
+                      </div>
+                    )}
+                  </dl>
+
+                  {/* Inline, so staff can answer the phone without opening the print view. */}
+                  {mto && (
+                    <div className="mt-2 border border-white/10 p-2.5">
+                      <p className="mb-1.5 text-[10px] uppercase tracking-[0.12em] text-white/40">
+                        Measurements{it.measureUnit ? ` (${it.measureUnit})` : ""}
+                      </p>
+                      {Object.keys(it.measurements ?? {}).length === 0 ? (
+                        <p className="text-xs text-white/40">None recorded.</p>
+                      ) : (
+                        <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs sm:grid-cols-3">
+                          {Object.entries(it.measurements ?? {}).map(([k, v]) => (
+                            <div key={k} className="flex justify-between gap-2">
+                              <dt className="text-white/40">{measureLabel(k)}</dt>
+                              <dd dir="ltr">{v}{it.measureUnit}</dd>
+                            </div>
+                          ))}
+                        </dl>
+                      )}
+                      {it.notes && <p className="mt-2 text-xs text-white/60">Note: {it.notes}</p>}
+                      {it.leadMinDays != null && it.leadMaxDays != null && (
+                        <p className="mt-1 text-[11px] text-white/40">
+                          Promised in {it.leadMinDays}–{it.leadMaxDays} days
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+                <div className="self-center text-sm">{formatMoney(it.price * it.quantity, "QAR")}</div>
               </div>
-              <div className="self-center text-sm">{formatMoney(it.price * it.quantity, "QAR")}</div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         <div className="space-y-1 border-t border-white/10 px-5 py-4 text-sm">
