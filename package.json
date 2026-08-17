@@ -9,6 +9,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "typecheck": "tsc --noEmit",
     "favicon": "tsx scripts/generate-favicon.ts",
     "upload-assets": "tsx scripts/upload-assets.ts",
     "seed": "tsx scripts/seed-supabase.ts",
