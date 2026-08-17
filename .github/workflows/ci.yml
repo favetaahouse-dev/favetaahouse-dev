@@ -1,0 +1,59 @@
+# Lint and type-check every push and pull request.
+#
+# THIS DOES NOT DEPLOY. Deployment is Vercel's job — see vercel.json (framework: nextjs,
+# region sin1). The workflow this replaced tried to publish to GitHub Pages, which cannot
+# host this app at all: Pages serves static files, and actions/configure-pages injects
+# `output: 'export'`, which is incompatible with every server feature the site is built on —
+# 15 "use server" action files, 14 route handlers (including the SkipCash payment webhook),
+# proxy.ts, next-auth, cookie-backed carts and cacheComponents/PPR.
+#
+# There is deliberately no `next build` step here. Building requires SUPABASE_URL and the
+# SUPABASE_SERVICE_KEY, because generateStaticParams reads the catalogue at build time — and
+# that key bypasses RLS entirely (RLS is deny-all; it is the only thing guarding the data).
+# Putting it in Actions secrets to duplicate a build Vercel already runs on every push would
+# add real risk for no signal. Lint + types need no secrets and catch the regressions that
+# actually happen.
+
+name: CI
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+  workflow_dispatch:
+
+# A newer push makes an in-flight check obsolete — unlike a deployment, cancelling is correct.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      # v5 of these actions runs on Node 24. The v4 line targets Node 20, which GitHub has
+      # deprecated and now force-runs on 24 anyway, emitting a warning on every run.
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+
+      # `ci`, not `install`: fails loudly if package-lock.json and package.json disagree,
+      # rather than quietly resolving to something the lockfile never described.
+      - name: Install dependencies
+        run: npm ci
+
+      # next build stopped running lint in Next 16, so this is the only thing that does.
+      - name: Lint
+        run: npm run lint
+
+      # tsconfig has noEmit + strict; this is the project's only full type check.
+      - name: Type check
+        run: npm run typecheck
