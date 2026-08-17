@@ -89,7 +89,9 @@
     "measureRange": "{field} must be between {min} and {max} {unit}",
     "measureFixErrors": "Please check the measurements highlighted below",
     "mtoNoReturn": "Made-to-order pieces are cut for you and cannot be returned.",
-    "selectColor": "Please select a colour"
+    "selectColor": "Please select a colour",
+    "measureMin": "{field} must be at least {min} {unit}",
+    "measureMax": "{field} must be at most {max} {unit}"
   },
   "collection": {
     "results": "{count} results",

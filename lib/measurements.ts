@@ -16,11 +16,21 @@ export type MeasureField = {
   key: string;
   label: string;
   labelAr: string;
-  /** Inclusive bounds, in centimetres. */
+  /**
+   * Inclusive bounds in centimetres, and OPTIONAL: 0 on either side means "no limit there".
+   *
+   * Unbounded by default on purpose. A range that rejects a real customer costs a sale, and the
+   * garment is cut by a person who will notice a 12 cm bust long before it reaches a cutting
+   * table. The mechanism stays so the owner can re-impose a limit per field from
+   * Admin -> Content -> Made to Order, but nothing is enforced unless they ask for it.
+   */
   min: number;
   max: number;
   required: boolean;
 };
+
+/** Whether a field constrains anything at all — 0 on both sides means it does not. */
+export const hasBounds = (f: { min: number; max: number }) => f.min > 0 || f.max > 0;
 
 export type Unit = "cm" | "in";
 export type Measurements = Record<string, number>;
@@ -73,15 +83,15 @@ export function fieldLabel(f: MeasureField, locale?: string): string {
  * sheila are cut from different subsets of these, which is what products.mto_fields selects.
  */
 export const DEFAULT_MEASURE_FIELDS: MeasureField[] = [
-  { key: "shoulder", label: "Shoulder", labelAr: "الكتف", min: 25, max: 70, required: true },
-  { key: "bust", label: "Bust", labelAr: "الصدر", min: 60, max: 180, required: true },
-  { key: "waist", label: "Waist", labelAr: "الخصر", min: 50, max: 180, required: true },
-  { key: "hips", label: "Hips", labelAr: "الأرداف", min: 60, max: 190, required: true },
-  { key: "sleeveLength", label: "Sleeve length", labelAr: "طول الكم", min: 30, max: 90, required: true },
-  { key: "armhole", label: "Armhole", labelAr: "فتحة الإبط", min: 25, max: 80, required: false },
-  { key: "wristWidth", label: "Wrist width", labelAr: "محيط المعصم", min: 10, max: 40, required: false },
-  { key: "totalLength", label: "Total length", labelAr: "الطول الكلي", min: 100, max: 190, required: true },
-  { key: "height", label: "Height", labelAr: "الطول", min: 120, max: 210, required: false },
+  { key: "shoulder", label: "Shoulder", labelAr: "الكتف", min: 0, max: 0, required: true },
+  { key: "bust", label: "Bust", labelAr: "الصدر", min: 0, max: 0, required: true },
+  { key: "waist", label: "Waist", labelAr: "الخصر", min: 0, max: 0, required: true },
+  { key: "hips", label: "Hips", labelAr: "الأرداف", min: 0, max: 0, required: true },
+  { key: "sleeveLength", label: "Sleeve length", labelAr: "طول الكم", min: 0, max: 0, required: true },
+  { key: "armhole", label: "Armhole", labelAr: "فتحة الإبط", min: 0, max: 0, required: false },
+  { key: "wristWidth", label: "Wrist width", labelAr: "محيط المعصم", min: 0, max: 0, required: false },
+  { key: "totalLength", label: "Total length", labelAr: "الطول الكلي", min: 0, max: 0, required: true },
+  { key: "height", label: "Height", labelAr: "الطول", min: 0, max: 0, required: false },
 ];
 
 /**
@@ -113,8 +123,10 @@ export function parseMeasureFields(raw: string | null | undefined): MeasureField
         key,
         label,
         labelAr: String(r.labelAr ?? "").trim(),
-        min: Number.isFinite(min) ? min : 0,
-        max: Number.isFinite(max) && max > 0 ? max : 300,
+        // 0 on either side means unbounded, so it must survive the parse rather than being
+        // coerced into an arbitrary ceiling.
+        min: Number.isFinite(min) && min > 0 ? min : 0,
+        max: Number.isFinite(max) && max > 0 ? max : 0,
         required: r.required !== false,
       });
     }
@@ -147,6 +159,14 @@ export function applicableFields(all: MeasureField[], keys: string[] | null | un
   const want = new Set(keys);
   const picked = all.filter((f) => want.has(f.key));
   return picked.length ? picked : all;
+}
+
+/** "between 25 and 70 cm" / "at least 25 cm" / "at most 70 cm", depending on which sides are set. */
+export function boundText(f: MeasureField, unit: Unit): string {
+  const r = fieldRange(f, unit);
+  if (f.min > 0 && f.max > 0) return `between ${r.min} and ${r.max} ${unit}`;
+  if (f.min > 0) return `at least ${r.min} ${unit}`;
+  return `at most ${r.max} ${unit}`;
 }
 
 export type MeasureResult =
@@ -187,9 +207,11 @@ export function validateMeasurements(
       return { ok: false, error: `${f.label} must be a number.`, key: f.key };
     }
     const cm = toCm(n, unit);
-    if (cm < f.min || cm > f.max) {
-      const r = fieldRange(f, unit);
-      return { ok: false, error: `${f.label} must be between ${r.min} and ${r.max} ${unit}.`, key: f.key };
+    // Each side is checked only if it is set. With both at 0 — the default — any positive
+    // number is accepted, and the only thing still rejected is a blank required field or a
+    // value that is not a number.
+    if ((f.min > 0 && cm < f.min) || (f.max > 0 && cm > f.max)) {
+      return { ok: false, error: `${f.label} must be ${boundText(f, unit)}.`, key: f.key };
     }
     clean[f.key] = roundMeasure(n);
   }

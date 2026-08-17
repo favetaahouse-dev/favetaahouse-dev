@@ -89,7 +89,9 @@
     "measureRange": "{field} يجب أن يكون بين {min} و{max} {unit}",
     "measureFixErrors": "يرجى مراجعة المقاسات المحدّدة أدناه",
     "mtoNoReturn": "القطع المفصّلة حسب الطلب تُقَصّ خصيصاً لكِ ولا يمكن إرجاعها.",
-    "selectColor": "يرجى اختيار اللون"
+    "selectColor": "يرجى اختيار اللون",
+    "measureMin": "{field} يجب ألا يقل عن {min} {unit}",
+    "measureMax": "{field} يجب ألا يزيد عن {max} {unit}"
   },
   "collection": {
     "results": "{count} منتج",

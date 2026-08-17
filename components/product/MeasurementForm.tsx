@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { fieldRange, fromCm, roundMeasure, toCm, UNITS, type Unit } from "@/lib/measurements";
+import { fieldRange, fromCm, hasBounds, roundMeasure, toCm, UNITS, type Unit } from "@/lib/measurements";
 import { cn } from "@/lib/utils";
 
 /** Localised server-side, so the client never receives the bilingual blob. */
@@ -90,6 +90,7 @@ export function MeasurementForm({
       <div className="mt-4 grid grid-cols-2 gap-x-3 gap-y-4">
         {fields.map((f) => {
           const r = fieldRange(f, unit);
+          const bounded = hasBounds(f);
           const err = errors[f.key];
           return (
             <div key={f.key}>
@@ -113,7 +114,11 @@ export function MeasurementForm({
                   onChange={(e) => onChange({ ...values, [f.key]: e.target.value })}
                   aria-invalid={!!err}
                   aria-describedby={err ? `m-${f.key}-err` : undefined}
-                  placeholder={`${r.min}–${r.max}`}
+                  // A hint only when there is something to hint at. Fields are unbounded by
+                  // default, and "0–0" would read as a rule rather than the absence of one.
+                  placeholder={
+                    bounded ? (f.min > 0 && f.max > 0 ? `${r.min}–${r.max}` : f.min > 0 ? `≥ ${r.min}` : `≤ ${r.max}`) : ""
+                  }
                   className={cn(
                     "focus-ring w-full border bg-card px-3 py-2.5 pe-10 text-start text-[13px]",
                     err ? "border-signal" : "border-line",

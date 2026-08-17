@@ -225,10 +225,16 @@ export function ProductDetail({ product }: { product: ProductDetailDTO }) {
         errs[f.key] = t("measureNumber", { field: f.label });
         continue;
       }
+      // Mirrors validateMeasurements: each side is enforced only if it is set, and both are
+      // unset by default, so this normally rejects nothing but blanks and non-numbers.
       const cm = toCm(n, unit);
-      if (cm < f.min || cm > f.max) {
-        const r = fieldRange(f, unit);
+      const r = fieldRange(f, unit);
+      if (f.min > 0 && f.max > 0 && (cm < f.min || cm > f.max)) {
         errs[f.key] = t("measureRange", { field: f.label, min: r.min, max: r.max, unit });
+      } else if (f.min > 0 && cm < f.min) {
+        errs[f.key] = t("measureMin", { field: f.label, min: r.min, unit });
+      } else if (f.max > 0 && cm > f.max) {
+        errs[f.key] = t("measureMax", { field: f.label, max: r.max, unit });
       }
     }
     return errs;
@@ -426,7 +432,27 @@ export function ProductDetail({ product }: { product: ProductDetailDTO }) {
                   unit={unit}
                   onUnitChange={setUnit}
                   values={values}
-                  onChange={setValues}
+                  onChange={(next) => {
+                    setValues(next);
+                    /**
+                     * Drop the error on whatever field just changed.
+                     *
+                     * Without this, errors set by the last Add click outlive the values that
+                     * caused them: correcting a waist of 12 to 50 left "Waist must be between
+                     * 50 and 180" sitting under a waist of 50, which reads as the form being
+                     * broken rather than the message being stale. Per-field rather than
+                     * clearing everything, so fixing one field does not hide the others still
+                     * waiting to be fixed.
+                     */
+                    setErrors((prev) => {
+                      if (!Object.keys(prev).length) return prev;
+                      const cleared = { ...prev };
+                      for (const k of Object.keys(next)) {
+                        if (next[k] !== values[k]) delete cleared[k];
+                      }
+                      return cleared;
+                    });
+                  }}
                   errors={errors}
                   intro={mto.intro}
                   notesLabel={mto.notesLabel}
