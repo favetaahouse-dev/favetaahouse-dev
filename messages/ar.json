@@ -1,5 +1,8 @@
 {
-  "brand": { "name": "FAVETAA", "tagline": "أزياء محتشمة راقية" },
+  "brand": {
+    "name": "FAVETAA",
+    "tagline": "أزياء محتشمة راقية"
+  },
   "nav": {
     "home": "الرئيسية",
     "categories": "الأقسام",
@@ -67,7 +70,26 @@
     "previousImage": "الصورة السابقة",
     "nextImage": "الصورة التالية",
     "goToImage": "الانتقال إلى الصورة {n}",
-    "noImage": "لا توجد صورة"
+    "noImage": "لا توجد صورة",
+    "madeToOrder": "تفصيل حسب الطلب",
+    "readyToWear": "جاهز للارتداء",
+    "chooseHow": "كيف تودّين تفصيلها؟",
+    "mtoLead": "يُفصَّل لكِ خلال {min}–{max} يوماً",
+    "mtoBlurb": "يُقصّ ويُخاط على مقاساتك.",
+    "rtwBlurb": "يُشحن من أتيليهنا في الدوحة.",
+    "yourMeasurements": "مقاساتك",
+    "howToMeasure": "طريقة القياس",
+    "unit": "الوحدة",
+    "unitCm": "سم",
+    "unitIn": "بوصة",
+    "notes": "ملاحظات للأتيليه (اختياري)",
+    "notesPlaceholder": "هل من شيء نعرفه عن القَصّة؟",
+    "measureRequired": "{field} مطلوب",
+    "measureNumber": "أدخلي {field} كرقم",
+    "measureRange": "{field} يجب أن يكون بين {min} و{max} {unit}",
+    "measureFixErrors": "يرجى مراجعة المقاسات المحدّدة أدناه",
+    "mtoNoReturn": "القطع المفصّلة حسب الطلب تُقَصّ خصيصاً لكِ ولا يمكن إرجاعها.",
+    "selectColor": "يرجى اختيار اللون"
   },
   "collection": {
     "results": "{count} منتج",
@@ -106,7 +128,11 @@
     "total": "الإجمالي",
     "promoPlaceholder": "رمز الخصم",
     "promoApplied": "تم تطبيق الكوبون",
-    "promoInvalid": "رمز غير صالح أو منتهي"
+    "promoInvalid": "رمز غير صالح أو منتهي",
+    "madeToOrder": "تفصيل حسب الطلب",
+    "measurementsCount": "{n} مقاسات",
+    "leadTime": "جاهز خلال {min}–{max} يوماً",
+    "lineUnavailable": "لم يعد متوفراً"
   },
   "checkout": {
     "title": "إتمام الشراء",
@@ -121,7 +147,10 @@
     "phone": "الهاتف",
     "payNow": "ادفعي الآن",
     "orderSummary": "ملخص الطلب",
-    "processing": "جارٍ المعالجة…"
+    "processing": "جارٍ المعالجة…",
+    "mtoNotice": "يحتوي هذا الطلب على قطع مفصّلة حسب الطلب — جاهزة خلال {min}–{max} يوماً.",
+    "errorMeasurements": "بعض المقاسات لم تعد صالحة. يرجى مراجعة سلتك.",
+    "errorMode": "أحد العناصر في سلتك لم يعد متاحاً للطلب. يرجى مراجعة سلتك."
   },
   "account": {
     "title": "حسابي",

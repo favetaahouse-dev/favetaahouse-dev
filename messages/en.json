@@ -1,5 +1,8 @@
 {
-  "brand": { "name": "FAVETAA", "tagline": "Elevated modest fashion" },
+  "brand": {
+    "name": "FAVETAA",
+    "tagline": "Elevated modest fashion"
+  },
   "nav": {
     "home": "Home",
     "categories": "Categories",
@@ -67,7 +70,26 @@
     "previousImage": "Previous image",
     "nextImage": "Next image",
     "goToImage": "Go to image {n}",
-    "noImage": "No image available"
+    "noImage": "No image available",
+    "madeToOrder": "Made to Order",
+    "readyToWear": "Ready to Wear",
+    "chooseHow": "How would you like it made?",
+    "mtoLead": "Made for you in {min}–{max} days",
+    "mtoBlurb": "Cut and sewn to your measurements.",
+    "rtwBlurb": "Ships from our Doha atelier.",
+    "yourMeasurements": "Your measurements",
+    "howToMeasure": "How to measure",
+    "unit": "Unit",
+    "unitCm": "cm",
+    "unitIn": "inches",
+    "notes": "Notes for the atelier (optional)",
+    "notesPlaceholder": "Anything we should know about the fit?",
+    "measureRequired": "{field} is required",
+    "measureNumber": "Enter {field} as a number",
+    "measureRange": "{field} must be between {min} and {max} {unit}",
+    "measureFixErrors": "Please check the measurements highlighted below",
+    "mtoNoReturn": "Made-to-order pieces are cut for you and cannot be returned.",
+    "selectColor": "Please select a colour"
   },
   "collection": {
     "results": "{count} results",
@@ -106,7 +128,11 @@
     "total": "Total",
     "promoPlaceholder": "Promo code",
     "promoApplied": "Coupon applied",
-    "promoInvalid": "Invalid or expired code"
+    "promoInvalid": "Invalid or expired code",
+    "madeToOrder": "Made to order",
+    "measurementsCount": "{n} measurements",
+    "leadTime": "Ready in {min}–{max} days",
+    "lineUnavailable": "No longer available"
   },
   "checkout": {
     "title": "Checkout",
@@ -121,7 +147,10 @@
     "phone": "Phone",
     "payNow": "Pay now",
     "orderSummary": "Order summary",
-    "processing": "Processing…"
+    "processing": "Processing…",
+    "mtoNotice": "This order contains made-to-order pieces — ready in {min}–{max} days.",
+    "errorMeasurements": "Some measurements are no longer valid. Please review your cart.",
+    "errorMode": "An item in your cart is no longer available to order. Please review your cart."
   },
   "account": {
     "title": "My Account",

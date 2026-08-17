@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requirePageAccess } from "@/lib/admin-guard";
 import { getOrder } from "@/lib/data/orders";
-import { getCommerceSettings, getSiteSettings } from "@/lib/content";
+import { getCommerceSettings, getSiteSettings, getMadeToOrderSettings } from "@/lib/content";
 import { renderReceiptHtml } from "@/lib/receipt";
 import { PrintButton } from "@/components/admin/OrderReceiptActions";
 
@@ -21,11 +21,18 @@ export default async function AdminOrderReceipt({ params }: { params: Promise<{ 
   const order = await getOrder(id);
   if (!order) notFound();
 
-  const [commerce, site] = await Promise.all([getCommerceSettings(), getSiteSettings()]);
+  const [commerce, site, mto] = await Promise.all([
+    getCommerceSettings(),
+    getSiteSettings(),
+    getMadeToOrderSettings(),
+  ]);
   const html = renderReceiptHtml(order, {
     taxLabel: commerce.taxLabel,
     storeLocation: site.storeLocation ?? "Doha, Qatar",
     contactEmail: site.contactEmail ?? "",
+    // The receipt is the atelier's copy too, so the measurement labels travel with it.
+    measureLabels: Object.fromEntries(mto.fields.map((f) => [f.key, f.label])),
+    mtoReturnsNote: mto.returnsNote,
   });
 
   return (

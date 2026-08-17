@@ -4,6 +4,7 @@ import { supabase } from "@/lib/supabase";
 import { DEFAULT_CONTENT, type Section } from "@/lib/content-schema";
 import { assetUrl } from "@/lib/asset-url";
 import { parseList, parseLengths } from "@/lib/variant-options";
+import { parseMeasureFields, type MeasureField, type Unit } from "@/lib/measurements";
 import { DEFAULT_CATEGORIES, normalizeCategory, sortCategoriesForNav } from "@/lib/categories";
 
 /**
@@ -178,6 +179,60 @@ export async function getWhatsappUrl(): Promise<string> {
 export async function getVariantOptions(): Promise<{ sizes: string[]; lengths: number[] }> {
   const c = await getContent("variant-options");
   return { sizes: parseList(c.sizes), lengths: parseLengths(c.lengths) };
+}
+
+export type MadeToOrderSettings = {
+  /** The house-wide measurement schema. A product narrows it via products.mto_fields. */
+  fields: MeasureField[];
+  leadMinDays: number;
+  leadMaxDays: number;
+  /** What the shopper's unit switch starts on. They can change it either way. */
+  defaultUnit: Unit;
+  intro: string;
+  introAr: string;
+  guide: string;
+  guideAr: string;
+  guideImage: string;
+  notesLabel: string;
+  notesLabelAr: string;
+  returnsNote: string;
+};
+
+/**
+ * The made-to-order schema and copy (Admin → Content → Made to Order).
+ *
+ * Unlike getVariantOptions this IS read by the storefront — the measurement form is generated
+ * from it — so the product page awaits it alongside getVariantOptions. Both ride the same
+ * "content" cache tag, so nothing new enters the cache graph.
+ *
+ * Every copy field returns "" when unset so the caller can fall back to its *translated*
+ * string; an English default here would win over the Arabic on /ar. The one exception is the
+ * field list, which ships with the house default because an empty measurement form is an
+ * unsellable product rather than a monolingual one.
+ */
+export async function getMadeToOrderSettings(): Promise<MadeToOrderSettings> {
+  const c = await getContent("made-to-order");
+  const days = (k: string, fallback: number) => {
+    const n = parseInt(c[k] ?? "", 10);
+    return Number.isFinite(n) && n >= 0 ? n : fallback;
+  };
+  const leadMinDays = days("leadMinDays", 14);
+  return {
+    fields: parseMeasureFields(c.measureFields),
+    leadMinDays,
+    // An inverted range would render "ready in 21–14 days". Clamp rather than reject: the
+    // owner typing the two boxes out of order should not take the product page down.
+    leadMaxDays: Math.max(days("leadMaxDays", 21), leadMinDays),
+    defaultUnit: c.unitInches === "true" ? "in" : "cm",
+    intro: c.intro || "",
+    introAr: c.intro_ar || "",
+    guide: c.guide || "",
+    guideAr: c.guide_ar || "",
+    guideImage: c.guideImage ? assetUrl(c.guideImage) : "",
+    notesLabel: c.notesLabel || "",
+    notesLabelAr: c.notesLabel_ar || "",
+    returnsNote: c.returnsNote || "",
+  };
 }
 
 /**

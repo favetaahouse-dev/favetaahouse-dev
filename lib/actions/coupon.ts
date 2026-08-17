@@ -2,7 +2,7 @@
 
 import { cookies } from "next/headers";
 import { supabase } from "@/lib/supabase";
-import { getOrCreateCart, cartStateById, CART_COOKIE, type CartState } from "@/lib/data/cart";
+import { getOrCreateCart, cartStateById, CART_COOKIE, EMPTY_CART, type CartState } from "@/lib/data/cart";
 import { computeDiscount, type Coupon } from "@/lib/coupons";
 
 export async function applyCouponAction(
@@ -25,7 +25,5 @@ export async function removeCouponAction(): Promise<CartState> {
   const store = await cookies();
   const id = store.get(CART_COOKIE)?.value;
   if (id) await supabase.from("carts").update({ coupon_code: null }).eq("id", id);
-  return id
-    ? cartStateById(id)
-    : { id: null, items: [], count: 0, subtotal: 0, couponCode: null, discount: 0, total: 0 };
+  return id ? cartStateById(id) : EMPTY_CART;
 }

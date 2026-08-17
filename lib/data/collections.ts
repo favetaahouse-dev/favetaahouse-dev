@@ -152,10 +152,14 @@ export async function getCollectionProducts(handle: string, q: CollectionQuery =
   // silently, so aggregate in the DB (≤ #products rows back) via an RPC.
   let variantIds: string[] | null = null;
   if (q.color || q.inStock) {
+    // p_color is nullable BY DESIGN: the function body reads `where (p_color is null or ...)`,
+    // where null means "no colour filter". supabase-js derives Args from the declared parameter
+    // types, which carry no nullability, so the cast states what the SQL already guarantees.
+    // (Older CLI versions emitted `string | null` here; 2.x does not.)
     const { data: v } = await supabase.rpc("variant_product_ids", {
       p_color: q.color ?? null,
       p_in_stock: !!q.inStock,
-    });
+    } as unknown as { p_color: string; p_in_stock: boolean });
     variantIds = (v as string[]) ?? [];
   }
 
@@ -200,7 +204,11 @@ export async function getCollectionFacets(handle: string): Promise<CollectionFac
   const idFilter = ids !== null ? (ids.length ? ids : [EMPTY_SENTINEL]) : null;
 
   // Distinct-product colour counts, aggregated in the DB so it doesn't truncate at 1000 variants.
-  const { data: facetRows } = await supabase.rpc("collection_color_facets", { p_ids: idFilter });
+  // Same nullability story as variant_product_ids above: `where p_ids is null or ...` treats
+  // null as "every active product", which is exactly what a collection-less facet count wants.
+  const { data: facetRows } = await supabase.rpc("collection_color_facets", {
+    p_ids: idFilter,
+  } as unknown as { p_ids: string[] });
   const colors = ((facetRows ?? []) as { color: string; hex: string | null; product_count: number }[])
     .map((r) => ({ color: r.color, hex: r.hex, count: Number(r.product_count) }))
     .sort((a, b) => b.count - a.count || a.color.localeCompare(b.color));

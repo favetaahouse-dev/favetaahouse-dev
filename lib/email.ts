@@ -1,7 +1,7 @@
 import "server-only";
 import { Resend } from "resend";
 import { getOrder } from "@/lib/data/orders";
-import { getCommerceSettings, getSiteSettings } from "@/lib/content";
+import { getCommerceSettings, getSiteSettings, getMadeToOrderSettings } from "@/lib/content";
 import { receiptEmailHtml, renderReceiptHtml } from "@/lib/receipt";
 import { formatMoney } from "@/lib/money";
 
@@ -42,6 +42,7 @@ export async function sendOrderConfirmation(orderId: string, opts?: { force?: bo
   const order = await getOrder(orderId);
   if (!order) return { ok: false, reason: "no-order" };
   const site = await getSiteSettings();
+  const mto = await getMadeToOrderSettings();
 
   try {
     const { error } = await resend.emails.send({
@@ -53,6 +54,9 @@ export async function sendOrderConfirmation(orderId: string, opts?: { force?: bo
         taxLabel: settings.taxLabel,
         storeLocation: site.storeLocation ?? "Doha, Qatar",
         contactEmail: site.contactEmail ?? "",
+        // The customer's own confirmation that we captured the measurements they typed.
+        measureLabels: Object.fromEntries(mto.fields.map((f) => [f.key, f.label])),
+        mtoReturnsNote: mto.returnsNote,
       }),
     });
     if (error) {
@@ -84,11 +88,15 @@ export async function sendMerchantOrderEmail(orderId: string): Promise<SendResul
   const order = await getOrder(orderId);
   if (!order) return { ok: false, reason: "no-order" };
   const site = await getSiteSettings();
+  const mto = await getMadeToOrderSettings();
 
   const receipt = renderReceiptHtml(order, {
     taxLabel: settings.taxLabel,
     storeLocation: site.storeLocation ?? "Doha, Qatar",
     contactEmail: site.contactEmail ?? "",
+    // The receipt is the atelier's copy too, so the measurement labels travel with it.
+    measureLabels: Object.fromEntries(mto.fields.map((f) => [f.key, f.label])),
+    mtoReturnsNote: mto.returnsNote,
   });
   const total = formatMoney(order.total, "QAR");
   const html = `<!doctype html><html><head><meta charset="utf-8"></head><body style="margin:0;background:#f4f4f4;padding:24px 0;font-family:Arial,Helvetica,sans-serif;">

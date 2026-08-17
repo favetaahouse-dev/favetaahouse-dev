@@ -31,6 +31,7 @@ export function CheckoutForm({
   const tc = useTranslations("cart");
   const locale = useLocale();
   const { items, subtotal, discount, couponCode } = useCart();
+  const mtoLines = items.filter((i) => i.fulfillment === "MTO");
   const [busy, setBusy] = useState(false);
 
   // Mirrors the authoritative shipping/tax math in the create_order RPC (QAR minor units).
@@ -105,7 +106,17 @@ export function CheckoutForm({
       window.location.href = res.url;
     } else {
       setBusy(false);
-      toast.error(res.error === "stock" ? "Some items are out of stock." : "Something went wrong.");
+      // A cart cookie lives 60 days, so "your cart went stale" is a routine outcome, not an
+      // exceptional one — it deserves a message that says which kind of stale.
+      toast.error(
+        res.error === "stock"
+          ? "Some items are out of stock."
+          : res.error === "measurements"
+            ? t("errorMeasurements")
+            : res.error === "mode"
+              ? t("errorMode")
+              : "Something went wrong.",
+      );
     }
   }
 
@@ -146,7 +157,11 @@ export function CheckoutForm({
               <div className="flex flex-1 flex-col justify-center">
                 <p className="text-[13px]">{it.title}</p>
                 <p className="text-xs text-muted">
-                  {variantLabel(it)}
+                  {variantLabel({
+                    ...it,
+                    madeToOrder: it.fulfillment === "MTO",
+                    madeToOrderLabel: tc("madeToOrder"),
+                  })}
                 </p>
               </div>
               <div className="self-center text-[13px]">
@@ -155,6 +170,16 @@ export function CheckoutForm({
             </div>
           ))}
         </div>
+        {/* The widest promise across the order, not per line: a shopper waiting on two pieces
+            waits for the slower one, so a single honest window beats two competing ones. */}
+        {mtoLines.length > 0 && (
+          <p className="mt-4 border border-line bg-mist px-3 py-2.5 text-xs text-ink">
+            {t("mtoNotice", {
+              min: Math.min(...mtoLines.map((l) => l.leadMin ?? 0)),
+              max: Math.max(...mtoLines.map((l) => l.leadMax ?? 0)),
+            })}
+          </p>
+        )}
         <div className="mt-6 space-y-1.5 border-t border-line pt-4 text-sm">
           <div className="flex items-center justify-between text-muted">
             <span>{tc("subtotal")}</span>

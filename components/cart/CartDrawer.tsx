@@ -88,8 +88,25 @@ export function CartDrawer() {
                       </button>
                     </div>
                     <p className="mt-0.5 text-xs text-muted">
-                      {variantLabel(it)}
+                      {variantLabel({
+                        ...it,
+                        madeToOrder: it.fulfillment === "MTO",
+                        madeToOrderLabel: t("madeToOrder"),
+                      })}
                     </p>
+                    {/* One line, not a table: the drawer is 420px wide, and the full
+                        measurement set belongs on the order page and the atelier worksheet. */}
+                    {it.fulfillment === "MTO" && (
+                      <p className="mt-0.5 text-[11px] text-muted">
+                        {t("measurementsCount", { n: Object.keys(it.measurements ?? {}).length })}
+                        {it.leadMin != null && it.leadMax != null
+                          ? ` · ${t("leadTime", { min: it.leadMin, max: it.leadMax })}`
+                          : ""}
+                      </p>
+                    )}
+                    {!it.available && (
+                      <p className="mt-0.5 text-[11px] text-signal">{t("lineUnavailable")}</p>
+                    )}
                     <div className="mt-auto flex items-center justify-between pt-2">
                       <div className="flex items-center border border-line">
                         {/* 13px glyphs in a 2×1 padded cell were the smallest touch targets on
@@ -106,7 +123,7 @@ export function CartDrawer() {
                         <button
                           className="focus-ring px-2.5 py-1.5 transition-colors hover:text-strong disabled:opacity-30"
                           onClick={() => update(it.id, it.quantity + 1)}
-                          disabled={it.quantity >= it.maxStock}
+                          disabled={it.quantity >= it.maxQty}
                           aria-label="increase"
                         >
                           <Plus {...icon.micro} />

@@ -115,8 +115,16 @@ async function OrderContent({ params }: { params: Promise<Params> }) {
               <div className="flex flex-1 flex-col justify-center">
                 <p className="text-sm">{it.title}</p>
                 <p className="text-xs text-muted">
-                  {variantLabel(it)} · × {it.quantity}
+                  {variantLabel({ ...it, madeToOrder: it.fulfillment === "MTO" })} · × {it.quantity}
                 </p>
+                {it.fulfillment === "MTO" && Object.keys(it.measurements ?? {}).length > 0 && (
+                  <p className="mt-1 text-[11px] text-muted" dir="ltr">
+                    {Object.entries(it.measurements ?? {})
+                      .map(([k, v]) => `${k} ${v}`)
+                      .join(" · ")}{" "}
+                    {it.measureUnit}
+                  </p>
+                )}
               </div>
               <div className="self-center text-sm">{formatMoney(it.price * it.quantity, "QAR")}</div>
             </div>

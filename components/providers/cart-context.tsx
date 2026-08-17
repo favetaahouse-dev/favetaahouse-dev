@@ -2,7 +2,13 @@
 
 import { createContext, useContext, useState, useTransition, useCallback, useRef, useMemo } from "react";
 import type { CartState, CartLine } from "@/lib/data/cart";
-import { addToCartAction, updateCartItemAction, removeCartItemAction } from "@/lib/actions/cart";
+import {
+  addToCartAction,
+  addMadeToOrderAction,
+  updateCartItemAction,
+  removeCartItemAction,
+  type MadeToOrderInput,
+} from "@/lib/actions/cart";
 import { applyCouponAction, removeCouponAction } from "@/lib/actions/coupon";
 
 type CartCtx = {
@@ -12,9 +18,20 @@ type CartCtx = {
   discount: number;
   total: number;
   couponCode: string | null;
+  hasMadeToOrder: boolean;
   open: boolean;
   pending: boolean;
   setOpen: (o: boolean) => void;
+  /**
+   * Made-to-order lives beside `add` rather than inside it: the two carry genuinely different
+   * payloads (a stocked variant vs. a measurement set) and folding them together would put the
+   * ready-to-wear path — the one that already works — at risk for no gain.
+   * Resolves to null on success, or the server's reason so the form can say which field failed.
+   */
+  addMto: (
+    input: MadeToOrderInput,
+    meta?: { eventId: string; eventSourceUrl?: string },
+  ) => Promise<string | null>;
   add: (
     variantId: string,
     qty?: number,
@@ -32,8 +49,14 @@ type CartCtx = {
 
 const Ctx = createContext<CartCtx | null>(null);
 
+/**
+ * Spelled out rather than imported from lib/data/cart, which exports the same constant: that
+ * module is `server-only`, so this file may take TYPES from it but not values. The type
+ * annotation is what keeps the two in step — adding a field to CartState fails this line.
+ */
 const EMPTY: CartState = {
   id: null, items: [], count: 0, subtotal: 0, couponCode: null, discount: 0, total: 0,
+  hasMadeToOrder: false,
 };
 
 /**
@@ -70,6 +93,14 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     },
     [],
   );
+
+  const addMto = useCallback<CartCtx["addMto"]>(async (input, meta) => {
+    touched.current = true;
+    const res = await addMadeToOrderAction(input, meta);
+    setState(res.cart);
+    if (res.ok) setOpen(true);
+    return res.ok ? null : (res.error ?? "error");
+  }, []);
 
   const update = useCallback((itemId: string, quantity: number) => {
     touched.current = true;
@@ -110,17 +141,19 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       discount: state.discount,
       total: state.total,
       couponCode: state.couponCode,
+      hasMadeToOrder: state.hasMadeToOrder,
       open,
       pending,
       setOpen,
       add,
+      addMto,
       update,
       remove,
       applyCoupon,
       removeCoupon,
       hydrate,
     }),
-    [state, open, pending, add, update, remove, applyCoupon, removeCoupon, hydrate],
+    [state, open, pending, add, addMto, update, remove, applyCoupon, removeCoupon, hydrate],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
@@ -136,6 +169,9 @@ function recompute(s: CartState, items: CartLine[]): CartState {
     subtotal,
     discount,
     total: Math.max(subtotal - discount, 0),
+    // Derived, not carried over from `s`: removing the last made-to-order line optimistically
+    // has to drop the checkout lead-time notice with it, not a round trip later.
+    hasMadeToOrder: items.some((i) => i.fulfillment === "MTO"),
   };
 }
 

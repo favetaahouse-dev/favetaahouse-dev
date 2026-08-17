@@ -35,12 +35,15 @@ export function VariantMatrixPanel({
   productId,
   existingKeys,
   onSpecChange,
+  sizesDisabled = false,
 }: {
   options: { sizes: string[]; lengths: number[] };
   mode: "create" | "edit";
   productId?: string;
   existingKeys?: Set<string>; // "color|size" keys already in the product
   onSpecChange?: (spec: MatrixSpec) => void;
+  /** Made-to-order only: there is no size axis, so the size and stock steps are hidden. */
+  sizesDisabled?: boolean;
 }) {
   const router = useRouter();
   const [colors, setColors] = useState<{ name: string; hex: string }[]>([{ name: "Black", hex: "#111111" }]);
@@ -136,7 +139,15 @@ export function VariantMatrixPanel({
           <Button size="sm" variant="outline" className="mt-2.5" onClick={() => setColors((cs) => [...cs, { name: "", hex: "#111111" }])}><Plus size={14} /> Add colour</Button>
         </div>
 
-        {/* sizes */}
+        {/* sizes — absent entirely for made-to-order, which has no size axis to cross the
+            colours with. Hidden rather than disabled: a greyed-out step still reads as
+            something the owner forgot to fill in. */}
+        {sizesDisabled ? (
+          <p className="border border-field px-3.5 py-3 text-[12px] text-secondary">
+            Made-to-order pieces are cut to the customer’s measurements, so they have no sizes and
+            no stock. The price is set under “How it’s made” above.
+          </p>
+        ) : (
         <div>
           <SubsectionHeader step={2} title="Sizes" description="Every size you pick is created for every colour above." />
           {options.sizes.length === 0 ? (
@@ -168,8 +179,11 @@ export function VariantMatrixPanel({
             </div>
           )}
         </div>
+        )}
 
-        {/* price + stock */}
+        {/* price + stock — the ready-to-wear price. Made-to-order carries its own, set once on
+            the product form rather than per size. */}
+        {!sizesDisabled && (
         <div>
           <SubsectionHeader step={3} title="Price & starting quantity" description="Applied to every variant created. Both can be edited per size afterwards." />
           <div className="grid gap-4 md:grid-cols-2">
@@ -191,15 +205,18 @@ export function VariantMatrixPanel({
             </label>
           </div>
         </div>
+        )}
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-3 border-t border-edge px-5 py-3">
         <p className="text-[12px] text-secondary">
-          {mode === "edit" && existingKeys
+          {sizesDisabled
+            ? "Colours only — made-to-order pieces have no size rows."
+            : mode === "edit" && existingKeys
             ? <>Requested <b className="font-medium text-foreground">{requested}</b> · already exist <b className="font-medium text-foreground">{requested - willCreate}</b> · will create <b className="font-medium text-foreground">{willCreate}</b>.</>
             : <><b className="font-medium text-foreground">{requested}</b> variant(s) will be created when you save.</>}
         </p>
-        {mode === "edit" && (
+        {mode === "edit" && !sizesDisabled && (
           <div className="flex flex-wrap items-center justify-end gap-3">
             {disabledReason && <span id="generate-reason" className="text-[12px] text-secondary">{disabledReason}</span>}
             <Button

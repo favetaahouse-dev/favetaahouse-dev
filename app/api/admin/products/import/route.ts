@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase";
 import { normalizeCategory } from "@/lib/categories";
 import { BRAND_NAME } from "@/lib/brand";
 import { recomputePrices } from "@/lib/data/product-pricing";
+import { upsertProductColors, colorsFromVariants } from "@/lib/data/product-colors";
 
 export const maxDuration = 60;
 
@@ -92,9 +93,29 @@ export async function POST(req: NextRequest) {
       created++;
     }
     if (p.variants?.length) {
+      // Colours are their own table now, and variants.color_id is NOT NULL — so the colour
+      // list has to exist before the rows that point at it. An import file describes a product
+      // as a flat colour+size list with no colour list of its own, so derive one.
+      //
+      // This is the sneakiest call site in the feature: without it an imported product would
+      // insert fine under the old shape and then show NO swatches on the product page, because
+      // the storefront reads colours from product_colors rather than from the variant grid.
+      let colorIds: Map<string, string>;
+      try {
+        colorIds = await upsertProductColors(productId, colorsFromVariants(p.variants));
+      } catch (e) {
+        failures.push({ handle: p.handle, error: e instanceof Error ? e.message : "colour sync failed" });
+        continue;
+      }
+      const orphan = p.variants.find((v) => !colorIds.get((v.color ?? "").trim()));
+      if (orphan) {
+        failures.push({ handle: p.handle, error: `variant colour "${orphan.color}" could not be resolved` });
+        continue;
+      }
       const { error: ve } = await supabase.from("variants").insert(
         p.variants.map((v, i) => ({
-          product_id: productId, color: v.color, color_hex: v.colorHex ?? null, size: v.size, sku: v.sku ?? null,
+          product_id: productId, color_id: colorIds.get(v.color.trim())!,
+          color: v.color, color_hex: v.colorHex ?? null, size: v.size, sku: v.sku ?? null,
           price: v.price, compare_at: v.compareAt ?? null, available: v.available ?? true,
           stock: v.stock ?? (v.available === false ? 0 : 10), position: v.position ?? i,
         })),

@@ -10,6 +10,7 @@ import {
   NumberFieldRow,
   ToggleFieldRow,
   ListFieldRow,
+  MeasureFieldsRow,
   SaveButton,
 } from "@/components/admin/ContentKit";
 import { FIELD_SCHEMA, SECTION_TITLES, SECTIONS, type Section } from "@/lib/content-schema";
@@ -65,6 +66,9 @@ export default function ContentEditor({ params }: { params: Promise<{ section: s
           }
           if (f.kind === "list") {
             return <ListFieldRow key={f.key} label={f.label} value={data[f.key] ?? ""} onChange={set(f.key)} hint={f.hint} />;
+          }
+          if (f.kind === "measures") {
+            return <MeasureFieldsRow key={f.key} label={f.label} value={data[f.key] ?? ""} onChange={set(f.key)} hint={f.hint} />;
           }
           return (
             <FieldRow key={f.key} label={f.label} value={data[f.key] ?? ""} onChange={set(f.key)} textarea={f.kind === "textarea"} hint={f.hint} />

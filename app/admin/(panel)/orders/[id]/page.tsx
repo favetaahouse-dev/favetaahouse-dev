@@ -3,6 +3,7 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import { requirePageAccess } from "@/lib/admin-guard";
 import { getOrder } from "@/lib/data/orders";
+import { getMadeToOrderSettings } from "@/lib/content";
 import { formatMoney } from "@/lib/money";
 import { variantLabel } from "@/lib/variant-options";
 import { Can } from "@/components/admin/ui/PermissionGate";
@@ -12,6 +13,10 @@ export default async function AdminOrderDetail({ params }: { params: Promise<{ i
   await requirePageAccess("orders:read");
   const { id } = await params;
   const order = await getOrder(id);
+  const mto = await getMadeToOrderSettings();
+  // key -> label. A key the CMS no longer defines still prints, under its raw name: an order
+  // placed before a schema edit must not lose the measurement the customer paid for.
+  const measureLabel = (k: string) => mto.fields.find((f) => f.key === k)?.label ?? k;
   if (!order) notFound();
   const addr = order.shippingAddress as Record<string, string> | null;
 
@@ -52,7 +57,28 @@ export default async function AdminOrderDetail({ params }: { params: Promise<{ i
               </div>
               <div className="flex-1 text-sm">
                 <p>{it.title}</p>
-                <p className="text-xs text-white/40">{variantLabel(it)} · × {it.quantity}</p>
+                <p className="text-xs text-white/40">
+                  {variantLabel({ ...it, madeToOrder: it.fulfillment === "MTO" })} · × {it.quantity}
+                </p>
+                {/* Inline, so staff can answer the phone without opening the print view. */}
+                {it.fulfillment === "MTO" && (
+                  <div className="mt-2 border border-white/10 p-2.5">
+                    <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs sm:grid-cols-3">
+                      {Object.entries(it.measurements ?? {}).map(([k, v]) => (
+                        <div key={k} className="flex justify-between gap-2">
+                          <dt className="text-white/40">{measureLabel(k)}</dt>
+                          <dd dir="ltr">{v}{it.measureUnit}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                    {it.notes && <p className="mt-2 text-xs text-white/60">Note: {it.notes}</p>}
+                    {it.leadMinDays != null && it.leadMaxDays != null && (
+                      <p className="mt-1 text-[11px] text-white/40">
+                        Promised in {it.leadMinDays}–{it.leadMaxDays} days
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
               <div className="self-center text-sm">{formatMoney(it.price * it.quantity, "QAR")}</div>
             </div>

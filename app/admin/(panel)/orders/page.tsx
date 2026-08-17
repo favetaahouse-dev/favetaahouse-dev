@@ -6,7 +6,9 @@ export default async function AdminOrders() {
   await requirePageAccess("orders:read");
   const { data: orders } = await supabase
     .from("orders")
-    .select("id, number, email, total, status, tracking_number, created_at, items:order_items(id)")
+    // fulfillment on the embedded items, not an !inner filter: joining on order_items would
+    // duplicate an order row once per matching item.
+    .select("id, number, email, total, status, tracking_number, created_at, items:order_items(id, fulfillment)")
     .order("created_at", { ascending: false });
 
   return (
@@ -41,6 +43,9 @@ export default async function AdminOrders() {
                     status: o.status as string,
                     trackingNumber: (o.tracking_number as string) ?? "",
                     itemCount: ((o.items ?? []) as unknown[]).length,
+                    mtoCount: ((o.items ?? []) as { fulfillment?: string }[]).filter(
+                      (i) => i.fulfillment === "MTO",
+                    ).length,
                     date: new Date(o.created_at as string).toLocaleDateString("en-US"),
                   }}
                 />

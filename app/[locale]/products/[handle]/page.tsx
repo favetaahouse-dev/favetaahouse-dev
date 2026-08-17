@@ -3,7 +3,8 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { setRequestLocale } from "next-intl/server";
 import { getProductByHandle, getRelatedProducts, getAllProductHandles } from "@/lib/data/catalog";
-import { getVariantOptions } from "@/lib/content";
+import { getVariantOptions, getMadeToOrderSettings } from "@/lib/content";
+import { applicableFields, fieldLabel } from "@/lib/measurements";
 import { ProductDetail, type ProductDetailDTO } from "@/components/product/ProductDetail";
 import { ProductRecommendations } from "@/components/product/ProductRecommendations";
 
@@ -53,10 +54,43 @@ async function ProductContent({ params }: { params: Promise<Params> }) {
   const product = await getProductByHandle(handle, locale);
   if (!product) notFound();
 
-  const [related, options] = await Promise.all([
+  // Both CMS reads ride the same "content" cache tag as getVariantOptions already did, so the
+  // made-to-order schema adds nothing new to this page's cache graph.
+  const [related, options, mtoSettings] = await Promise.all([
     getRelatedProducts(product.id, product.category, 4, locale),
     getVariantOptions(),
+    getMadeToOrderSettings(),
   ]);
+
+  /**
+   * The made-to-order panel is assembled HERE, not in the client component: the field list is
+   * bilingual in the CMS and the lead time may fall back to the house default, so resolving both
+   * server-side means the browser receives one localised, complete object instead of the raw
+   * blob plus the logic to interpret it.
+   */
+  const ar = locale === "ar";
+  const mto: ProductDetailDTO["mto"] = product.offersMto
+    ? {
+        price: product.mtoPrice!,
+        compareAt: product.mtoCompareAt,
+        leadMin: product.mtoLeadMin ?? mtoSettings.leadMinDays,
+        leadMax: product.mtoLeadMax ?? mtoSettings.leadMaxDays,
+        unit: mtoSettings.defaultUnit,
+        fields: applicableFields(mtoSettings.fields, product.mtoFields).map((f) => ({
+          key: f.key,
+          label: fieldLabel(f, locale),
+          min: f.min,
+          max: f.max,
+          required: f.required,
+        })),
+        // `||` not `??` throughout: a field cleared in the admin is "", which must fall through
+        // to the other language rather than render as an empty block.
+        intro: (ar ? mtoSettings.introAr || mtoSettings.intro : mtoSettings.intro) || "",
+        guide: (ar ? mtoSettings.guideAr || mtoSettings.guide : mtoSettings.guide) || "",
+        guideImage: mtoSettings.guideImage,
+        notesLabel: (ar ? mtoSettings.notesLabelAr || mtoSettings.notesLabel : mtoSettings.notesLabel) || "",
+      }
+    : null;
 
   const dto: ProductDetailDTO = {
     handle: product.handle,
@@ -69,10 +103,10 @@ async function ProductContent({ params }: { params: Promise<Params> }) {
     details: product.details,
     packaging: product.packaging,
     images: product.images.map((i) => ({ url: i.url, alt: i.alt })),
+    colors: product.colors,
     variants: product.variants.map((v) => ({
       id: v.id,
-      color: v.color,
-      colorHex: v.colorHex,
+      colorId: v.colorId,
       size: v.size,
       sku: v.sku,
       price: v.price,
@@ -82,6 +116,9 @@ async function ProductContent({ params }: { params: Promise<Params> }) {
       imageUrl: v.imageUrl,
     })),
     lengths: options.lengths,
+    offersMto: product.offersMto,
+    offersRtw: product.offersRtw,
+    mto,
   };
 
   const jsonLd = {
@@ -90,16 +127,22 @@ async function ProductContent({ params }: { params: Promise<Params> }) {
     name: product.title,
     image: product.images.map((i) => i.url),
     description: product.description ?? undefined,
-    sku: product.variants[0]?.sku ?? undefined,
+    sku: product.variants[0]?.sku ?? product.productCode ?? undefined,
     brand: { "@type": "Brand", name: "FAVETAA" },
     offers: {
       "@type": "AggregateOffer",
       priceCurrency: "QAR",
+      // price_min/price_max already fold the made-to-order price in — see
+      // recompute_product_prices in 20260816120000_made_to_order.sql.
       lowPrice: (product.priceMin / 100).toFixed(2),
       highPrice: (product.priceMax / 100).toFixed(2),
-      availability: product.variants.some((v) => v.available)
-        ? "https://schema.org/InStock"
-        : "https://schema.org/OutOfStock",
+      // A made-to-order piece is cut after the sale and is never out of stock. Without the
+      // first clause the entire made-to-order catalogue would advertise OutOfStock to Google,
+      // which is the same bug the product cards had.
+      availability:
+        product.offersMto || product.variants.some((v) => v.available)
+          ? "https://schema.org/InStock"
+          : "https://schema.org/OutOfStock",
     },
   };
 

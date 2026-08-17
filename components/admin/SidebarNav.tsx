@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, ShoppingCart, Package, Boxes, FolderTree, Users, CreditCard,
   TicketPercent, BarChart3, Megaphone, ShieldCheck, ScrollText, Home,
-  Settings, Images, Ruler, type LucideIcon,
+  Settings, Images, Ruler, Scissors, type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { can, type Access } from "@/lib/rbac/access";
@@ -29,6 +29,7 @@ export const navGroups: NavGroup[] = [
       { href: "/admin/inventory", label: "Inventory", icon: Boxes, permission: "inventory:read" },
       { href: "/admin/collections", label: "Collections", icon: FolderTree, permission: "categories:read" },
       { href: "/admin/content/variant-options", label: "Sizes & Lengths", icon: Ruler, permission: "content:read" },
+      { href: "/admin/content/made-to-order", label: "Made to Order", icon: Scissors, permission: "content:read" },
     ],
   },
   {

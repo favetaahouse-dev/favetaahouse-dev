@@ -18,6 +18,7 @@ export function OrderRow({
     status: string;
     trackingNumber: string;
     itemCount: number;
+    mtoCount: number;
     date: string;
   };
 }) {
@@ -34,7 +35,18 @@ export function OrderRow({
 
   return (
     <tr className="border-b border-white/5 align-top">
-      <td className="px-5 py-3">#{order.number}</td>
+      <td className="px-5 py-3">
+        #{order.number}
+        {/* The atelier has work on this order — the one thing that changes how it is handled. */}
+        {order.mtoCount > 0 && (
+          <span
+            title={`${order.mtoCount} made-to-order item(s)`}
+            className="ms-2 inline-block border border-white/20 px-1.5 py-0.5 text-[10px] tracking-[0.08em] text-white/60 uppercase"
+          >
+            MTO {order.mtoCount}
+          </span>
+        )}
+      </td>
       <td className="px-3 py-3 text-xs">
         <div>{order.email}</div>
         <div className="text-white/40">

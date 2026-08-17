@@ -2,7 +2,20 @@ import { formatMoney } from "@/lib/money";
 import { variantLabel } from "@/lib/variant-options";
 import type { OrderDTO } from "@/lib/data/orders";
 
-export type ReceiptOpts = { taxLabel: string; storeLocation: string; contactEmail: string };
+export type ReceiptOpts = {
+  taxLabel: string;
+  storeLocation: string;
+  contactEmail: string;
+  /**
+   * key -> label for the made-to-order measurements. A key MISSING from this map still prints,
+   * under its raw name: the CMS field list can be edited after an order is placed, and a receipt
+   * that silently drops a measurement the customer paid for is worse than one that prints
+   * "sleeve_length" instead of "Sleeve length".
+   */
+  measureLabels?: Record<string, string>;
+  /** Appended to the returns line only when the order contains a made-to-order piece. */
+  mtoReturnsNote?: string;
+};
 
 function esc(s: string): string {
   return s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
@@ -18,6 +31,30 @@ const fmtDate = (d: Date) => d.toLocaleDateString("en-GB", { day: "2-digit", mon
  */
 export function renderReceiptHtml(order: OrderDTO, opts: ReceiptOpts): string {
   const money = (c: number) => formatMoney(c, "QAR");
+  const hasMto = order.items.some((it) => it.fulfillment === "MTO");
+
+  /**
+   * Iterates the STORED blob, not the current schema — so an order placed under last month's
+   * field list still prints in full, in schema order where known and unknown keys after.
+   */
+  const measureBlock = (it: OrderDTO["items"][number]): string => {
+    if (it.fulfillment !== "MTO") return "";
+    const entries = Object.entries(it.measurements ?? {});
+    const parts = entries.map(
+      ([k, v]) => `${esc(opts.measureLabels?.[k] ?? k)} ${v}${it.measureUnit ? esc(it.measureUnit) : ""}`,
+    );
+    const lead =
+      it.leadMinDays != null && it.leadMaxDays != null
+        ? `<div style="color:${muted};font-size:11px;">Made to order &middot; ready in ${it.leadMinDays}–${it.leadMaxDays} days</div>`
+        : "";
+    const note = it.notes
+      ? `<div style="color:${muted};font-size:11px;">Note: ${esc(it.notes)}</div>`
+      : "";
+    const measures = parts.length
+      ? `<div style="color:${muted};font-size:11px;">${parts.join(" &middot; ")}</div>`
+      : "";
+    return `${measures}${lead}${note}`;
+  };
   const addr = order.shippingAddress as Record<string, string> | null;
   const ink = "#111111";
   const rule = "#dddddd";
@@ -29,7 +66,8 @@ export function renderReceiptHtml(order: OrderDTO, opts: ReceiptOpts): string {
       <tr>
         <td style="padding:10px 0;border-bottom:1px solid ${rule};vertical-align:top;">
           <div style="color:${ink};">${esc(it.title)}</div>
-          <div style="color:${muted};font-size:12px;">${esc(variantLabel(it))}${it.sku ? ` &middot; ${esc(it.sku)}` : ""}</div>
+          <div style="color:${muted};font-size:12px;">${esc(variantLabel({ ...it, madeToOrder: it.fulfillment === "MTO" }))}${it.sku ? ` &middot; ${esc(it.sku)}` : ""}</div>
+          ${measureBlock(it)}
         </td>
         <td style="padding:10px 8px;border-bottom:1px solid ${rule};text-align:center;color:${ink};white-space:nowrap;">${it.quantity}</td>
         <td style="padding:10px 8px;border-bottom:1px solid ${rule};text-align:right;color:${muted};white-space:nowrap;">${money(it.price)}</td>
@@ -128,6 +166,7 @@ export function renderReceiptHtml(order: OrderDTO, opts: ReceiptOpts): string {
       <div style="color:${ink};">Thank you for shopping with FAVETAA.</div>
       ${opts.contactEmail ? `<div>Questions? ${esc(opts.contactEmail)}</div>` : ""}
       <div>Returns &amp; exchanges within 15 days with the original invoice. All prices in QAR.</div>
+      ${hasMto && opts.mtoReturnsNote ? `<div>${esc(opts.mtoReturnsNote)}</div>` : ""}
     </div>
   </div>`;
 }

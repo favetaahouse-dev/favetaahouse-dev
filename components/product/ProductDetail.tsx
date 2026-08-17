@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Plus, Minus, Truck, PackageCheck } from "lucide-react";
+import { Plus, Minus, Truck, PackageCheck, Scissors } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { useRouter } from "@/lib/i18n-navigation";
@@ -11,19 +11,21 @@ import { ProductAccordion } from "@/components/product/ProductAccordion";
 import { ProductGallery } from "@/components/product/ProductGallery";
 import { ProductLightbox } from "@/components/product/ProductLightbox";
 import { StickyBuyBar } from "@/components/product/StickyBuyBar";
+import { MeasurementForm, type MeasureFieldDTO } from "@/components/product/MeasurementForm";
 import { useCart } from "@/components/providers/cart-context";
 import { sortSizes, variantLabel } from "@/lib/variant-options";
+import { MAX_MTO_QTY, MAX_NOTES, fieldRange, toCm, type Unit } from "@/lib/measurements";
 import { trackMeta, newEventId } from "@/lib/meta/fbq";
 import { viewContentPayload, addToCartPayload } from "@/lib/meta/events";
 import { icon } from "@/lib/icon";
 import { cn } from "@/lib/utils";
 
-// A variant is one colour+size, holding stock. Length + tack-tack are made-to-order choices
-// captured on the cart line, not stocked separately.
+// A variant is one colour+size, holding stock — the ready-to-wear half of the catalogue.
+// Made-to-order has no variant at all: it is a colour plus a set of measurements.
 export type VariantDTO = {
   id: string;
-  color: string;
-  colorHex: string | null;
+  /** The colour ROW's id. colors[].name is localised; variants.color is not — so ids match. */
+  colorId: string;
   size: string;
   sku: string | null;
   price: number;
@@ -31,6 +33,28 @@ export type VariantDTO = {
   stock: number;
   available: boolean;
   imageUrl: string | null;
+};
+
+export type ProductColorDTO = {
+  id: string;
+  name: string;
+  hex: string | null;
+  imageUrl: string | null;
+};
+
+/** Everything the made-to-order panel needs, already localised and already merged with the
+ *  house defaults, so the client resolves nothing. Null when the product doesn't offer it. */
+export type MtoDTO = {
+  price: number;
+  compareAt: number | null;
+  leadMin: number;
+  leadMax: number;
+  unit: Unit;
+  fields: MeasureFieldDTO[];
+  intro: string;
+  guide: string;
+  guideImage: string;
+  notesLabel: string;
 };
 
 export type ProductDetailDTO = {
@@ -44,9 +68,15 @@ export type ProductDetailDTO = {
   details: string | null;
   packaging: string | null;
   images: { url: string; alt: string | null }[];
+  colors: ProductColorDTO[];
   variants: VariantDTO[];
-  lengths: number[]; // offered lengths (from the CMS list); made-to-order choices
+  lengths: number[]; // offered lengths (from the CMS list); a ready-to-wear choice
+  offersMto: boolean;
+  offersRtw: boolean;
+  mto: MtoDTO | null;
 };
+
+type Mode = "MTO" | "RTW";
 
 const stocked = (v: VariantDTO) => v.available && v.stock > 0;
 const firstStocked = (list: VariantDTO[]) => list.find(stocked) ?? list[0];
@@ -68,24 +98,27 @@ const chipDead = "cursor-not-allowed border-line/60 text-muted line-through opac
 export function ProductDetail({ product }: { product: ProductDetailDTO }) {
   const t = useTranslations("product");
   const router = useRouter();
-  const { add } = useCart();
-  const variants = product.variants;
+  const { add, addMto } = useCart();
+  const { variants, colors, mto, offersMto, offersRtw } = product;
 
-  const colors = useMemo(() => {
-    const map = new Map<string, string | null>();
-    for (const v of variants) if (!map.has(v.color)) map.set(v.color, v.colorHex);
-    return [...map.entries()].map(([color, hex]) => ({ color, hex }));
-  }, [variants]);
-
-  const firstColor = colors[0]?.color ?? "";
-  const firstSize = firstStocked(variants.filter((v) => v.color === firstColor))?.size ?? "";
+  const firstColorId = colors[0]?.id ?? "";
+  const firstSize = firstStocked(variants.filter((v) => v.colorId === firstColorId))?.size ?? "";
   const lengths = product.lengths;
 
-  const [color, setColor] = useState(firstColor);
+  /**
+   * Made-to-order leads when the product offers it. That is the business, not a UI preference:
+   * ready-to-wear is now the secondary line, so it must not be what a shopper lands on.
+   */
+  const [mode, setMode] = useState<Mode>(offersMto ? "MTO" : "RTW");
+  const [colorId, setColorId] = useState(firstColorId);
   const [size, setSize] = useState(firstSize);
   const [tackTack, setTackTack] = useState(false); // "No" by default
   const [length, setLength] = useState<number | null>(lengths[0] ?? null);
   const [qty, setQty] = useState(1);
+  const [unit, setUnit] = useState<Unit>(mto?.unit ?? "cm");
+  const [values, setValues] = useState<Record<string, string>>({});
+  const [notes, setNotes] = useState("");
+  const [errors, setErrors] = useState<Record<string, string>>({});
   /** One index for the gallery, the lightbox and the colour jump, so closing the zoomed
    *  view on the third shot leaves the gallery on the third shot. */
   const [imageIndex, setImageIndex] = useState(0);
@@ -94,26 +127,35 @@ export function ProductDetail({ product }: { product: ProductDetailDTO }) {
   /** The two sentinels that bound the mobile buy bar — see StickyBuyBar. */
   const ctaRef = useRef<HTMLDivElement>(null);
   const detailsEndRef = useRef<HTMLDivElement>(null);
+  const measuresRef = useRef<HTMLDivElement>(null);
 
-  const inColor = variants.filter((v) => v.color === color);
+  const color = colors.find((c) => c.id === colorId);
+  const inColor = variants.filter((v) => v.colorId === colorId);
   const sizes = useMemo(() => sortSizes([...new Set(inColor.map((v) => v.size))]), [inColor]);
 
-  // Stock lives on (colour, size). Tack-tack + length are always-available made-to-order choices.
-  const selected = variants.find((v) => v.color === color && v.size === size);
+  // Stock lives on (colour, size). Length and tack-tack are choices on the line, not stock axes.
+  const selected = variants.find((v) => v.colorId === colorId && v.size === size);
+  const isMto = mode === "MTO";
+  const price = isMto ? (mto?.price ?? 0) : (selected?.price ?? 0);
+  const compareAt = isMto ? (mto?.compareAt ?? null) : (selected?.compareAt ?? null);
+  const maxQty = isMto ? MAX_MTO_QTY : (selected?.stock ?? 1);
 
   /**
    * Meta ViewContent — once per product, not once per variant click.
    *
-   * The dependency is `product.handle`, deliberately not `selected`. A shopper trying on four
-   * sizes is looking at ONE product; re-firing per selection would inflate ViewContent several
-   * times over and skew every downstream ratio. The price reported is the initially-selected
-   * variant's, which is also what <Price> renders on arrival.
+   * The dependency is `product.handle`, deliberately not `selected` and deliberately not `mode`.
+   * A shopper trying on four sizes, or toggling between made-to-order and ready-to-wear, is
+   * looking at ONE product; re-firing per selection would inflate ViewContent several times over
+   * and skew every downstream ratio. The price reported is the one the page opens on, which is
+   * also what <Price> renders on arrival.
    */
   const viewed = useRef<string | null>(null);
   useEffect(() => {
     if (viewed.current === product.handle) return;
     viewed.current = product.handle;
-    const priceFils = variants.find((v) => v.color === firstColor && v.size === firstSize)?.price ?? variants[0]?.price;
+    const priceFils = offersMto
+      ? mto?.price
+      : (variants.find((v) => v.colorId === firstColorId && v.size === firstSize)?.price ?? variants[0]?.price);
     if (priceFils == null) return;
     trackMeta(
       "ViewContent",
@@ -124,10 +166,12 @@ export function ProductDetail({ product }: { product: ProductDetailDTO }) {
         category: product.category,
       }),
     );
-    // firstColor/firstSize are derived from `variants`, which is derived from `product`.
+    // firstColorId/firstSize are derived from `variants`, which is derived from `product`.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [product.handle]);
-  const allSoldOut = variants.length > 0 && variants.every((v) => !stocked(v));
+
+  // Only meaningful for ready-to-wear: made-to-order is cut after the sale and never sells out.
+  const allSoldOut = offersRtw && variants.length > 0 && variants.every((v) => !stocked(v));
   const sizeSoldOut = (s: string) => !inColor.some((v) => v.size === s && stocked(v));
 
   function openLightbox(i: number) {
@@ -136,31 +180,117 @@ export function ProductDetail({ product }: { product: ProductDetailDTO }) {
   }
 
   /**
-   * Colour → image. Every variants.image_url in the catalogue is currently NULL and the
-   * admin has no field that writes one, so this is a deliberate no-op rather than an
-   * accidental one: attach an image to a variant and picking that colour moves the gallery
-   * to it, with no code change here.
-   *
-   * What it replaces scrolled a parallel array of tile refs into view — the same no-op,
-   * plus an array that had to stay in step with the render. Moving the controlled index
-   * instead means one line does the work at every width, and honouring reduced motion
-   * becomes the carousel's problem rather than this function's.
+   * Colour → image. A colour can now carry its own photograph (product_colors.image_url), so
+   * this reads the colour row rather than hunting a variant for one. Still a no-op for any
+   * colour with no image attached, which is most of them — attach one and picking that colour
+   * moves the gallery to it, with no code change here.
    */
-  function jumpGallery(v?: VariantDTO) {
-    if (!v?.imageUrl) return;
-    const i = product.images.findIndex((im) => im.url === v.imageUrl);
+  function jumpGallery(c?: ProductColorDTO) {
+    if (!c?.imageUrl) return;
+    const i = product.images.findIndex((im) => im.url === c.imageUrl);
     if (i >= 0) setImageIndex(i);
   }
 
-  function selectColor(c: string) {
-    const inC = variants.filter((v) => v.color === c);
-    const s = firstStocked(inC)?.size ?? inC[0]?.size ?? "";
-    setColor(c);
-    setSize(s);
-    jumpGallery(inC.find((v) => v.size === s));
+  function selectColor(id: string) {
+    const inC = variants.filter((v) => v.colorId === id);
+    setColorId(id);
+    setSize(firstStocked(inC)?.size ?? inC[0]?.size ?? "");
+    jumpGallery(colors.find((c) => c.id === id));
+  }
+
+  function switchMode(next: Mode) {
+    setMode(next);
+    setErrors({});
+    // Quantity is capped by different things in the two modes; carrying 8 across from a
+    // made-to-order line into a size with 2 in stock would silently over-order.
+    setQty(1);
+  }
+
+  /**
+   * The browser's copy of validateMeasurements, for instant per-field feedback.
+   *
+   * NOT the enforcement point — addMadeToOrderAction re-runs the real one against the CMS field
+   * list, because a server action is a public endpoint and this is only a courtesy.
+   */
+  function validate(): Record<string, string> {
+    const errs: Record<string, string> = {};
+    for (const f of mto?.fields ?? []) {
+      const raw = (values[f.key] ?? "").trim();
+      if (!raw) {
+        if (f.required) errs[f.key] = t("measureRequired", { field: f.label });
+        continue;
+      }
+      const n = Number(raw);
+      if (!Number.isFinite(n) || n <= 0) {
+        errs[f.key] = t("measureNumber", { field: f.label });
+        continue;
+      }
+      const cm = toCm(n, unit);
+      if (cm < f.min || cm > f.max) {
+        const r = fieldRange(f, unit);
+        errs[f.key] = t("measureRange", { field: f.label, min: r.min, max: r.max, unit });
+      }
+    }
+    return errs;
   }
 
   async function handleAdd(buyNow = false) {
+    if (!color) {
+      toast.error(t("selectColor"));
+      return;
+    }
+    const eventId = newEventId();
+    const meta = {
+      eventId,
+      eventSourceUrl: typeof window !== "undefined" ? window.location.href : undefined,
+    };
+
+    if (isMto) {
+      if (!mto) return;
+      const errs = validate();
+      setErrors(errs);
+      if (Object.keys(errs).length) {
+        toast.error(t("measureFixErrors"));
+        // The failing field can be far above the button on mobile, so a silent refusal reads
+        // as a dead button.
+        measuresRef.current?.scrollIntoView({ block: "center", behavior: "smooth" });
+        return;
+      }
+      setAdding(true);
+      const err = await addMto(
+        {
+          handle: product.handle,
+          colorId: color.id,
+          quantity: qty,
+          unit,
+          values: Object.fromEntries(
+            Object.entries(values).filter(([, v]) => v.trim() !== ""),
+          ),
+          notes: notes.trim() || undefined,
+          tackTack,
+        },
+        meta,
+      );
+      setAdding(false);
+      if (err) {
+        toast.error(err === "unavailable" ? t("outOfStock") : err);
+        return;
+      }
+      trackMeta(
+        "AddToCart",
+        addToCartPayload({
+          handle: product.handle,
+          title: product.title,
+          priceFils: mto.price,
+          quantity: qty,
+          category: product.category,
+        }),
+        eventId,
+      );
+      if (buyNow) router.push("/checkout");
+      return;
+    }
+
     if (!selected) {
       toast.error(t("selectSize"));
       return;
@@ -176,11 +306,7 @@ export function ProductDetail({ product }: { product: ProductDetailDTO }) {
     setAdding(true);
     // One id shared by the browser event below and the Conversions API event that
     // addToCartAction sends, so Meta merges the pair instead of counting two add-to-carts.
-    const eventId = newEventId();
-    const ok = await add(selected.id, qty, length ?? undefined, tackTack, {
-      eventId,
-      eventSourceUrl: typeof window !== "undefined" ? window.location.href : undefined,
-    });
+    const ok = await add(selected.id, qty, length ?? undefined, tackTack, meta);
     setAdding(false);
     if (ok) {
       // Only on success. A refused add — out of stock at the moment of the click — must not
@@ -203,6 +329,8 @@ export function ProductDetail({ product }: { product: ProductDetailDTO }) {
     if (!ok) toast.error(t("outOfStock"));
   }
 
+  const leadLine = mto ? t("mtoLead", { min: mto.leadMin, max: mto.leadMax }) : "";
+
   return (
     <div className="px-4 py-8 md:px-8 xl:px-10">
       <div className="mx-auto max-w-[1440px]">
@@ -222,31 +350,61 @@ export function ProductDetail({ product }: { product: ProductDetailDTO }) {
           <div className="max-w-[560px] xl:max-w-none">
             <h1 className="display text-[28px] md:text-[33px]">{product.title}</h1>
             <div className="mt-3 text-lg">
-              {selected && <Price cents={selected.price} compareAt={selected.compareAt} />}
+              {price > 0 && <Price cents={price} compareAt={compareAt} />}
             </div>
-            {selected?.sku && (
+            {!isMto && selected?.sku && (
               <p className="mt-1 text-xs text-muted">
                 {t("sku")}: {selected.sku}
               </p>
             )}
 
-            {/* Colors */}
+            {/* How it's made. Rendered only when there is a genuine choice — a product that
+                offers one way of buying should not be asked a question with one answer. */}
+            {offersMto && offersRtw && mto && (
+              <div className="mt-7">
+                <p className="mb-2.5 font-button text-[13px] font-medium text-strong">{t("chooseHow")}</p>
+                <div className="grid gap-2 sm:grid-cols-2" role="radiogroup" aria-label={t("chooseHow")}>
+                  {([
+                    { key: "MTO" as const, label: t("madeToOrder"), sub: leadLine, cents: mto.price },
+                    { key: "RTW" as const, label: t("readyToWear"), sub: t("rtwBlurb"), cents: selected?.price ?? 0 },
+                  ]).map((o) => (
+                    <button
+                      key={o.key}
+                      type="button"
+                      role="radio"
+                      aria-checked={mode === o.key}
+                      onClick={() => switchMode(o.key)}
+                      className={cn(
+                        "focus-ring border px-3.5 py-3 text-start transition-colors",
+                        mode === o.key ? "border-strong bg-mist" : "border-line hover:border-strong",
+                      )}
+                    >
+                      <span className="block font-button text-[13px] font-medium text-strong">{o.label}</span>
+                      <span className="mt-0.5 block text-[11px] text-muted">{o.sub}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Colours — the one axis both modes share, and the reason they live in their own
+                table rather than being repeated across the size grid. */}
             {colors.length > 0 && (
               <div className="mt-7">
                 <p className="mb-2.5 font-button text-[13px] font-medium text-strong">
-                  {t("color")}: <span className="font-normal text-muted">{color}</span>
+                  {t("color")}: <span className="font-normal text-muted">{color?.name}</span>
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {colors.map((c) => (
                     <button
-                      key={c.color}
-                      onClick={() => selectColor(c.color)}
-                      title={c.color}
-                      aria-label={c.color}
-                      aria-pressed={color === c.color}
+                      key={c.id}
+                      onClick={() => selectColor(c.id)}
+                      title={c.name}
+                      aria-label={c.name}
+                      aria-pressed={colorId === c.id}
                       className={cn(
                         "h-8 w-8 border transition-all",
-                        color === c.color ? "ring-1 ring-strong ring-offset-2" : "border-line",
+                        colorId === c.id ? "ring-1 ring-strong ring-offset-2" : "border-line",
                       )}
                       style={{ backgroundColor: c.hex ?? "var(--color-mist)" }}
                     />
@@ -255,53 +413,95 @@ export function ProductDetail({ product }: { product: ProductDetailDTO }) {
               </div>
             )}
 
-            {allSoldOut && (
+            {allSoldOut && !offersMto && (
               <p className="mt-5 border border-line bg-mist px-3 py-2 text-center text-[12px] tracking-[0.16em] text-muted uppercase">
                 {t("soldOut")}
               </p>
             )}
 
-            {/* Sizes */}
-            <div className="mt-6">
-              <p className="mb-2.5 font-button text-[13px] font-medium text-strong">{t("size")}</p>
-              <div className="flex flex-wrap gap-2">
-                {sizes.map((s) => {
-                  const disabled = sizeSoldOut(s);
-                  return (
-                    <button
-                      key={s}
-                      disabled={disabled}
-                      onClick={() => setSize(s)}
-                      aria-pressed={size === s}
-                      className={cn(chip, size === s ? chipOn : chipOff, disabled && chipDead)}
-                    >
-                      {s}
-                    </button>
-                  );
-                })}
+            {isMto && mto ? (
+              <div ref={measuresRef}>
+                <MeasurementForm
+                  fields={mto.fields}
+                  unit={unit}
+                  onUnitChange={setUnit}
+                  values={values}
+                  onChange={setValues}
+                  errors={errors}
+                  intro={mto.intro}
+                  notesLabel={mto.notesLabel}
+                  notes={notes}
+                  onNotesChange={setNotes}
+                  maxNotes={MAX_NOTES}
+                />
+                {(mto.guide || mto.guideImage) && (
+                  <details className="mt-4 border border-line">
+                    <summary className="focus-ring cursor-pointer px-3.5 py-2.5 font-button text-[12px] text-strong">
+                      {t("howToMeasure")}
+                    </summary>
+                    <div className="border-t border-line px-3.5 py-3">
+                      {mto.guideImage && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={mto.guideImage}
+                          alt={t("howToMeasure")}
+                          className="mb-3 max-w-full"
+                          loading="lazy"
+                        />
+                      )}
+                      {mto.guide && <p className="text-[13px] whitespace-pre-line text-ink">{mto.guide}</p>}
+                    </div>
+                  </details>
+                )}
               </div>
-            </div>
-
-            {/* Length — a made-to-order choice, always selectable */}
-            {lengths.length > 0 && (
-              <div className="mt-6">
-                <p className="mb-2.5 font-button text-[13px] font-medium text-strong">{t("length")}</p>
-                <div className="flex flex-wrap gap-2">
-                  {lengths.map((l) => (
-                    <button
-                      key={l}
-                      onClick={() => setLength(l)}
-                      aria-pressed={length === l}
-                      className={cn(chip, length === l ? chipOn : chipOff)}
-                    >
-                      {l}
-                    </button>
-                  ))}
+            ) : (
+              <>
+                {/* Sizes */}
+                <div className="mt-6">
+                  <p className="mb-2.5 font-button text-[13px] font-medium text-strong">{t("size")}</p>
+                  <div className="flex flex-wrap gap-2">
+                    {sizes.map((s) => {
+                      const disabled = sizeSoldOut(s);
+                      return (
+                        <button
+                          key={s}
+                          disabled={disabled}
+                          onClick={() => setSize(s)}
+                          aria-pressed={size === s}
+                          className={cn(chip, size === s ? chipOn : chipOff, disabled && chipDead)}
+                        >
+                          {s}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
+
+                {/* Length — a ready-to-wear choice. Absent under made-to-order, where the hem
+                    is the total-length MEASUREMENT: offering both would give the atelier two
+                    numbers for one dimension. */}
+                {lengths.length > 0 && (
+                  <div className="mt-6">
+                    <p className="mb-2.5 font-button text-[13px] font-medium text-strong">{t("length")}</p>
+                    <div className="flex flex-wrap gap-2">
+                      {lengths.map((l) => (
+                        <button
+                          key={l}
+                          onClick={() => setLength(l)}
+                          aria-pressed={length === l}
+                          className={cn(chip, length === l ? chipOn : chipOff)}
+                        >
+                          {l}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
             )}
 
-            {/* Tack Tack — a made-to-order choice, always selectable; sits under length */}
+            {/* Tack Tack — offered in BOTH modes. It is a finishing choice, not a fit
+                dimension, and the tailor needs it either way. */}
             <div className="mt-6">
               <p className="mb-2.5 font-button text-[13px] font-medium text-strong">{t("tackTack")}</p>
               <div className="flex flex-wrap gap-2">
@@ -331,7 +531,7 @@ export function ProductDetail({ product }: { product: ProductDetailDTO }) {
                 <span className="min-w-8 text-center text-sm">{qty}</span>
                 <button
                   className="focus-ring px-3 py-3 transition-opacity hover:opacity-60"
-                  onClick={() => setQty((q) => Math.min(selected?.stock ?? 1, q + 1))}
+                  onClick={() => setQty((q) => Math.min(maxQty, q + 1))}
                   aria-label="increase"
                 >
                   <Plus {...icon.inline} />
@@ -357,6 +557,14 @@ export function ProductDetail({ product }: { product: ProductDetailDTO }) {
                 was too quiet to do that job. 18px marks against 13px ink read at a glance without
                 turning the block into a feature. */}
             <div className="mt-6 space-y-2.5 border-y border-line py-4 text-[13px] text-ink">
+              {isMto && mto && (
+                <>
+                  <p className="flex items-center gap-2.5">
+                    <Scissors {...icon.inline} /> {leadLine}
+                  </p>
+                  <p className="text-[12px] text-muted">{t("mtoNoReturn")}</p>
+                </>
+              )}
               <p className="flex items-center gap-2.5">
                 <PackageCheck {...icon.inline} /> {t("freeShipping")}
               </p>
@@ -389,11 +597,20 @@ export function ProductDetail({ product }: { product: ProductDetailDTO }) {
         </div>
       </div>
 
-      {selected && (
+      {/* The gate is `isMto || selected`, not `selected` alone: a made-to-order-only product
+          has no variant to select, and would otherwise lose its mobile buy bar entirely. */}
+      {(isMto ? !!mto : !!selected) && (
         <StickyBuyBar
-          price={selected.price}
-          compareAt={selected.compareAt}
-          label={variantLabel({ color, size, length, tackTack })}
+          price={price}
+          compareAt={compareAt}
+          label={variantLabel({
+            color: color?.name ?? "",
+            size: selected?.size,
+            length,
+            tackTack,
+            madeToOrder: isMto,
+            madeToOrderLabel: t("madeToOrder"),
+          })}
           disabled={adding}
           onAdd={() => handleAdd(false)}
           ctaRef={ctaRef}

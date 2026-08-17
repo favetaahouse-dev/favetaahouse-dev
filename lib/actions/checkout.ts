@@ -6,6 +6,8 @@ import { randomUUID } from "crypto";
 import { z } from "zod";
 import { supabase } from "@/lib/supabase";
 import { getCart, getCartCoupon, CART_COOKIE } from "@/lib/data/cart";
+import { getMadeToOrderSettings } from "@/lib/content";
+import { applicableFields, validateMeasurements } from "@/lib/measurements";
 import { skipcashEnabled, createPayment } from "@/lib/skipcash";
 import { sendOrderConfirmation, sendMerchantOrderEmail } from "@/lib/email";
 import { auth } from "@/lib/auth";
@@ -52,12 +54,66 @@ export async function createCheckout(
   const session = await auth().catch(() => null);
   const userId = session?.user?.id ?? null;
   const coupon = cart.id ? await getCartCoupon(cart.id) : null;
-  const items = cart.items.map((i) => ({
-    variant_id: i.variantId,
-    quantity: i.quantity,
-    length: i.length,
-    tack_tack: i.tackTack,
-  }));
+
+  /**
+   * Re-validate every made-to-order line before the RPC.
+   *
+   * The cart cookie lives 60 days, and in that window the CMS field list can change, a bound can
+   * tighten, a colour can be deleted or the product can flip back to ready-to-wear only. Without
+   * this, a cart assembled under last month's rules ships whatever it was holding to the atelier.
+   *
+   * Two batched reads, never 2N: one products query for the whole cart, one cached CMS read.
+   * create_order keeps only the cheap structural invariants — reimplementing the field-level
+   * rules in plpgsql would be a second copy of lib/measurements.ts that immediately drifts.
+   */
+  const mtoLines = cart.items.filter((i) => i.fulfillment === "MTO");
+  const rules = new Map<string, string[]>();
+  if (mtoLines.length) {
+    const { data: rows } = await supabase
+      .from("products")
+      .select("id, fulfillment, mto_price, mto_fields")
+      .in("id", [...new Set(mtoLines.map((i) => i.productId))]);
+    for (const p of rows ?? []) {
+      if (p.fulfillment === "READY_TO_WEAR" || p.mto_price == null) return { ok: false, error: "mode" };
+      rules.set(p.id as string, (p.mto_fields as string[]) ?? []);
+    }
+    const settings = await getMadeToOrderSettings();
+    for (const line of mtoLines) {
+      const only = rules.get(line.productId);
+      if (!only || !line.measureUnit) return { ok: false, error: "mode" };
+      const check = validateMeasurements(
+        applicableFields(settings.fields, only),
+        line.measurements ?? {},
+        line.measureUnit,
+      );
+      if (!check.ok) return { ok: false, error: "measurements" };
+    }
+  }
+
+  // Every made-to-order field rides INSIDE p_items rather than as a new RPC parameter: the
+  // grant on create_order is bound to its signature, and a seventh argument would need a fresh
+  // grant while the old overload kept resolving. This array is built from the DB cart, so it is
+  // server-derived — but create_order still reprices it from the DB regardless.
+  const items = cart.items.map((i) =>
+    i.fulfillment === "MTO"
+      ? {
+          fulfillment: "MTO" as const,
+          product_id: i.productId,
+          color_id: i.colorId,
+          quantity: i.quantity,
+          measurements: i.measurements,
+          measure_unit: i.measureUnit,
+          notes: i.notes,
+          tack_tack: i.tackTack,
+        }
+      : {
+          fulfillment: "RTW" as const,
+          variant_id: i.variantId,
+          quantity: i.quantity,
+          length: i.length,
+          tack_tack: i.tackTack,
+        },
+  );
 
   const { data: res, error } = await supabase.rpc("create_order", {
     p_email: data.email,
@@ -77,6 +133,10 @@ export async function createCheckout(
 
   if (error || !res) {
     const msg = (error?.message ?? "").toLowerCase();
+    // 'mto' is create_order's structural refusal — the product stopped offering made-to-order,
+    // lost its price, or the colour went away between the cart and the checkout. It gets its
+    // own code so the form can say which, rather than "Something went wrong."
+    if (msg.includes("mto")) return { ok: false, error: "mode" };
     return { ok: false, error: msg.includes("stock") ? "stock" : "error" };
   }
   const order = res as {

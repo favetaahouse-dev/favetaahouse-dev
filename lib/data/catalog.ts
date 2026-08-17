@@ -1,5 +1,6 @@
 import { cacheLife, cacheTag } from "next/cache";
 import { supabase } from "@/lib/supabase";
+import type { FulfillmentMode } from "@/lib/fulfillment";
 
 export type ProductCardDTO = {
   handle: string;
@@ -13,12 +14,26 @@ export type ProductCardDTO = {
   hoverImage: string | null;
   swatches: { color: string; hex: string | null }[];
   inStock: boolean;
+  fulfillment: FulfillmentMode;
 };
 
-// PostgREST select for card rows (images/variants ordered by position via query below).
+// PostgREST select for card rows (images/colours ordered by position via query below).
 // Shared with lib/data/collections.ts so the two listing queries can't drift apart.
+//
+// Colours come from product_colors rather than from the variant grid: a made-to-order product
+// has colours and no variants at all, so reading swatches off variants would leave the majority
+// of the catalogue with a blank swatch row.
+//
+// Every caller casts the result `as unknown as CardRow[]` rather than `as CardRow[]`. That is
+// not laziness: supabase-js infers a row type by PARSING this string in the type system, and
+// that parser is depth-limited. Three embeds plus the made-to-order columns crosses the limit,
+// at which point it yields GenericStringError and the honest cast is the one through unknown.
+// CardRow below is the hand-maintained contract — keep the two in step by hand, as
+// getProductByHandle already does for the same reason.
 export const CARD =
-  "handle,title,title_ar,category,on_sale,price_min,price_max,images:product_images(url,position),variants(color,color_hex,price,compare_at,available,position)";
+  "handle,title,title_ar,category,on_sale,price_min,price_max,fulfillment,mto_price,mto_compare_at," +
+  "images:product_images(url,position),colors:product_colors(name,hex,position)," +
+  "variants(price,compare_at,available)";
 
 /**
  * A card renders only images[0] (main) and images[1] (hover), so ask the database for
@@ -42,18 +57,25 @@ type CardRow = {
   on_sale: boolean;
   price_min: number;
   price_max: number;
+  fulfillment: FulfillmentMode;
+  mto_price: number | null;
+  mto_compare_at: number | null;
   images: { url: string; position: number }[];
-  variants: { color: string; color_hex: string | null; price: number; compare_at: number | null; available: boolean; position: number }[];
+  colors: { name: string; hex: string | null; position: number }[];
+  variants: { price: number; compare_at: number | null; available: boolean }[];
 };
 
 export function toCard(p: CardRow, locale: string): ProductCardDTO {
   const images = [...(p.images ?? [])].sort((a, b) => a.position - b.position);
-  const variants = [...(p.variants ?? [])].sort((a, b) => a.position - b.position);
-  const swatchMap = new Map<string, string | null>();
+  const colors = [...(p.colors ?? [])].sort((a, b) => a.position - b.position);
+  const variants = p.variants ?? [];
   let compareAtMax: number | null = null;
   for (const v of variants) {
-    if (!swatchMap.has(v.color)) swatchMap.set(v.color, v.color_hex);
     if (v.compare_at && v.compare_at > v.price) compareAtMax = Math.max(compareAtMax ?? 0, v.compare_at);
+  }
+  const offersMto = p.fulfillment !== "READY_TO_WEAR" && p.mto_price != null;
+  if (offersMto && p.mto_compare_at && p.mto_compare_at > p.mto_price!) {
+    compareAtMax = Math.max(compareAtMax ?? 0, p.mto_compare_at);
   }
   return {
     handle: p.handle,
@@ -66,8 +88,12 @@ export function toCard(p: CardRow, locale: string): ProductCardDTO {
     compareAtMax,
     image: images[0]?.url ?? null,
     hoverImage: images[1]?.url ?? null,
-    swatches: [...swatchMap.entries()].map(([color, hex]) => ({ color, hex })),
-    inStock: variants.some((v) => v.available),
+    swatches: colors.map((c) => ({ color: c.name, hex: c.hex })),
+    // A made-to-order piece is cut after the sale, so it is never out of stock. Without this
+    // clause every made-to-order card would render dimmed under a "Sold out" badge, because the
+    // only signal here used to be whether some variant row was available — and it has none.
+    inStock: offersMto || variants.some((v) => v.available),
+    fulfillment: p.fulfillment,
   };
 }
 
@@ -85,7 +111,7 @@ export async function getFeaturedProducts(take = 16, locale: string): Promise<Pr
       .order("created_at", { ascending: false })
       .limit(take),
   );
-  const featured = ((data ?? []) as CardRow[]).map((r) => toCard(r, locale));
+  const featured = ((data ?? []) as unknown as CardRow[]).map((r) => toCard(r, locale));
   // Never leave the homepage empty — fall back to the newest active products.
   return featured.length > 0 ? featured : getNewestProducts(take, locale);
 }
@@ -121,7 +147,7 @@ export async function getProductsByCategory(take = 60, locale: string): Promise<
   // Map, not an object literal: insertion order is the tab order, and it follows
   // created_at, so the category with the newest arrival leads.
   const groups = new Map<string, ProductCardDTO[]>();
-  for (const row of (data ?? []) as CardRow[]) {
+  for (const row of (data ?? []) as unknown as CardRow[]) {
     const card = toCard(row, locale);
     if (!card.category) continue;
     const bucket = groups.get(card.category);
@@ -138,7 +164,7 @@ export async function getNewestProducts(take = 8, locale: string): Promise<Produ
   const { data } = await cardImages(
     supabase.from("products").select(CARD).eq("status", "active").order("created_at", { ascending: false }).limit(take),
   );
-  return ((data ?? []) as CardRow[]).map((r) => toCard(r, locale));
+  return ((data ?? []) as unknown as CardRow[]).map((r) => toCard(r, locale));
 }
 
 export type FullProduct = {
@@ -155,10 +181,34 @@ export type FullProduct = {
   priceMin: number;
   priceMax: number;
   images: { id: string; url: string; alt: string | null; position: number }[];
+  /** Canonical colour list. Both modes read it; variants merely reference it. */
+  colors: { id: string; name: string; hex: string | null; imageUrl: string | null }[];
   variants: {
-    id: string; color: string; colorHex: string | null; size: string; sku: string | null;
+    id: string;
+    /**
+     * The colour's id, not its name. `color` below is a denormalised English snapshot, while
+     * colors[].name is localised — so on /ar matching a variant to a swatch by name finds
+     * nothing. Everything downstream keys on this.
+     */
+    colorId: string;
+    color: string; colorHex: string | null; size: string; sku: string | null;
     price: number; compareAt: number | null; stock: number; available: boolean; imageUrl: string | null; position: number;
   }[];
+  fulfillment: FulfillmentMode;
+  mtoPrice: number | null;
+  mtoCompareAt: number | null;
+  /** Null here means "use the house default" — resolved by the caller from the CMS. */
+  mtoLeadMin: number | null;
+  mtoLeadMax: number | null;
+  /** Which measurement fields apply. Empty = all of them. */
+  mtoFields: string[];
+  /**
+   * Derived ONCE, here, so no component re-derives it and gets the null-price case wrong.
+   * A product set to made-to-order but never given a price cannot be sold that way, and must
+   * read as not offering it rather than as offering it for nothing.
+   */
+  offersMto: boolean;
+  offersRtw: boolean;
 };
 
 /**
@@ -174,7 +224,9 @@ export async function getProductByHandle(handle: string, locale: string): Promis
     .from("products")
     .select(
       "id,handle,title,title_ar,category,product_code,description,description_ar,materials,materials_ar,model_size,details,details_ar,packaging,price_min,price_max," +
-        "images:product_images(id,url,alt,position),variants(id,color,color_hex,size,sku,price,compare_at,stock,available,image_url,position)",
+        "fulfillment,mto_price,mto_compare_at,mto_lead_min,mto_lead_max,mto_fields," +
+        "images:product_images(id,url,alt,position),colors:product_colors(id,name,name_ar,hex,image_url,position)," +
+        "variants(id,color_id,color,color_hex,size,sku,price,compare_at,stock,available,image_url,position)",
     )
     .eq("handle", handle)
     .eq("status", "active")
@@ -182,7 +234,8 @@ export async function getProductByHandle(handle: string, locale: string): Promis
   if (!data) return null;
   const p = data as unknown as Record<string, unknown> & {
     images: { id: string; url: string; alt: string | null; position: number }[];
-    variants: { id: string; color: string; color_hex: string | null; size: string; sku: string | null; price: number; compare_at: number | null; stock: number; available: boolean; image_url: string | null; position: number }[];
+    colors: { id: string; name: string; name_ar: string | null; hex: string | null; image_url: string | null; position: number }[];
+    variants: { id: string; color_id: string; color: string; color_hex: string | null; size: string; sku: string | null; price: number; compare_at: number | null; stock: number; available: boolean; image_url: string | null; position: number }[];
   };
   const ar = locale === "ar";
   // `||` (not `??`) so a blank Arabic field falls back to English.
@@ -202,10 +255,27 @@ export async function getProductByHandle(handle: string, locale: string): Promis
     priceMin: p.price_min as number,
     priceMax: p.price_max as number,
     images: [...p.images].sort((a, b) => a.position - b.position),
+    colors: [...(p.colors ?? [])]
+      .sort((a, b) => a.position - b.position)
+      .map((c) => ({
+        id: c.id,
+        // Same `||` fallback as every other bilingual field: a blank Arabic name shows English.
+        name: ar ? c.name_ar || c.name : c.name,
+        hex: c.hex,
+        imageUrl: c.image_url,
+      })),
+    fulfillment: (p.fulfillment as FulfillmentMode) ?? "READY_TO_WEAR",
+    mtoPrice: (p.mto_price as number) ?? null,
+    mtoCompareAt: (p.mto_compare_at as number) ?? null,
+    mtoLeadMin: (p.mto_lead_min as number) ?? null,
+    mtoLeadMax: (p.mto_lead_max as number) ?? null,
+    mtoFields: (p.mto_fields as string[]) ?? [],
+    offersMto: p.fulfillment !== "READY_TO_WEAR" && p.mto_price != null,
+    offersRtw: p.fulfillment !== "MADE_TO_ORDER",
     variants: [...p.variants]
       .sort((a, b) => a.position - b.position)
       .map((v) => ({
-        id: v.id, color: v.color, colorHex: v.color_hex, size: v.size, sku: v.sku,
+        id: v.id, colorId: v.color_id, color: v.color, colorHex: v.color_hex, size: v.size, sku: v.sku,
         price: v.price, compareAt: v.compare_at, stock: v.stock, available: v.available, imageUrl: v.image_url, position: v.position,
       })),
   };
@@ -233,7 +303,7 @@ export async function getRelatedProducts(productId: string, category: string, ta
       .order("created_at", { ascending: false })
       .limit(take),
   );
-  return ((data ?? []) as CardRow[]).map((r) => toCard(r, locale));
+  return ((data ?? []) as unknown as CardRow[]).map((r) => toCard(r, locale));
 }
 
 export async function searchProducts(q: string, take = 24, locale: string): Promise<ProductCardDTO[]> {
@@ -253,5 +323,5 @@ export async function searchProducts(q: string, take = 24, locale: string): Prom
   const { data } = await cardImages(
     supabase.from("products").select(CARD).eq("status", "active").or(filters.join(",")).limit(take),
   );
-  return ((data ?? []) as CardRow[]).map((r) => toCard(r, locale));
+  return ((data ?? []) as unknown as CardRow[]).map((r) => toCard(r, locale));
 }
