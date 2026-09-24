@@ -6,7 +6,7 @@ import { notFound } from "next/navigation";
 import { SessionProvider } from "next-auth/react";
 import { Toaster } from "sonner";
 import { routing } from "@/i18n/routing";
-import { getNavItems } from "@/lib/data/navigation";
+import { getNavCategories } from "@/lib/data/navigation";
 import { getHomeMedia, getSiteSettings } from "@/lib/content";
 import { DirSync } from "@/components/DirSync";
 import { Providers } from "@/components/providers/Providers";
@@ -36,9 +36,10 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  // Cream, matching --color-paper. The browser paints this behind the page and into the
-  // mobile status bar, so leaving it white put a hard white strip above a cream document.
-  themeColor: "#f6f2ea",
+  // Black, matching the storefront's --color-paper (.theme-dark in globals.css). The browser
+  // paints this behind the page and into the mobile status bar, so any other value puts a
+  // coloured strip above a black document.
+  themeColor: "#000000",
 };
 
 export const metadata: Metadata = {
@@ -105,7 +106,7 @@ export default async function LocaleLayout({
     locale === "ar"
       ? (await import("@/messages/ar.json")).default
       : (await import("@/messages/en.json")).default;
-  const navItems = await getNavItems(locale);
+  const categories = await getNavCategories(locale);
 
   // The admin-editable storefront announcement bar (Admin → Announcements). Cached under the
   // "content" tag like the footer/nav, so it stays in the prerendered shell and a save
@@ -126,7 +127,8 @@ export default async function LocaleLayout({
   const heroOverlay = (await getHomeMedia()) !== null;
 
   return (
-    <html lang={locale} dir={locale === "ar" ? "rtl" : "ltr"} className={`h-full ${fontVars}`}>
+    // theme-dark swaps the storefront to black ground / white type — see app/globals.css.
+    <html lang={locale} dir={locale === "ar" ? "rtl" : "ltr"} className={`theme-dark h-full ${fontVars}`}>
       <body className="flex min-h-full flex-col bg-paper text-ink">
         {/* No `session` prop: fetching it needs cookies(), which would pull the whole
             shell out of the prerender. Anonymous visitors — nearly all of them — get one
@@ -138,7 +140,7 @@ export default async function LocaleLayout({
               {/* The header and the bottom bar sit at opposite edges and open the same three
                   panels, so the panels are owned here — one mounted instance each, and one
                   answer to "which is showing". */}
-              <NavUIProvider navItems={navItems}>
+              <NavUIProvider categories={categories}>
                 {/* In normal flow at the very top so it scrolls away; the fixed header offsets
                     itself below it. Renders nothing when no message is set. */}
                 <AnnouncementBar text={announcement} />
@@ -179,6 +181,7 @@ export default async function LocaleLayout({
             <MetaPixel />
             {/* Offset so toasts land above the fixed bottom bar rather than behind it. */}
             <Toaster
+              theme="dark"
               position="bottom-center"
               offset={72}
               toastOptions={{ style: { borderRadius: "var(--radius-control)" } }}

@@ -28,6 +28,7 @@
   --color-mist: #e8e1d6;       /* alternating band + image placeholder */
   --color-haze: #efe9de;       /* one step between paper and mist */
   --color-line: #e0d6c6;       /* hairlines, warm rather than grey */
+  --color-line-strong: #b3a697; /* the edge of a CONTROL or swatch — must hold 3:1, a hairline need not */
   --color-ink: #4a423d;        /* body copy */
   --color-strong: #222222;     /* headings — charcoal, NOT the brand colour */
   --color-muted: #8e8279;      /* meta, placeholders, inactive */
@@ -130,6 +131,58 @@
 }
 @media (min-width: 1440px) {
   :root { --gutter: 6rem; }
+}
+
+/* ─────────────────────────── Storefront: black ───────────────────────────
+   The storefront is black ground and white type. The values are swapped HERE, on the class
+   app/[locale]/layout.tsx puts on the storefront's <html>, rather than in @theme above,
+   because the admin still paints with the light values: its printed receipt sets `.display`
+   in --color-strong on white paper, and every back-office accent is --color-signal burgundy.
+   The semantic names are unchanged, so every bg-paper / text-ink / border-line flips with no
+   markup edit — the same trick the @theme comment describes, applied to one subtree.
+
+   In @layer base so it outranks @layer theme on the same element by layer order.
+
+   The ramp keeps the light theme's hierarchy: headings (strong) are pure white, body copy
+   (ink) sits one step down so a `hover:text-strong` on it still visibly lifts, and muted clears
+   AA at 7.4:1 — the cream theme's muted never did. Champagne stays exactly as it was: it reads
+   at 8.3:1 on black, so the jewellery note survives the move untouched.
+
+   Brand fills go WHITE, not burgundy. #5b1e2d is 1.4:1 against black — a burgundy button would
+   read as a smudge — so the CTA becomes the white slab and black type becomes its label, the
+   exact inversion of the cream theme. Signal is the one place burgundy had to be lifted rather
+   than dropped: it carries error text, and on black it becomes a rose that holds 8.4:1. */
+@layer base {
+  .theme-dark {
+    color-scheme: dark;
+    --color-paper: #000000;
+    --color-haze: #0a0a0a;
+    --color-mist: #141414;
+    --color-line: #2a2a2a;
+    --color-line-strong: #5c5c5c;  /* 3.1:1 — a black swatch or an empty input still has an edge */
+    --color-ink: #ececec;
+    --color-strong: #ffffff;
+    --color-muted: #999999;
+    --color-card: #0f0f0f;
+    --color-brand: #ffffff;
+    --color-brand-hover: #d6d6d6;
+    --color-on-brand: #000000;
+    --color-signal: #e38b97;
+    --color-signal-strong: #f2b3bb;
+    /* The footer goes black with the page. The step between the two bands survives as
+       #0a0a0a over #000, with the champagne hover and tagline carried over as they were. */
+    --color-footer: #0a0a0a;
+    --color-footer-deep: #000000;
+    --color-footer-fg: #ffffff;
+    --color-footer-link: #ececec;
+    --color-footer-accent: #e6cfa0;
+    --color-footer-muted: #999999;
+    --color-footer-line: #262626;
+  }
+  /* The paper grain is a cream-stock effect; over black it only greys the ground. */
+  .theme-dark body {
+    background-image: none;
+  }
 }
 
 /* ─────────────────────────── Base ─────────────────────────── */
@@ -438,7 +491,8 @@
     transition: background-size var(--dur) var(--ease-lux), color var(--dur) var(--ease-lux);
   }
   .nav-underline:hover,
-  .nav-underline[aria-current="page"] {
+  .nav-underline[aria-current="page"],
+  .nav-underline[aria-expanded="true"] {
     background-size: 100% 1px;
     color: var(--color-brand);
   }
@@ -461,7 +515,9 @@
     transition: color var(--dur-fast) var(--ease-lux), border-color var(--dur-fast) var(--ease-lux);
   }
   .tab-label:hover { color: var(--color-ink); }
-  .tab-label[aria-selected="true"] {
+  /* aria-pressed is the filter form of the same control — see components/home/TrendyTabs.tsx. */
+  .tab-label[aria-selected="true"],
+  .tab-label[aria-pressed="true"] {
     color: var(--color-brand);
     border-bottom-color: var(--color-brand);
   }
@@ -479,7 +535,9 @@
   .field {
     width: 100%;
     background: transparent;
-    border: 1px solid var(--color-line);
+    /* line-strong, not line: a hairline-weight edge vanishes on black, and an input with no
+       visible boundary is a value floating under its label (WCAG 1.4.11 asks 3:1). */
+    border: 1px solid var(--color-line-strong);
     border-radius: var(--radius-control);
     padding: 0.9rem 1.05rem;
     font-family: var(--font-sans);

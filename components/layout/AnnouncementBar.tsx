@@ -17,7 +17,7 @@
 export function AnnouncementBar({ text }: { text: string }) {
   if (!text) return null;
   return (
-    <div data-announce className="bg-ink pt-[env(safe-area-inset-top,0px)] text-white">
+    <div data-announce className="bg-ink pt-[env(safe-area-inset-top,0px)] text-paper">
       <div className="flex h-[34px] items-center justify-center px-4 text-center">
         <p className="truncate text-[12px] tracking-[0.06em]">{text}</p>
       </div>

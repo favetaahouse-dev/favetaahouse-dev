@@ -66,15 +66,15 @@ export function ProductCardView({
           )}
         </Link>
 
-        {/* With no accent colour left, the two badges have to differ by treatment rather than
-            hue: sale is a solid black slab, sold-out a pale chip. Two black slabs would be
-            indistinguishable at a glance. */}
+        {/* With no accent colour, the two badges have to differ by treatment rather than hue:
+            sale is a solid slab in the heading colour, sold-out a chip in the page colour. Two
+            slabs would be indistinguishable at a glance. */}
         {!product.inStock ? (
           <span className="badge absolute start-0 top-0 border border-line bg-paper/90 text-ink">
             {labels.outOfStock}
           </span>
         ) : product.onSale ? (
-          <span className="badge absolute start-0 top-0 bg-strong text-white">{labels.sale}</span>
+          <span className="badge absolute start-0 top-0 bg-strong text-paper">{labels.sale}</span>
         ) : null}
 
         <div className="absolute end-2 top-2 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
@@ -98,7 +98,7 @@ export function ProductCardView({
               <span
                 key={s.color}
                 title={s.color}
-                className="h-3 w-3 border border-line"
+                className="h-3 w-3 border border-line-strong"
                 style={{ backgroundColor: s.hex ?? "#ccc" }}
               />
             ))}

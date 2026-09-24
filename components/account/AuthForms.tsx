@@ -12,7 +12,7 @@ function Field(props: React.InputHTMLAttributes<HTMLInputElement>) {
   return (
     <input
       {...props}
-      className="w-full border border-line bg-transparent px-4 py-3 text-sm outline-none focus:border-ink"
+      className="w-full border border-line-strong bg-transparent px-4 py-3 text-sm outline-none focus:border-ink"
     />
   );
 }

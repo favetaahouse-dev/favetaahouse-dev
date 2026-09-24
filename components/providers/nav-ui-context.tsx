@@ -20,7 +20,8 @@ const CategoriesSheet = dynamic(() =>
 type Panel = "menu" | "search" | "categories";
 
 type NavUI = {
-  navItems: NavItem[];
+  /** The live product categories — the contents of every "Collections" list. */
+  categories: NavItem[];
   open: (panel: Panel) => void;
   close: () => void;
   isOpen: (panel: Panel) => boolean;
@@ -51,10 +52,10 @@ export function useNavUI() {
  * away would still have flipped it.
  */
 export function NavUIProvider({
-  navItems,
+  categories,
   children,
 }: {
-  navItems: NavItem[];
+  categories: NavItem[];
   children: React.ReactNode;
 }) {
   const [active, setActive] = useState<Panel | null>(null);
@@ -72,19 +73,19 @@ export function NavUIProvider({
   const isOpen = useCallback((panel: Panel) => active === panel, [active]);
 
   const value = useMemo(
-    () => ({ navItems, open, close, isOpen }),
-    [navItems, open, close, isOpen],
+    () => ({ categories, open, close, isOpen }),
+    [categories, open, close, isOpen],
   );
 
   return (
     <Ctx.Provider value={value}>
       {children}
       {mounted.menu && (
-        <MobileMenu open={active === "menu"} onClose={close} navItems={navItems} />
+        <MobileMenu open={active === "menu"} onClose={close} categories={categories} />
       )}
       {mounted.search && <SearchDrawer open={active === "search"} onClose={close} />}
       {mounted.categories && (
-        <CategoriesSheet open={active === "categories"} onClose={close} navItems={navItems} />
+        <CategoriesSheet open={active === "categories"} onClose={close} categories={categories} />
       )}
     </Ctx.Provider>
   );

@@ -72,7 +72,7 @@ export function CollectionToolbar({
         >
           <SlidersHorizontal {...icon.inline} /> {t("filter")}
           {activeCount > 0 && (
-            <span className="flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-strong px-1 text-[10px] font-medium leading-none text-white">
+            <span className="flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-strong px-1 text-[10px] font-medium leading-none text-paper">
               {activeCount}
             </span>
           )}
@@ -113,8 +113,8 @@ export function CollectionToolbar({
                         aria-label={`${c.color} (${c.count})`}
                         aria-pressed={active}
                         className={cn(
-                          "h-6 w-6 rounded-full border border-line transition",
-                          active && "ring-2 ring-strong ring-offset-1",
+                          "h-6 w-6 rounded-full border border-line-strong transition",
+                          active && "ring-2 ring-strong ring-offset-1 ring-offset-paper",
                         )}
                         // --color-cream was never defined, so an unnamed colour rendered
                         // transparent; mist is the same placeholder the cards use.
@@ -139,7 +139,7 @@ export function CollectionToolbar({
                         aria-pressed={active}
                         className={cn(
                           "border px-3 py-1 text-[12px] transition-colors",
-                          active ? "border-strong bg-strong text-white" : "border-line hover:border-strong",
+                          active ? "border-strong bg-strong text-paper" : "border-line hover:border-strong",
                         )}
                       >
                         {m.label} <span className="text-muted">({m.count})</span>
@@ -241,7 +241,7 @@ function PriceInputs({
           min={0}
           placeholder="0"
           onChange={(e) => setMin(e.target.value)}
-          className="w-full border border-line px-2 py-1.5 text-sm outline-none focus:border-strong focus:shadow-[inset_0_-2px_0_var(--color-strong)]"
+          className="w-full border border-line-strong px-2 py-1.5 text-sm outline-none focus:border-strong focus:shadow-[inset_0_-2px_0_var(--color-strong)]"
         />
         <span>–</span>
         <input
@@ -249,13 +249,13 @@ function PriceInputs({
           value={max}
           placeholder={String(maxPriceQar)}
           onChange={(e) => setMax(e.target.value)}
-          className="w-full border border-line px-2 py-1.5 text-sm outline-none focus:border-strong focus:shadow-[inset_0_-2px_0_var(--color-strong)]"
+          className="w-full border border-line-strong px-2 py-1.5 text-sm outline-none focus:border-strong focus:shadow-[inset_0_-2px_0_var(--color-strong)]"
         />
       </div>
       <div className="flex gap-2">
         <button
           onClick={() => onApply(min || null, max || null)}
-          className="flex-1 bg-strong py-2 text-[12px] text-white transition-colors hover:bg-ink"
+          className="flex-1 bg-strong py-2 text-[12px] text-paper transition-colors hover:bg-ink"
         >
           {applyLabel}
         </button>

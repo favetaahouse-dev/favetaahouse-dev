@@ -98,7 +98,7 @@ export function ProductGallery({
               className={cn(
                 "focus-ring relative aspect-[2/3] w-12 shrink-0 bg-mist transition-opacity duration-200 motion-reduce:transition-none xl:w-full",
                 i === index
-                  ? "opacity-100 ring-1 ring-strong ring-offset-2"
+                  ? "opacity-100 ring-1 ring-strong ring-offset-2 ring-offset-paper"
                   : "opacity-55 hover:opacity-90",
               )}
             >

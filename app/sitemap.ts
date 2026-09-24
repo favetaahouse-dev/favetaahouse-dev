@@ -14,6 +14,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/collections/jalabiyas",
     "/collections/sales",
     "/collections/travel-collection",
+    "/pages/about",
     "/pages/terms-and-conditions",
     "/pages/privacy-policy",
     ...handles.map((h) => `/products/${h}`),

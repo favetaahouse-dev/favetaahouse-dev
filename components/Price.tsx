@@ -19,8 +19,8 @@ export function Price({
   return (
     <span className="inline-flex items-baseline gap-2">
       {/* A reduced price used to be red. With no accent colour left, weight carries it:
-          the live price goes medium and black against the struck-through original, which
-          is the pairing that actually communicates the discount anyway. */}
+          the live price goes medium and full-strength against the struck-through original,
+          which is the pairing that actually communicates the discount anyway. */}
       <span className={cn(onSale && "font-medium text-strong", className)}>{format(cents)}</span>
       {onSale && (
         <span className={cn("text-muted line-through text-[0.85em]", compareClassName)}>

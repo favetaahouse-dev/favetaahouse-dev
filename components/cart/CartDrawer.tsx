@@ -29,7 +29,7 @@ export function CartDrawer() {
         aria-hidden={!open}
       />
       <aside
-        className={`fixed end-0 top-0 z-50 flex h-full w-full max-w-[420px] flex-col bg-paper shadow-xl transition-transform duration-500 ease-[cubic-bezier(0.24,0.25,0,1)] ${
+        className={`fixed end-0 top-0 z-50 flex h-full w-full max-w-[420px] flex-col border-s border-line bg-paper shadow-xl transition-transform duration-500 ease-[cubic-bezier(0.24,0.25,0,1)] ${
           open ? "translate-x-0" : "ltr:translate-x-full rtl:-translate-x-full"
         }`}
         role="dialog"
@@ -151,7 +151,7 @@ export function CartDrawer() {
                     value={code}
                     onChange={(e) => setCode(e.target.value.toUpperCase())}
                     placeholder={t("promoPlaceholder")}
-                    className="flex-1 border border-line px-3 py-2 text-xs uppercase tracking-wider outline-none focus:border-ink focus:shadow-[inset_0_-2px_0_var(--color-strong)]"
+                    className="flex-1 border border-line-strong px-3 py-2 text-xs uppercase tracking-wider outline-none focus:border-ink focus:shadow-[inset_0_-2px_0_var(--color-strong)]"
                   />
                   <button
                     onClick={async () => {
@@ -160,7 +160,7 @@ export function CartDrawer() {
                       if (ok) { toast.success(t("promoApplied")); setCode(""); }
                       else toast.error(t("promoInvalid"));
                     }}
-                    className="focus-ring border border-ink px-4 text-[11px] uppercase tracking-wider transition-colors hover:bg-ink hover:text-white"
+                    className="focus-ring border border-ink px-4 text-[11px] uppercase tracking-wider transition-colors hover:bg-ink hover:text-paper"
                   >
                     {t("apply")}
                   </button>

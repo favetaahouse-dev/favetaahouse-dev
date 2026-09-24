@@ -51,7 +51,7 @@ export function BottomBar() {
           className={cell}
         >
           <LayoutGrid {...icon.nav} />
-          {tn("categories")}
+          {tn("collections")}
         </button>
 
         <button onClick={() => open("search")} aria-expanded={isOpen("search")} className={cell}>
@@ -67,7 +67,7 @@ export function BottomBar() {
           <span className="relative">
             <ShoppingBag {...icon.nav} />
             {count > 0 && (
-              <span className="absolute -end-2 -top-1.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-strong px-1 text-[10px] font-medium leading-none text-white">
+              <span className="absolute -end-2 -top-1.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-strong px-1 text-[10px] font-medium leading-none text-paper">
                 {count}
               </span>
             )}

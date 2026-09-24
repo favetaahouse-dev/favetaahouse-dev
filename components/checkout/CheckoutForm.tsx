@@ -150,7 +150,7 @@ export function CheckoutForm({
             <div key={it.id} className="flex gap-3">
               <div className="relative aspect-[4/5] w-16 shrink-0 bg-paper">
                 {it.image && <Image src={it.image} alt={it.title} fill sizes="64px" className="object-cover" />}
-                <span className="absolute -end-2 -top-2 flex h-5 w-5 items-center justify-center bg-ink text-[10px] text-white">
+                <span className="absolute -end-2 -top-2 flex h-5 w-5 items-center justify-center bg-ink text-[10px] text-paper">
                   {it.quantity}
                 </span>
               </div>

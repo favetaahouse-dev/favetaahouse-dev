@@ -5,7 +5,7 @@ import { getTranslations, getLocale } from "next-intl/server";
 import { Link } from "@/lib/i18n-navigation";
 import { PAYMENT_ICONS } from "@/lib/constants";
 import { getSiteSettings } from "@/lib/content";
-import { getNavItems } from "@/lib/data/navigation";
+import { getNavCategories } from "@/lib/data/navigation";
 import { cn } from "@/lib/utils";
 import { LocaleSwitcher } from "./LocaleSwitcher";
 import { InstagramIcon, FacebookIcon, YoutubeIcon, TiktokIcon, WhatsAppIcon } from "@/components/icons/social";
@@ -50,23 +50,24 @@ const CONTACT_COLS: Record<number, string> = {
 };
 
 /**
- * A centred burgundy footer, in two bands: the main slab carries the lockup, the links and
- * the socials, and a deeper band under it carries the legal row. The step between the two
- * is what stops a full-width dark red from reading as one undifferentiated wall.
+ * A centred footer, in two bands: the main slab carries the lockup, the links and the
+ * socials, and a deeper band under it carries the legal row. The step between the two is
+ * what stops a full-width dark surface from reading as one undifferentiated wall.
  *
- * Everything here paints on burgundy, so it uses the footer-* scale from globals.css —
- * NOT text-ink / text-muted / border-line, which are tuned for the cream page and
- * disappear against this surface. Champagne is the only accent, used at hover and on the
- * tagline; the three link columns are gone because the catalogue is already reachable from
- * the bottom bar and the drawer on every screen.
+ * It paints with the footer-* scale from globals.css rather than text-ink / text-muted /
+ * border-line, so it can be retuned apart from the page — on the storefront's black theme
+ * both are near-black, and the top hairline is what separates them. Champagne is the only
+ * accent, used at hover and on the tagline; the three link columns are gone because the
+ * catalogue is already reachable from the bottom bar and the drawer on every screen.
  */
 export async function Footer() {
   const t = await getTranslations("footer");
+  const tn = await getTranslations("nav");
   const locale = await getLocale();
   const year = await copyrightYear();
   const settings = await getSiteSettings();
-  // Mirror the header navigation so the footer stays in sync as categories/collections change.
-  const navItems = await getNavItems(locale);
+  // The same category list as the header's Collections menu, so the two can never disagree.
+  const categories = await getNavCategories(locale);
 
   // Every one of these is admin-editable and every one may be blank, so each group below
   // renders only if it has something to say — an empty "Contact" heading over nothing is
@@ -95,13 +96,15 @@ export async function Footer() {
   const groups = [location, email || phone, socials.length ? "x" : ""].filter(Boolean).length;
 
   const links = [
-    ...navItems.map((n) => ({ label: n.label, href: n.href })),
+    { label: t("home"), href: "/" },
+    ...categories.map((c) => ({ label: c.label, href: c.href })),
+    { label: tn("about"), href: "/pages/about" },
     { label: t("terms"), href: "/pages/terms-and-conditions" },
     { label: t("privacy"), href: "/pages/privacy-policy" },
   ];
 
   return (
-    <footer className="site-footer mt-20 bg-footer text-footer-fg">
+    <footer className="site-footer mt-20 border-t border-footer-line bg-footer text-footer-fg">
       <div className="mx-auto max-w-[1200px] px-6 py-14 text-center">
         {/* The full lockup — mark above the FAVETAA wordmark — because the footer is the one
             place with the vertical room the header lacks.

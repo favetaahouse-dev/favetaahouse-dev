@@ -91,7 +91,7 @@ const firstStocked = (list: VariantDTO[]) => list.find(stocked) ?? list[0];
  */
 const chip =
   "focus-ring min-w-11 border px-4 py-2.5 text-[13px] transition-colors";
-const chipOn = "border-strong bg-strong text-white";
+const chipOn = "border-strong bg-strong text-paper";
 const chipOff = "border-line hover:border-strong";
 const chipDead = "cursor-not-allowed border-line/60 text-muted line-through opacity-50";
 
@@ -410,7 +410,9 @@ export function ProductDetail({ product }: { product: ProductDetailDTO }) {
                       aria-pressed={colorId === c.id}
                       className={cn(
                         "h-8 w-8 border transition-all",
-                        colorId === c.id ? "ring-1 ring-strong ring-offset-2" : "border-line",
+                        colorId === c.id
+                          ? "ring-1 ring-strong ring-offset-2 ring-offset-paper"
+                          : "border-line-strong",
                       )}
                       style={{ backgroundColor: c.hex ?? "var(--color-mist)" }}
                     />

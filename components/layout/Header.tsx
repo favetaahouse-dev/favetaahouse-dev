@@ -8,6 +8,7 @@ import { Link, usePathname } from "@/lib/i18n-navigation";
 import { useCart } from "@/components/providers/cart-context";
 import { useNavUI } from "@/components/providers/nav-ui-context";
 import { LocaleSwitcher } from "@/components/layout/LocaleSwitcher";
+import { CollectionsMenu } from "@/components/layout/CollectionsMenu";
 import { icon } from "@/lib/icon";
 import { cn } from "@/lib/utils";
 
@@ -17,10 +18,12 @@ import { cn } from "@/lib/utils";
 const BAR_H = 34;
 
 /**
- * One header at every width: controls on the left, wordmark dead centre, account and bag on
- * the right. The navigation itself lives in the drawer and the bottom bar rather than in a
- * row of links here — which is why the layout no longer forks at `lg`, and why the wordmark
- * can hold the centre column on a phone and a desktop alike.
+ * Controls on the left, wordmark dead centre, account and bag on the right, at every width.
+ *
+ * The one fork is at `lg`: from there the start cluster carries the navigation inline — the
+ * "Collections" dropdown and About — and the drawer's hamburger goes, because everything the
+ * drawer holds is then already on the bar. Below `lg` the drawer and the bottom bar carry it.
+ * Search stays at the outer edge at every width, mirroring the bag across the wordmark.
  */
 export function Header({
   announcementActive = false,
@@ -31,10 +34,11 @@ export function Header({
   heroOverlay?: boolean;
 }) {
   const ta = useTranslations("actions");
+  const tn = useTranslations("nav");
   const pathname = usePathname();
   const isHome = pathname === "/";
   const { count, setOpen } = useCart();
-  const { open } = useNavUI();
+  const { open, categories } = useNavUI();
 
   const headerRef = useRef<HTMLElement>(null);
   const [scrolled, setScrolled] = useState(false);
@@ -111,14 +115,29 @@ export function Header({
             light && "drop-shadow-[0_1px_2px_rgb(0_0_0/0.55)]",
           )}
         >
-          {/* start: the two controls that open something */}
-          <div className="flex items-center gap-4 justify-self-start md:gap-5">
-            <button className={iconBtn} onClick={() => open("menu")} aria-label={ta("menu")}>
+          {/* start: the controls that open something, then — from lg — the navigation itself.
+              self-stretch gives the cluster the row's full height, which is what lets the
+              Collections panel drop from the header's bottom edge rather than from its label. */}
+          <div className="flex items-center gap-4 self-stretch justify-self-start md:gap-5">
+            <button className={cn(iconBtn, "lg:hidden")} onClick={() => open("menu")} aria-label={ta("menu")}>
               <Menu {...icon.nav} />
             </button>
             <button className={iconBtn} onClick={() => open("search")} aria-label={ta("search")}>
               <Search {...icon.nav} />
             </button>
+            {/* The same hairline the end cluster sets between language and icons, so the two
+                sides of the wordmark mirror each other: icon at the edge, words inboard. */}
+            <span aria-hidden className="hidden h-3.5 w-px bg-current opacity-25 lg:block" />
+            <nav aria-label={tn("main")} className="hidden h-full items-center gap-7 lg:flex">
+              {categories.length > 0 && <CollectionsMenu label={tn("collections")} items={categories} />}
+              <Link
+                href="/pages/about"
+                aria-current={pathname === "/pages/about" ? "page" : undefined}
+                className="nav-underline focus-ring py-1 font-button text-[12px] font-medium uppercase leading-none tracking-[0.16em]"
+              >
+                {tn("about")}
+              </Link>
+            </nav>
           </div>
 
           {/* centre: the monogram, and nothing else. Square rather than the old wordmark's
@@ -158,7 +177,7 @@ export function Header({
               <span className="relative block">
                 <ShoppingBag {...icon.nav} />
                 {count > 0 && (
-                  <span className="absolute -end-2 -top-1.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-strong px-1 text-[10px] font-medium leading-none text-white">
+                  <span className="absolute -end-2 -top-1.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-strong px-1 text-[10px] font-medium leading-none text-paper">
                     {count}
                   </span>
                 )}

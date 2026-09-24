@@ -116,45 +116,60 @@ export async function getFeaturedProducts(take = 16, locale: string): Promise<Pr
   return featured.length > 0 ? featured : getNewestProducts(take, locale);
 }
 
-export type CategoryGroup = { category: string; products: ProductCardDTO[] };
+/** How many of its newest pieces a category the homepage pool missed is topped up with. */
+const NEW_ARRIVALS_TOP_UP = 6;
 
 /**
- * The homepage's tabbed grid: the newest active products, bucketed by category.
+ * The homepage's "New This Season" grid: the newest active products, newest first. The
+ * category filter above it narrows this one list in the browser.
  *
- * One query, grouped in memory, rather than one query per tab. The alternative — a
- * round trip per category — would multiply the database calls by however many
- * categories the catalogue happens to have, for a section that shows a handful of
- * each; and because every tab's products arrive together, switching tabs is instant
+ * One pool query rather than one per category: a round trip per filter would multiply the
+ * database calls by however many categories the catalogue has, for a section that shows a
+ * handful of each — and with everything in the first payload, switching filters is instant,
  * with no second fetch and no loading state.
  *
- * `take` is the pool size, not the per-tab count: the caller slices each bucket. A
- * category the pool never reaches simply gets no tab, which is the right outcome —
- * an empty tab is worse than an absent one.
+ * The filter offers every live category (the same list as the nav), so each one must have
+ * pieces here. A category whose newest piece is older than the whole pool would otherwise get
+ * a button over an empty grid; any such category is topped up with its own newest few, queried
+ * in parallel. While the catalogue is smaller than `take` the pool covers it and the top-up
+ * never runs.
  */
-export async function getProductsByCategory(take = 60, locale: string): Promise<CategoryGroup[]> {
+export async function getNewArrivals(take = 60, locale: string): Promise<ProductCardDTO[]> {
   "use cache";
   cacheLife("hours");
   cacheTag("products");
-  const { data } = await cardImages(
-    supabase
-      .from("products")
-      .select(CARD)
-      .eq("status", "active")
-      .order("created_at", { ascending: false })
-      .limit(take),
-  );
+  const [{ data }, { data: live }] = await Promise.all([
+    cardImages(
+      supabase
+        .from("products")
+        .select(CARD)
+        .eq("status", "active")
+        .order("created_at", { ascending: false })
+        .limit(take),
+    ),
+    supabase.from("products").select("category").eq("status", "active"),
+  ]);
+  const cards = ((data ?? []) as unknown as CardRow[]).map((r) => toCard(r, locale));
 
-  // Map, not an object literal: insertion order is the tab order, and it follows
-  // created_at, so the category with the newest arrival leads.
-  const groups = new Map<string, ProductCardDTO[]>();
-  for (const row of (data ?? []) as unknown as CardRow[]) {
-    const card = toCard(row, locale);
-    if (!card.category) continue;
-    const bucket = groups.get(card.category);
-    if (bucket) bucket.push(card);
-    else groups.set(card.category, [card]);
-  }
-  return [...groups.entries()].map(([category, products]) => ({ category, products }));
+  const pooled = new Set(cards.map((c) => c.category));
+  const missing = [...new Set((live ?? []).map((r) => r.category as string))].filter(
+    (c) => c && !pooled.has(c),
+  );
+  const topUps = await Promise.all(
+    missing.map(async (category) => {
+      const { data: rows } = await cardImages(
+        supabase
+          .from("products")
+          .select(CARD)
+          .eq("status", "active")
+          .eq("category", category)
+          .order("created_at", { ascending: false })
+          .limit(NEW_ARRIVALS_TOP_UP),
+      );
+      return ((rows ?? []) as unknown as CardRow[]).map((r) => toCard(r, locale));
+    }),
+  );
+  return [...cards, ...topUps.flat()];
 }
 
 export async function getNewestProducts(take = 8, locale: string): Promise<ProductCardDTO[]> {

@@ -9,7 +9,7 @@ import { icon } from "@/lib/icon";
 import { cn } from "@/lib/utils";
 
 /**
- * The bottom bar's Categories panel — a sheet that rises from the same edge the control
+ * The bottom bar's Collections panel — a sheet that rises from the same edge the control
  * lives on, so the movement traces back to the thing you pressed.
  *
  * Two columns of plain type rather than image tiles: the categories are derived from live
@@ -22,11 +22,11 @@ import { cn } from "@/lib/utils";
 export function CategoriesSheet({
   open,
   onClose,
-  navItems,
+  categories,
 }: {
   open: boolean;
   onClose: () => void;
-  navItems: NavItem[];
+  categories: NavItem[];
 }) {
   const tn = useTranslations("nav");
   const tc = useTranslations("common");
@@ -38,9 +38,6 @@ export function CategoriesSheet({
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onClose]);
-
-  // The home link is a destination, not a category — it already has its own cell in the bar.
-  const categories = navItems.filter((item) => item.href !== "/");
 
   return (
     <>
@@ -54,14 +51,14 @@ export function CategoriesSheet({
       <aside
         aria-hidden={!open}
         className={cn(
-          "fixed inset-x-0 bottom-0 z-50 max-h-[80vh] overflow-y-auto bg-paper pb-[env(safe-area-inset-bottom,0px)] transition-transform duration-500 ease-[cubic-bezier(0.24,0.25,0,1)] motion-reduce:transition-none",
+          "fixed inset-x-0 bottom-0 z-50 max-h-[80vh] overflow-y-auto border-t border-line bg-paper pb-[env(safe-area-inset-bottom,0px)] transition-transform duration-500 ease-[cubic-bezier(0.24,0.25,0,1)] motion-reduce:transition-none",
           open ? "translate-y-0" : "translate-y-full",
         )}
       >
         <div className="mx-auto max-w-[720px] px-5 py-5">
           <div className="flex items-center justify-between">
             <span className="font-button text-[13px] font-medium tracking-[0.1em]">
-              {tn("categories")}
+              {tn("collections")}
             </span>
             <button
               onClick={onClose}

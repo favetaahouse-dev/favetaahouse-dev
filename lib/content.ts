@@ -62,12 +62,14 @@ export async function getHomeStory(locale: string): Promise<HomeStory> {
   const bi = (key: string) =>
     (locale === "ar" ? c[`${key}_ar`] || c[key] : c[key] || c[`${key}_ar`] || "").trim();
   return {
-    title: bi("trendyTitle"),
+    title: bi("storyTitle"),
     heading: bi("storyHeading"),
     lead: bi("storyLead"),
     body: bi("storyBody"),
     cta: bi("storyCta"),
-    ctaHref: (c.storyCtaHref ?? "").trim() || "/collections/all",
+    // "Learn more" under "Who We Are" leads to the house's own page unless the owner points it
+    // somewhere else.
+    ctaHref: (c.storyCtaHref ?? "").trim() || "/pages/about",
     image: assetUrl((c.storyImage ?? "").trim() || DEFAULT_STORY_IMAGE),
   };
 }

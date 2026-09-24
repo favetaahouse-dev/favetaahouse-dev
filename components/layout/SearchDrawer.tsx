@@ -72,7 +72,7 @@ export function SearchDrawer({ open, onClose }: { open: boolean; onClose: () => 
       />
       <div
         className={cn(
-          "fixed inset-x-0 top-0 z-50 bg-paper text-ink transition-transform duration-500 ease-[cubic-bezier(0.24,0.25,0,1)]",
+          "fixed inset-x-0 top-0 z-50 border-b border-line bg-paper text-ink transition-transform duration-500 ease-[cubic-bezier(0.24,0.25,0,1)]",
           open ? "translate-y-0" : "-translate-y-full",
         )}
       >

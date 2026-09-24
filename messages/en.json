@@ -5,12 +5,14 @@
   },
   "nav": {
     "home": "Home",
-    "categories": "Categories",
     "abayas": "Abayas",
     "jalabiyas": "Jalabiyas",
     "sheilas": "Sheilas",
     "travel": "Travel Collection",
-    "sale": "Sale"
+    "sale": "Sale",
+    "collections": "Collections",
+    "about": "About FAVETAA",
+    "main": "Main"
   },
   "actions": {
     "search": "Search",
@@ -26,12 +28,29 @@
   },
   "home": {
     "trendy": "New This Season",
+    "all": "All",
+    "filterBy": "Filter by category",
     "loadMore": "Load more",
     "whoWeAre": "Who We Are",
     "ourStory": "Our Story",
     "storyLead": "FAVETAA is a Qatari house working in the space between tradition and the present day — abayas and jalabiyas cut with restraint, finished by hand, and made to be worn for years rather than a season.",
     "storyBody": "Every piece begins with the cloth: limited-run fabrics chosen for how they fall and how they wear. The silhouettes stay quiet so the material can speak, which is why a FAVETAA piece reads as considered rather than seasonal.",
     "learnMore": "Learn more"
+  },
+  "about": {
+    "metaTitle": "About FAVETAA",
+    "metaDescription": "FAVETAA is a Qatari house of timeless elegance — abayas and jalabiyas cut with restraint, finished by hand, and made to be worn for years.",
+    "title": "A Qatari house of <em>timeless</em> elegance",
+    "deck": "Elevated modest fashion from Doha — abayas and jalabiyas crafted from exclusive fabrics.",
+    "principlesTitle": "What Guides Us",
+    "clothTitle": "The Cloth",
+    "clothBody": "Every piece begins with the fabric: limited runs, chosen for how they fall and how they wear over the years.",
+    "cutTitle": "The Cut",
+    "cutBody": "Silhouettes stay quiet so the material can speak. Each piece is cut with restraint and finished by hand.",
+    "madeTitle": "Made for You",
+    "madeBody": "Choose a piece ready to wear, shipped from our atelier in Doha, or have it cut and sewn to your own measurements.",
+    "closing": "Made to be worn for years, not for a season.",
+    "cta": "Explore the Collection"
   },
   "product": {
     "addToCart": "Add to Cart",

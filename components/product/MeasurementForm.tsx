@@ -29,7 +29,7 @@ type Props = {
 };
 
 const chip = "focus-ring min-w-11 border px-4 py-2.5 text-[13px] transition-colors";
-const chipOn = "border-strong bg-strong text-white";
+const chipOn = "border-strong bg-strong text-paper";
 const chipOff = "border-line hover:border-strong";
 
 /**
@@ -121,7 +121,7 @@ export function MeasurementForm({
                   }
                   className={cn(
                     "focus-ring w-full border bg-card px-3 py-2.5 pe-10 text-start text-[13px]",
-                    err ? "border-signal" : "border-line",
+                    err ? "border-signal" : "border-line-strong",
                   )}
                 />
                 {/*
@@ -156,7 +156,7 @@ export function MeasurementForm({
           value={notes}
           onChange={(e) => onNotesChange(e.target.value)}
           placeholder={t("notesPlaceholder")}
-          className="focus-ring w-full border border-line bg-card px-3 py-2.5 text-[13px]"
+          className="focus-ring w-full border border-line-strong bg-card px-3 py-2.5 text-[13px]"
         />
       </div>
     </div>
