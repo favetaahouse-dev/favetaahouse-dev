@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { setRequestLocale } from "next-intl/server";
 import { getProductByHandle, getRelatedProducts, getAllProductHandles } from "@/lib/data/catalog";
 import { getVariantOptions, getMadeToOrderSettings } from "@/lib/content";
-import { applicableFields, fieldLabel } from "@/lib/measurements";
+import { madeToOrderSizes } from "@/lib/variant-options";
 import { ProductDetail, type ProductDetailDTO } from "@/components/product/ProductDetail";
 import { ProductRecommendations } from "@/components/product/ProductRecommendations";
 
@@ -54,8 +54,8 @@ async function ProductContent({ params }: { params: Promise<Params> }) {
   const product = await getProductByHandle(handle, locale);
   if (!product) notFound();
 
-  // Both CMS reads ride the same "content" cache tag as getVariantOptions already did, so the
-  // made-to-order schema adds nothing new to this page's cache graph.
+  // Both CMS reads ride the same "content" cache tag, so made-to-order adds nothing new to this
+  // page's cache graph.
   const [related, options, mtoSettings] = await Promise.all([
     getRelatedProducts(product.id, product.category, 4, locale),
     getVariantOptions(),
@@ -63,32 +63,17 @@ async function ProductContent({ params }: { params: Promise<Params> }) {
   ]);
 
   /**
-   * The made-to-order panel is assembled HERE, not in the client component: the field list is
-   * bilingual in the CMS and the lead time may fall back to the house default, so resolving both
-   * server-side means the browser receives one localised, complete object instead of the raw
-   * blob plus the logic to interpret it.
+   * The made-to-order panel is assembled HERE, not in the client component: the lead time may
+   * fall back to the house default, and the size list is the same rule the cart action and
+   * checkout enforce (madeToOrderSizes), so the page can only offer what they will accept.
    */
-  const ar = locale === "ar";
   const mto: ProductDetailDTO["mto"] = product.offersMto
     ? {
         price: product.mtoPrice!,
         compareAt: product.mtoCompareAt,
         leadMin: product.mtoLeadMin ?? mtoSettings.leadMinDays,
         leadMax: product.mtoLeadMax ?? mtoSettings.leadMaxDays,
-        unit: mtoSettings.defaultUnit,
-        fields: applicableFields(mtoSettings.fields, product.mtoFields).map((f) => ({
-          key: f.key,
-          label: fieldLabel(f, locale),
-          min: f.min,
-          max: f.max,
-          required: f.required,
-        })),
-        // `||` not `??` throughout: a field cleared in the admin is "", which must fall through
-        // to the other language rather than render as an empty block.
-        intro: (ar ? mtoSettings.introAr || mtoSettings.intro : mtoSettings.intro) || "",
-        guide: (ar ? mtoSettings.guideAr || mtoSettings.guide : mtoSettings.guide) || "",
-        guideImage: mtoSettings.guideImage,
-        notesLabel: (ar ? mtoSettings.notesLabelAr || mtoSettings.notesLabel : mtoSettings.notesLabel) || "",
+        sizes: madeToOrderSizes(product.variants.map((v) => v.size), options.sizes),
       }
     : null;
 

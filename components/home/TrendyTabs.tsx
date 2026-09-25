@@ -13,9 +13,12 @@ const PAGE = 6;
 /**
  * The homepage's catalogue section: one title, a category filter under it, and a grid.
  *
- * The filter is "All" plus the categories that actually have pieces — the caller passes only
- * those, so a category with nothing in it never gets a button. Single-choice toggle buttons
- * (aria-pressed) rather than tabs: this narrows one grid, it does not switch between panels.
+ * The filter is the nav's Collections list — New In, then the house categories and any an admin
+ * has added — and it shows every entry even while one has nothing in it: the owner wants the
+ * range to read as the house's, not as whatever happens to be in stock. An empty filter says so
+ * in the grid's place. New In leads and is where the section opens, so it starts on the newest
+ * pieces across everything. Single-choice toggle buttons (aria-pressed) rather than tabs: this
+ * narrows one grid, it does not switch between panels.
  *
  * Every piece arrives in the initial payload (one pooled query — see getNewArrivals), so
  * filtering is instant and offline-safe: no fetch, no spinner, no skeleton that shifts the
@@ -37,26 +40,24 @@ export function TrendyTabs({
   const t = useTranslations("home");
   const tc = useTranslations("common");
   const tcol = useTranslations("collection");
-  // null is "All". A key that goes stale — a revalidation can drop a category out from under
-  // this state — resolves to no match, which is All again rather than an empty grid.
-  const [activeKey, setActiveKey] = useState<string | null>(null);
+  const [activeKey, setActiveKey] = useState(categories[0]?.key ?? null);
   const [visible, setVisible] = useState(PAGE);
 
-  if (products.length === 0) return null;
-
-  const active = categories.find((c) => c.key === activeKey) ?? null;
-  const filtered = active ? products.filter((p) => p.category === active.value) : products;
+  // A key that goes stale — a revalidation can drop an admin-added category out from under this
+  // state — resolves to the first entry, New In, rather than to an empty grid.
+  const active = categories.find((c) => c.key === activeKey) ?? categories[0] ?? null;
+  // New In (value null) is every category's newest pieces: the pool as it arrives, newest first.
+  const filtered =
+    active?.value == null ? products : products.filter((p) => p.category === active.value);
   const shown = filtered.slice(0, visible);
   const hasMore = filtered.length > visible;
 
-  function select(key: string | null) {
+  function select(key: string) {
     setActiveKey(key);
     // A filter you have never opened should start at the top of its list, not inherit
     // however far you scrolled the previous one.
     setVisible(PAGE);
   }
-
-  const filterButton = "tab-label focus-ring shrink-0 whitespace-nowrap";
 
   return (
     <section className="px-4 pt-[70px] pb-[90px] md:px-8">
@@ -67,25 +68,19 @@ export function TrendyTabs({
           <div
             role="group"
             aria-label={t("filterBy")}
-            // Scrollable rather than wrapping: with six categories on a 390pt screen a
-            // wrapped row becomes three ragged lines above the grid.
-            className="no-scrollbar mt-6 flex justify-start gap-7 overflow-x-auto md:justify-center"
+            // Scrollable rather than wrapping: a wrapped row becomes ragged lines above the grid.
+            // The four house categories fit a 375pt phone as they are; once an admin adds more,
+            // the row scrolls, and it bleeds to the screen edges (-mx-4 px-4) so the last label
+            // is cut by the glass rather than by the page margin, which reads as "more this way".
+            className="no-scrollbar -mx-4 mt-6 flex justify-start gap-4 overflow-x-auto px-4 md:mx-0 md:justify-center md:gap-7 md:px-0"
           >
-            <button
-              type="button"
-              aria-pressed={active === null}
-              onClick={() => select(null)}
-              className={filterButton}
-            >
-              {t("all")}
-            </button>
             {categories.map((category) => (
               <button
                 key={category.key}
                 type="button"
                 aria-pressed={active?.key === category.key}
                 onClick={() => select(category.key)}
-                className={filterButton}
+                className="tab-label focus-ring shrink-0 whitespace-nowrap"
               >
                 {category.label}
               </button>
@@ -98,27 +93,35 @@ export function TrendyTabs({
           {tcol("results", { count: filtered.length })}
         </p>
 
-        <div className="mt-10">
-          <ProductGridClient products={shown} />
-        </div>
+        {filtered.length > 0 ? (
+          <>
+            <div className="mt-10">
+              <ProductGridClient products={shown} />
+            </div>
 
-        <div className="mt-12 text-center">
-          {hasMore ? (
-            <button
-              onClick={() => setVisible((n) => n + PAGE)}
-              className="focus-ring font-button text-[13px] tracking-[0.16em] text-muted uppercase transition-colors hover:text-strong"
-            >
-              {t("loadMore")}
-            </button>
-          ) : (
-            <Link
-              href={active?.href ?? "/collections/all"}
-              className="focus-ring font-button text-[13px] tracking-[0.16em] text-muted uppercase transition-colors hover:text-strong"
-            >
-              {tc("backToShop")}
-            </Link>
-          )}
-        </div>
+            <div className="mt-12 text-center">
+              {hasMore ? (
+                <button
+                  onClick={() => setVisible((n) => n + PAGE)}
+                  className="focus-ring font-button text-[13px] tracking-[0.16em] text-muted uppercase transition-colors hover:text-strong"
+                >
+                  {t("loadMore")}
+                </button>
+              ) : (
+                <Link
+                  href={active?.href ?? "/collections/all"}
+                  className="focus-ring font-button text-[13px] tracking-[0.16em] text-muted uppercase transition-colors hover:text-strong"
+                >
+                  {tc("backToShop")}
+                </Link>
+              )}
+            </div>
+          </>
+        ) : (
+          // In the grid's place, at roughly its height's worth of air, so switching to an empty
+          // category does not collapse the page under the shopper's pointer.
+          <p className="py-24 text-center text-sm text-muted">{tcol("comingSoon")}</p>
+        )}
       </div>
     </section>
   );

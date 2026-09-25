@@ -94,14 +94,20 @@ export function CartDrawer() {
                         madeToOrderLabel: t("madeToOrder"),
                       })}
                     </p>
-                    {/* One line, not a table: the drawer is 420px wide, and the full
-                        measurement set belongs on the order page and the atelier worksheet. */}
+                    {/* Size and length are already in the label above; this line carries the
+                        lead time, and the measurement count only on a line from the old
+                        measurement form. */}
                     {it.fulfillment === "MTO" && (
                       <p className="mt-0.5 text-[11px] text-muted">
-                        {t("measurementsCount", { n: Object.keys(it.measurements ?? {}).length })}
-                        {it.leadMin != null && it.leadMax != null
-                          ? ` · ${t("leadTime", { min: it.leadMin, max: it.leadMax })}`
-                          : ""}
+                        {[
+                          Object.keys(it.measurements ?? {}).length > 0 &&
+                            t("measurementsCount", { n: Object.keys(it.measurements ?? {}).length }),
+                          it.leadMin != null &&
+                            it.leadMax != null &&
+                            t("leadTime", { min: it.leadMin, max: it.leadMax }),
+                        ]
+                          .filter(Boolean)
+                          .join(" · ")}
                       </p>
                     )}
                     {!it.available && (

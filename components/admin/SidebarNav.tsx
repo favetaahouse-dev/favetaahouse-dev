@@ -27,7 +27,7 @@ export const navGroups: NavGroup[] = [
     items: [
       { href: "/admin/products", label: "Products", icon: Package, permission: "products:read" },
       { href: "/admin/inventory", label: "Inventory", icon: Boxes, permission: "inventory:read" },
-      { href: "/admin/collections", label: "Collections", icon: FolderTree, permission: "categories:read" },
+      { href: "/admin/collections", label: "Categories", icon: FolderTree, permission: "categories:read" },
       { href: "/admin/content/variant-options", label: "Sizes & Lengths", icon: Ruler, permission: "content:read" },
       { href: "/admin/content/made-to-order", label: "Made to Order", icon: Scissors, permission: "content:read" },
     ],

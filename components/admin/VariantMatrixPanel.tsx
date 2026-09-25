@@ -144,8 +144,9 @@ export function VariantMatrixPanel({
             something the owner forgot to fill in. */}
         {sizesDisabled ? (
           <p className="border border-field px-3.5 py-3 text-[12px] text-secondary">
-            Made-to-order pieces are cut to the customer’s measurements, so they have no sizes and
-            no stock. The price is set under “How it’s made” above.
+            Made-to-order pieces are offered in every size and length from Content → Sizes &amp;
+            Lengths and cut after the sale, so they hold no stock here. The price is set under
+            “How it’s made” above.
           </p>
         ) : (
         <div>

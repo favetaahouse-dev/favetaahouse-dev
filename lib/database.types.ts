@@ -145,6 +145,7 @@ export type Database = {
           notes: string | null
           product_id: string
           quantity: number
+          size: string | null
           tack_tack: boolean | null
           variant_id: string | null
         }
@@ -159,6 +160,7 @@ export type Database = {
           notes?: string | null
           product_id: string
           quantity?: number
+          size?: string | null
           tack_tack?: boolean | null
           variant_id?: string | null
         }
@@ -173,6 +175,7 @@ export type Database = {
           notes?: string | null
           product_id?: string
           quantity?: number
+          size?: string | null
           tack_tack?: boolean | null
           variant_id?: string | null
         }

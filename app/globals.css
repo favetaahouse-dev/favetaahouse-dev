@@ -507,12 +507,18 @@
     font-family: var(--font-button);
     font-size: 0.8125rem;
     font-weight: 500;
-    letter-spacing: 0.12em;
+    /* 0.08em on a phone, 0.12em from md: the four house categories then fit a 375pt row
+       without scrolling. Set here rather than as a tracking-* utility on the markup, because a
+       utility would outrank the Arabic zero-tracking reset below by layer order. */
+    letter-spacing: 0.08em;
     text-transform: uppercase;
     color: var(--color-muted);
     padding-bottom: 0.5rem;
     border-bottom: 1px solid transparent;
     transition: color var(--dur-fast) var(--ease-lux), border-color var(--dur-fast) var(--ease-lux);
+  }
+  @media (min-width: 768px) {
+    .tab-label { letter-spacing: 0.12em; }
   }
   .tab-label:hover { color: var(--color-ink); }
   /* aria-pressed is the filter form of the same control — see components/home/TrendyTabs.tsx. */

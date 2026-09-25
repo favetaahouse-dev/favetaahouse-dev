@@ -6,6 +6,7 @@ import {
   getCollectionTitle,
   getCollectionFacets,
   getPriceRange,
+  defaultSortFor,
   COLLECTION_HANDLES,
   type SortKey,
 } from "@/lib/data/collections";
@@ -73,15 +74,20 @@ async function CollectionResults({
 }) {
   const sp = await searchParams;
   const str = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
+  const defaultSort = defaultSortFor(handle);
 
   const query = {
-    sort: str(sp.sort) as SortKey | undefined,
+    sort: (str(sp.sort) as SortKey | undefined) ?? defaultSort,
     inStock: str(sp.inStock) === "1",
     minPrice: str(sp.min) ? Number(str(sp.min)) * 100 : undefined,
     maxPrice: str(sp.max) ? Number(str(sp.max)) * 100 : undefined,
     color: str(sp.color),
     material: str(sp.material),
   };
+  // Whether the shopper has narrowed the page. It decides what an empty grid means: nothing
+  // matching their filters, or a category — which always shows in the nav — with nothing in it yet.
+  const narrowed =
+    query.inStock || query.minPrice != null || query.maxPrice != null || !!query.color || !!query.material;
 
   const [{ products, total }, range, facets, t] = await Promise.all([
     getCollectionProducts(handle, query, locale),
@@ -92,12 +98,12 @@ async function CollectionResults({
 
   return (
     <>
-      <CollectionToolbar total={total} priceMax={range.max} facets={facets} />
+      <CollectionToolbar total={total} priceMax={range.max} facets={facets} defaultSort={defaultSort} />
       <div className="mx-auto max-w-[1200px] px-4 py-10 md:px-8 md:pb-[90px]">
         {products.length ? (
           <ProductGrid products={products} />
         ) : (
-          <p className="py-24 text-center text-sm text-muted">{t("empty")}</p>
+          <p className="py-24 text-center text-sm text-muted">{narrowed ? t("empty") : t("comingSoon")}</p>
         )}
       </div>
     </>

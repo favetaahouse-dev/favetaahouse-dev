@@ -23,15 +23,13 @@ export default async function HomePage({
     getTranslations({ locale, namespace: "home" }),
   ]);
 
-  // The filter offers the nav's own category list — same labels, same order — so the two can
-  // never disagree. The two caches expire on different tags, so a category is kept only if the
-  // grid actually holds a piece of it: a button over an empty grid is worse than no button.
-  const filters = categories.filter((c) => products.some((p) => p.category === c.value));
-
+  // The filter is the nav's own Collections list — same entries, labels and order, New In first —
+  // so the two can never disagree. Every entry shows even with nothing in it (the owner's call);
+  // TrendyTabs says so rather than hiding the button.
   return (
     <>
       <Hero media={heroMedia} />
-      <TrendyTabs title={titles.trendy || t("trendy")} products={products} categories={filters} />
+      <TrendyTabs title={titles.trendy || t("trendy")} products={products} categories={categories} />
       <StoryBand />
     </>
   );

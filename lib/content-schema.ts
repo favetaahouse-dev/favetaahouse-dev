@@ -57,22 +57,15 @@ export const FIELD_SCHEMA: Record<Section, Field[]> = {
   ],
   "variant-options": [
     { key: "sizes", label: "Sizes", kind: "list", hint: "The size buttons a product can offer. Order here is the order shown on the product page." },
-    { key: "lengths", label: "Lengths", kind: "list", hint: "Whole numbers, e.g. hem length in inches. These become the length chips when a product's variants use them." },
+    { key: "lengths", label: "Lengths", kind: "list", hint: "Whole numbers — hem lengths in inches. Shoppers pick one on every product page, ready-to-wear and made-to-order alike." },
   ],
-  // Ready-to-wear is sized off the rail; made-to-order is cut to a body. This section is the
-  // form that body is described in — and a product picks which of these fields apply to it.
+  // Made-to-order is chosen from the same size and length chips as ready-to-wear (the lists
+  // above), so all this section still sets is the promise that comes with it. The old
+  // measurement-form settings are gone from the editor; their stored field list is kept in
+  // DEFAULT_CONTENT only so an order placed through that form still labels its measurements.
   "made-to-order": [
-    {
-      key: "measureFields", label: "Measurement fields", kind: "measures",
-      hint: "The form a made-to-order shopper fills in. Minimum and maximum are always in centimetres — the shopper's cm/inch switch converts on the way in.",
-    },
     { key: "leadMinDays", label: "Production time — from (days)", kind: "number", hint: "Used by any product that doesn't set its own lead time." },
     { key: "leadMaxDays", label: "Production time — to (days)", kind: "number" },
-    { key: "unitInches", label: "Show inches by default", kind: "toggle", hint: "Off = centimetres. Shoppers can switch either way on the product page." },
-    { key: "intro", label: "Measurement form intro", kind: "bitext", hint: "A line above the fields. Blank uses the built-in translation." },
-    { key: "guide", label: "How to measure", kind: "bitext", hint: "Shown in the product page's details panel. A product can override it with its own." },
-    { key: "guideImage", label: "How-to-measure diagram URL", kind: "text" },
-    { key: "notesLabel", label: "Notes box label", kind: "bi" },
     { key: "returnsNote", label: "Made-to-order returns note", kind: "text", hint: "Printed on the receipt when the order contains a made-to-order piece. English — the receipt is English." },
   ],
 };
@@ -137,20 +130,11 @@ export const DEFAULT_CONTENT: Record<Section, Record<string, string>> = {
     lengths: "50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62",
   },
   "made-to-order": {
-    // The one field here with a real default rather than a blank: an empty measurement form is
-    // an unsellable product, so the house list ships ready to use. See lib/measurements.ts.
+    // Not editable any more (see FIELD_SCHEMA above) — kept so an order placed through the old
+    // measurement form still prints "Bust 92" rather than "bust 92". See lib/measurements.ts.
     measureFields: serializeMeasureFields(DEFAULT_MEASURE_FIELDS),
     leadMinDays: "14",
     leadMaxDays: "21",
-    // "false" spelled out, not "": ToggleFieldRow reads on = value !== "false", so a blank here
-    // would quietly make inches the default unit on a fresh install.
-    unitInches: "false",
-    // Blank on purpose — each falls back to its i18n string, so /ar is not overwritten by an
-    // English default. Components use || not ??. Same rule as the home section above.
-    intro: "", intro_ar: "",
-    guide: "", guide_ar: "",
-    guideImage: "",
-    notesLabel: "", notesLabel_ar: "",
     returnsNote: "",
   },
 };

@@ -7,27 +7,37 @@
  *
  * No `server-only`: imported by both the server data layer and client admin components.
  *
- * Values are stored UPPERCASE (matching the original four). Handles are lowercase slugs; the
- * original three keep their historical plural handles so existing URLs/i18n keys never break.
+ * Values are stored UPPERCASE. Handles are lowercase slugs.
  */
 
-/** Always offered in the product picker, even before any product uses them. */
-export const DEFAULT_CATEGORIES = ["ABAYA", "JALABIYA", "SHEILA", "OTHER"] as const;
+/**
+ * The house's categories, in menu order. They are the admin picker's defaults, and they show in
+ * the navigation and the homepage filter at all times — even while nothing is filed under one;
+ * the owner's call, 2026-09-25. Each has a translated `nav` label (`labelKey`) and a plural URL
+ * handle to match the long-standing /collections/abayas.
+ *
+ * An admin can still type a new category on any product. It then appears after these wherever a
+ * live product uses it, labelled with its own title-cased value until a translation is added.
+ */
+export const HOUSE_CATEGORIES = [
+  { value: "ABAYA", handle: "abayas", labelKey: "abayas" },
+  { value: "KAFTAN", handle: "kaftans", labelKey: "kaftans" },
+  { value: "READY TO WEAR", handle: "ready-to-wear", labelKey: "readyToWear" },
+] as const;
 
-/** Original categories → their historical plural handles (also the `nav` i18n keys). */
-export const LEGACY_CATEGORY_HANDLES: Record<string, string> = {
-  ABAYA: "abayas",
-  JALABIYA: "jalabiyas",
-  SHEILA: "sheilas",
-};
+/** The admin picker's defaults: the house categories' stored values, in menu order. */
+export const DEFAULT_CATEGORIES: string[] = HOUSE_CATEGORIES.map((c) => c.value);
 
-/** Reverse of LEGACY_CATEGORY_HANDLES: historical handle → category value. */
-export const LEGACY_HANDLE_TO_CATEGORY: Record<string, string> = Object.fromEntries(
-  Object.entries(LEGACY_CATEGORY_HANDLES).map(([value, handle]) => [handle, value]),
-);
+/**
+ * New In leads every category list, but nothing is filed under it: it is the newest arrivals
+ * across all of them, so it fills itself and can never be empty while anything is on sale. Its
+ * page is the everything-set sorted newest first (lib/data/collections.ts).
+ */
+export const NEW_IN = { handle: "new-in", labelKey: "newIn" } as const;
 
-/** Categories deliberately kept out of the top nav (still valid on products + landing pages). */
-export const NAV_HIDDEN_CATEGORIES = new Set(["OTHER"]);
+type HouseCategory = (typeof HOUSE_CATEGORIES)[number];
+const BY_VALUE = new Map<string, HouseCategory>(HOUSE_CATEGORIES.map((c) => [c.value, c]));
+const BY_HANDLE = new Map<string, HouseCategory>(HOUSE_CATEGORIES.map((c) => [c.handle, c]));
 
 /** Canonicalize a raw category string for storage: trim, collapse whitespace, UPPERCASE, cap. */
 export function normalizeCategory(raw: string): string {
@@ -42,30 +52,39 @@ function slugify(s: string): string {
 /** Category value → storefront collection handle (`/collections/<handle>`). */
 export function categoryHandle(value: string): string {
   const v = normalizeCategory(value);
-  return LEGACY_CATEGORY_HANDLES[v] ?? slugify(v);
+  return BY_VALUE.get(v)?.handle ?? slugify(v);
 }
 
-/** Title-cased label for a category with no i18n key (e.g. "KAFTAN" → "Kaftan"). */
+/**
+ * A house category's handle → its stored value, or null for any other handle. Resolves even
+ * while the category is empty, which is what lets its page render an honest empty state rather
+ * than falling through to an unrelated collection.
+ */
+export function houseCategoryForHandle(handle: string): string | null {
+  return BY_HANDLE.get(handle)?.value ?? null;
+}
+
+/** The `nav` i18n key for a house category's label, or null for a category an admin added. */
+export function categoryLabelKey(value: string): string | null {
+  return BY_VALUE.get(normalizeCategory(value))?.labelKey ?? null;
+}
+
+/** Title-cased label for a category with no i18n key (e.g. "EVENING WEAR" → "Evening Wear"). */
 export function categoryLabelFallback(value: string): string {
   return normalizeCategory(value)
     .toLowerCase()
     .replace(/\b\w/g, (m) => m.toUpperCase());
 }
 
-/**
- * Order categories for the nav: the original three first (abaya-first), then any new ones
- * alphabetically. `OTHER` and other hidden categories are dropped.
- */
-export function sortCategoriesForNav(values: string[]): string[] {
-  const order = ["ABAYA", "JALABIYA", "SHEILA"];
-  return values
-    .filter((v) => !NAV_HIDDEN_CATEGORIES.has(v))
-    .sort((a, b) => {
-      const ia = order.indexOf(a);
-      const ib = order.indexOf(b);
-      if (ia === -1 && ib === -1) return a.localeCompare(b);
-      if (ia === -1) return 1;
-      if (ib === -1) return -1;
-      return ia - ib;
-    });
+/** The house categories first, in their fixed order, then any others alphabetically. */
+export function sortCategories(values: string[]): string[] {
+  const order: string[] = DEFAULT_CATEGORIES;
+  return [...values].sort((a, b) => {
+    const ia = order.indexOf(a);
+    const ib = order.indexOf(b);
+    if (ia === -1 && ib === -1) return a.localeCompare(b);
+    if (ia === -1) return 1;
+    if (ib === -1) return -1;
+    return ia - ib;
+  });
 }

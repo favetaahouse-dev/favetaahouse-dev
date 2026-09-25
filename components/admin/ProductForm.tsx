@@ -94,14 +94,11 @@ export function ProductForm({
   product,
   options,
   categories,
-  measureFields = [],
   canEditProducts = true,
 }: {
   product?: AdminProduct;
   options: { sizes: string[]; lengths: number[] };
   categories: string[];
-  /** The CMS measurement list, already localised to English for the admin. */
-  measureFields?: { key: string; label: string }[];
   canEditProducts?: boolean;
 }) {
   const router = useRouter();
@@ -305,12 +302,12 @@ export function ProductForm({
       <Panel>
         <PanelHeader
           title="How it's made"
-          description="Made-to-order pieces are cut to the customer's measurements after the sale, carry their own price, and are never out of stock."
+          description="Made-to-order pieces are cut to the size and length the customer picks, after the sale. They carry their own price and are never out of stock."
         />
         <div className="space-y-4 p-5">
           <div className="grid gap-2 sm:grid-cols-3" role="radiogroup" aria-label="Fulfilment">
             {([
-              ["MADE_TO_ORDER", "Made to order only", "Colours and measurements. No sizes, no stock."],
+              ["MADE_TO_ORDER", "Made to order only", "Every size and length, cut after the sale. No stock."],
               ["BOTH", "Both", "Shoppers choose on the product page."],
               ["READY_TO_WEAR", "Ready to wear only", "Stocked sizes, as before."],
             ] as const).map(([value, label, sub]) => (
@@ -352,42 +349,6 @@ export function ProductForm({
                   <FieldLabel>Production time — to (days)</FieldLabel>
                   <input className={input} type="number" min={0} value={f.mtoLeadMaxStr} onChange={(e) => set("mtoLeadMaxStr", e.target.value)} />
                 </label>
-              </div>
-              <div>
-                <FieldLabel hint="Which measurements this piece needs. Select none to ask for all of them.">
-                  Measurements asked for
-                </FieldLabel>
-                {measureFields.length === 0 ? (
-                  <p className="text-[12px] text-secondary">
-                    No measurements defined yet — add them under Content → Made to Order.
-                  </p>
-                ) : (
-                  <div className="flex flex-wrap gap-1.5">
-                    {measureFields.map((m) => {
-                      const on = f.mtoFields.includes(m.key);
-                      return (
-                        <button
-                          key={m.key}
-                          type="button"
-                          aria-pressed={on}
-                          onClick={() =>
-                            set(
-                              "mtoFields",
-                              on ? f.mtoFields.filter((k) => k !== m.key) : [...f.mtoFields, m.key],
-                            )
-                          }
-                          className={cn(
-                            "border px-2.5 py-1.5 text-[12px] transition-colors",
-                            on ? "border-accent bg-raised text-foreground" : "border-field text-secondary hover:border-accent",
-                          )}
-                        >
-                          {on && "✓ "}
-                          {m.label}
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
               </div>
             </>
           )}

@@ -7,16 +7,15 @@ import { VariantGrid } from "@/components/admin/VariantGrid";
 import { ProductActions } from "@/components/admin/ProductActions";
 import { ImageUploader } from "@/components/admin/ImageUploader";
 import { requirePageAccess } from "@/lib/admin-guard";
-import { getVariantOptions, getProductCategories, getMadeToOrderSettings } from "@/lib/content";
+import { getVariantOptions, getProductCategories } from "@/lib/content";
 
 export default async function AdminProductEdit({ params }: { params: Promise<{ id: string }> }) {
   await requirePageAccess("products:read");
   const { id } = await params;
-  const [product, options, categories, mto] = await Promise.all([
+  const [product, options, categories] = await Promise.all([
     getAdminProduct(id),
     getVariantOptions(),
     getProductCategories(),
-    getMadeToOrderSettings(),
   ]);
   if (!product) notFound();
 
@@ -45,12 +44,7 @@ export default async function AdminProductEdit({ params }: { params: Promise<{ i
           </>
         }
       />
-      <ProductForm
-        product={product}
-        options={options}
-        categories={categories}
-        measureFields={mto.fields.map((m) => ({ key: m.key, label: m.label }))}
-      />
+      <ProductForm product={product} options={options} categories={categories} />
       {/* Prices and quantities are a ready-to-wear concern: a made-to-order-only product is
           priced once on the form above and holds no stock at all. */}
       {product.fulfillment !== "MADE_TO_ORDER" && (

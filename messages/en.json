@@ -5,7 +5,10 @@
   },
   "nav": {
     "home": "Home",
+    "newIn": "New In",
     "abayas": "Abayas",
+    "kaftans": "Kaftans",
+    "readyToWear": "Ready to Wear",
     "jalabiyas": "Jalabiyas",
     "sheilas": "Sheilas",
     "travel": "Travel Collection",
@@ -28,7 +31,6 @@
   },
   "home": {
     "trendy": "New This Season",
-    "all": "All",
     "filterBy": "Filter by category",
     "loadMore": "Load more",
     "whoWeAre": "Who We Are",
@@ -70,7 +72,7 @@
     "sale": "Sale",
     "soldOut": "Sold Out",
     "selectSize": "Please select a size",
-    "length": "Length",
+    "length": "Length (inches)",
     "selectLength": "Please select a length",
     "tackTack": "Tack Tack",
     "tackTackYes": "Yes (No Return)",
@@ -96,21 +98,8 @@
     "mtoLead": "Made for you in {min}–{max} days",
     "mtoBlurb": "Cut and sewn to your measurements.",
     "rtwBlurb": "Ships from our Doha atelier.",
-    "yourMeasurements": "Your measurements",
-    "howToMeasure": "How to measure",
-    "unit": "Unit",
-    "unitCm": "cm",
-    "unitIn": "inches",
-    "notes": "Notes for the atelier (optional)",
-    "notesPlaceholder": "Anything we should know about the fit?",
-    "measureRequired": "{field} is required",
-    "measureNumber": "Enter {field} as a number",
-    "measureRange": "{field} must be between {min} and {max} {unit}",
-    "measureFixErrors": "Please check the measurements highlighted below",
     "mtoNoReturn": "Made-to-order pieces are cut for you and cannot be returned.",
-    "selectColor": "Please select a colour",
-    "measureMin": "{field} must be at least {min} {unit}",
-    "measureMax": "{field} must be at most {max} {unit}"
+    "selectColor": "Please select a colour"
   },
   "collection": {
     "results": "{count} results",
@@ -126,6 +115,7 @@
     "clear": "Clear",
     "clearAll": "Clear all",
     "empty": "No products found.",
+    "comingSoon": "New pieces are coming soon.",
     "featured": "Featured",
     "bestSelling": "Best selling",
     "priceLow": "Price, low to high",
@@ -170,7 +160,6 @@
     "orderSummary": "Order summary",
     "processing": "Processing…",
     "mtoNotice": "This order contains made-to-order pieces — ready in {min}–{max} days.",
-    "errorMeasurements": "Some measurements are no longer valid. Please review your cart.",
     "errorMode": "An item in your cart is no longer available to order. Please review your cart."
   },
   "account": {

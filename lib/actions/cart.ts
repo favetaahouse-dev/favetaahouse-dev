@@ -3,16 +3,9 @@
 import { z } from "zod";
 import { supabase } from "@/lib/supabase";
 import { getOrCreateCart, cartStateById, getCart, type CartState, type CartLine } from "@/lib/data/cart";
-import { getMadeToOrderSettings } from "@/lib/content";
-import {
-  MAX_MTO_QTY,
-  MAX_NOTES,
-  UNITS,
-  applicableFields,
-  validateMeasurements,
-  type Measurements,
-  type Unit,
-} from "@/lib/measurements";
+import { getVariantOptions } from "@/lib/content";
+import { MAX_MTO_QTY } from "@/lib/measurements";
+import { madeToOrderSizes } from "@/lib/variant-options";
 import { sendMetaAddToCart } from "@/lib/meta/server-events";
 import { addToCartPayload } from "@/lib/meta/events";
 
@@ -20,24 +13,22 @@ import { addToCartPayload } from "@/lib/meta/events";
 export type AddToCartMeta = { eventId: string; eventSourceUrl?: string; fbc?: string };
 
 /**
- * Identity of a made-to-order line: same product, colour, unit, measurements and note.
+ * Identity of a made-to-order line: same product, colour, size, length and tack-tack — the same
+ * choices that make two ready-to-wear lines one line.
  *
- * Done here rather than by a unique constraint because the measurement set is a jsonb object,
- * and a uniqueness key over jsonb is only as stable as its key ordering. The DB keeps a partial
- * unique index for READY-TO-WEAR lines only (see 20260816120000_made_to_order.sql); made-to-order
- * dedup is this function, and two customers' measurements are never "the same line" by accident
- * because the whole set has to match.
+ * Done here rather than by a unique constraint: the DB keeps a partial unique index for
+ * READY-TO-WEAR lines only (see 20260816120000_made_to_order.sql), keyed on the variant, and a
+ * made-to-order line has none. A line carried over from the measurement form has no size, so it
+ * can never match a new one and is never silently merged into it.
  */
 function mtoKey(l: {
   productId: string;
   colorId: string | null;
-  measureUnit: string | null;
-  measurements: Measurements | null;
-  notes: string | null;
+  size: string | null;
+  length: number | null;
+  tackTack: boolean | null;
 }): string {
-  const m = l.measurements ?? {};
-  const canon = Object.keys(m).sort().map((k) => `${k}:${m[k]}`).join(",");
-  return [l.productId, l.colorId ?? "", l.measureUnit ?? "", canon, (l.notes ?? "").trim()].join("|");
+  return [l.productId, l.colorId ?? "", l.size ?? "", l.length ?? "", l.tackTack ? 1 : 0].join("|");
 }
 
 /**
@@ -123,24 +114,24 @@ const mtoInputSchema = z.object({
   handle: z.string().trim().min(1).max(120),
   colorId: z.string().uuid(),
   quantity: z.number().int().min(1).max(MAX_MTO_QTY).optional(),
-  unit: z.enum(UNITS as unknown as [Unit, ...Unit[]]),
-  values: z.record(z.string(), z.union([z.number(), z.string()])),
-  notes: z.string().max(MAX_NOTES).optional(),
+  size: z.string().trim().min(1).max(40),
+  /** Inches, from the house length list. */
+  length: z.number().int().positive().optional(),
   tackTack: z.boolean().optional(),
 });
 export type MadeToOrderInput = z.input<typeof mtoInputSchema>;
 
 /**
- * Add a made-to-order line.
+ * Add a made-to-order line: a colour, a size and a length in inches, the same chips a
+ * ready-to-wear piece is bought with — only never sold out, because it is cut after the sale.
  *
- * A sibling action rather than three more positional parameters on addToCartAction, which was
- * already at five — the ready-to-wear path is the one that must not break, and this way it is
- * untouched apart from the two columns it now fills in.
+ * A sibling action rather than more positional parameters on addToCartAction, which was already
+ * at five — the ready-to-wear path is the one that must not break.
  *
  * Everything the browser sent is re-derived or re-checked here. Server actions are public
- * endpoints, so the product's mode, its price, the colour, the applicable field list and every
- * measurement bound are read from the database and the CMS, never taken from the payload — the
- * same reasoning assertOptionsAllowed was written under.
+ * endpoints, so the product's mode, its price, the colour, and the size and length lists are read
+ * from the database and the CMS, never taken from the payload — the same reasoning
+ * assertOptionsAllowed was written under.
  */
 export async function addMadeToOrderAction(
   input: MadeToOrderInput,
@@ -154,7 +145,7 @@ export async function addMadeToOrderAction(
 
   const { data: product } = await supabase
     .from("products")
-    .select("id, fulfillment, mto_price, mto_fields")
+    .select("id, fulfillment, mto_price, variants(size)")
     .eq("handle", data.handle)
     .eq("status", "active")
     .maybeSingle();
@@ -170,17 +161,18 @@ export async function addMadeToOrderAction(
     .maybeSingle();
   if (!color) return fail("color");
 
-  const settings = await getMadeToOrderSettings();
-  const fields = applicableFields(settings.fields, product.mto_fields);
-  const check = validateMeasurements(fields, data.values, data.unit);
-  if (!check.ok) return fail(check.error);
+  const options = await getVariantOptions();
+  const sizes = madeToOrderSizes((product.variants ?? []).map((v) => v.size), options.sizes);
+  if (!sizes.includes(data.size)) return fail("size");
+  // Required whenever the house offers lengths at all, and only ever one of them.
+  const length = options.lengths.length ? (data.length ?? null) : null;
+  if (options.lengths.length && (length == null || !options.lengths.includes(length))) {
+    return fail("length");
+  }
 
-  const notes = data.notes?.trim() || null;
+  const tackTack = !!data.tackTack;
   const qty = data.quantity ?? 1;
-  const key = mtoKey({
-    productId: product.id, colorId: color.id,
-    measureUnit: data.unit, measurements: check.clean, notes,
-  });
+  const key = mtoKey({ productId: product.id, colorId: color.id, size: data.size, length, tackTack });
   const existing = cart.items.find((i) => i.fulfillment === "MTO" && mtoKey(i) === key);
 
   try {
@@ -192,10 +184,9 @@ export async function addMadeToOrderAction(
         product_id: product.id,
         color_id: color.id,
         fulfillment: "MTO",
-        measurements: check.clean,
-        measure_unit: data.unit,
-        notes,
-        tack_tack: !!data.tackTack,
+        size: data.size,
+        length,
+        tack_tack: tackTack,
       },
       qty,
       MAX_MTO_QTY,

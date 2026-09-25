@@ -11,17 +11,16 @@ import { ProductAccordion } from "@/components/product/ProductAccordion";
 import { ProductGallery } from "@/components/product/ProductGallery";
 import { ProductLightbox } from "@/components/product/ProductLightbox";
 import { StickyBuyBar } from "@/components/product/StickyBuyBar";
-import { MeasurementForm, type MeasureFieldDTO } from "@/components/product/MeasurementForm";
 import { useCart } from "@/components/providers/cart-context";
 import { sortSizes, variantLabel } from "@/lib/variant-options";
-import { MAX_MTO_QTY, MAX_NOTES, fieldRange, toCm, type Unit } from "@/lib/measurements";
+import { MAX_MTO_QTY } from "@/lib/measurements";
 import { trackMeta, newEventId } from "@/lib/meta/fbq";
 import { viewContentPayload, addToCartPayload } from "@/lib/meta/events";
 import { icon } from "@/lib/icon";
 import { cn } from "@/lib/utils";
 
 // A variant is one colour+size, holding stock — the ready-to-wear half of the catalogue.
-// Made-to-order has no variant at all: it is a colour plus a set of measurements.
+// Made-to-order has no variant at all: it is a colour, a size and a length, cut after the sale.
 export type VariantDTO = {
   id: string;
   /** The colour ROW's id. colors[].name is localised; variants.color is not — so ids match. */
@@ -42,19 +41,15 @@ export type ProductColorDTO = {
   imageUrl: string | null;
 };
 
-/** Everything the made-to-order panel needs, already localised and already merged with the
- *  house defaults, so the client resolves nothing. Null when the product doesn't offer it. */
+/** Everything the made-to-order panel needs, already merged with the house defaults, so the
+ *  client resolves nothing. Null when the product doesn't offer it. */
 export type MtoDTO = {
   price: number;
   compareAt: number | null;
   leadMin: number;
   leadMax: number;
-  unit: Unit;
-  fields: MeasureFieldDTO[];
-  intro: string;
-  guide: string;
-  guideImage: string;
-  notesLabel: string;
+  /** Always selectable — a made-to-order piece is cut after the sale and never sells out. */
+  sizes: string[];
 };
 
 export type ProductDetailDTO = {
@@ -70,7 +65,7 @@ export type ProductDetailDTO = {
   images: { url: string; alt: string | null }[];
   colors: ProductColorDTO[];
   variants: VariantDTO[];
-  lengths: number[]; // offered lengths (from the CMS list); a ready-to-wear choice
+  lengths: number[]; // offered lengths in inches (from the CMS list), in both modes
   offersMto: boolean;
   offersRtw: boolean;
   mto: MtoDTO | null;
@@ -109,16 +104,13 @@ export function ProductDetail({ product }: { product: ProductDetailDTO }) {
    * Made-to-order leads when the product offers it. That is the business, not a UI preference:
    * ready-to-wear is now the secondary line, so it must not be what a shopper lands on.
    */
-  const [mode, setMode] = useState<Mode>(offersMto ? "MTO" : "RTW");
+  const initialMode: Mode = offersMto ? "MTO" : "RTW";
+  const [mode, setMode] = useState<Mode>(initialMode);
   const [colorId, setColorId] = useState(firstColorId);
-  const [size, setSize] = useState(firstSize);
+  const [size, setSize] = useState(initialMode === "MTO" ? (mto?.sizes[0] ?? "") : firstSize);
   const [tackTack, setTackTack] = useState(false); // "No" by default
   const [length, setLength] = useState<number | null>(lengths[0] ?? null);
   const [qty, setQty] = useState(1);
-  const [unit, setUnit] = useState<Unit>(mto?.unit ?? "cm");
-  const [values, setValues] = useState<Record<string, string>>({});
-  const [notes, setNotes] = useState("");
-  const [errors, setErrors] = useState<Record<string, string>>({});
   /** One index for the gallery, the lightbox and the colour jump, so closing the zoomed
    *  view on the third shot leaves the gallery on the third shot. */
   const [imageIndex, setImageIndex] = useState(0);
@@ -127,15 +119,17 @@ export function ProductDetail({ product }: { product: ProductDetailDTO }) {
   /** The two sentinels that bound the mobile buy bar — see StickyBuyBar. */
   const ctaRef = useRef<HTMLDivElement>(null);
   const detailsEndRef = useRef<HTMLDivElement>(null);
-  const measuresRef = useRef<HTMLDivElement>(null);
 
   const color = colors.find((c) => c.id === colorId);
   const inColor = variants.filter((v) => v.colorId === colorId);
-  const sizes = useMemo(() => sortSizes([...new Set(inColor.map((v) => v.size))]), [inColor]);
+  const stockedSizes = useMemo(() => sortSizes([...new Set(inColor.map((v) => v.size))]), [inColor]);
 
   // Stock lives on (colour, size). Length and tack-tack are choices on the line, not stock axes.
   const selected = variants.find((v) => v.colorId === colorId && v.size === size);
   const isMto = mode === "MTO";
+  // One row of size chips for both modes. Ready-to-wear offers what this colour has on the rail;
+  // made-to-order offers every size it is cut in, none of which can sell out.
+  const sizes = isMto ? (mto?.sizes ?? []) : stockedSizes;
   const price = isMto ? (mto?.price ?? 0) : (selected?.price ?? 0);
   const compareAt = isMto ? (mto?.compareAt ?? null) : (selected?.compareAt ?? null);
   const maxQty = isMto ? MAX_MTO_QTY : (selected?.stock ?? 1);
@@ -194,50 +188,26 @@ export function ProductDetail({ product }: { product: ProductDetailDTO }) {
   function selectColor(id: string) {
     const inC = variants.filter((v) => v.colorId === id);
     setColorId(id);
-    setSize(firstStocked(inC)?.size ?? inC[0]?.size ?? "");
+    // Only ready-to-wear sizes depend on the colour — what is on the rail in it. A made-to-order
+    // size is cut in any colour, so the shopper's choice stands.
+    if (!isMto) setSize(firstStocked(inC)?.size ?? inC[0]?.size ?? "");
     jumpGallery(colors.find((c) => c.id === id));
   }
 
   function switchMode(next: Mode) {
     setMode(next);
-    setErrors({});
+    // Keep the chosen size across the switch when the other mode can honour it; otherwise land
+    // on its first — for ready-to-wear, the first one actually in stock in this colour.
+    if (next === "MTO") {
+      const offered = mto?.sizes ?? [];
+      if (!offered.includes(size)) setSize(offered[0] ?? "");
+    } else {
+      const same = inColor.find((v) => v.size === size);
+      if (!same || !stocked(same)) setSize(firstStocked(inColor)?.size ?? "");
+    }
     // Quantity is capped by different things in the two modes; carrying 8 across from a
     // made-to-order line into a size with 2 in stock would silently over-order.
     setQty(1);
-  }
-
-  /**
-   * The browser's copy of validateMeasurements, for instant per-field feedback.
-   *
-   * NOT the enforcement point — addMadeToOrderAction re-runs the real one against the CMS field
-   * list, because a server action is a public endpoint and this is only a courtesy.
-   */
-  function validate(): Record<string, string> {
-    const errs: Record<string, string> = {};
-    for (const f of mto?.fields ?? []) {
-      const raw = (values[f.key] ?? "").trim();
-      if (!raw) {
-        if (f.required) errs[f.key] = t("measureRequired", { field: f.label });
-        continue;
-      }
-      const n = Number(raw);
-      if (!Number.isFinite(n) || n <= 0) {
-        errs[f.key] = t("measureNumber", { field: f.label });
-        continue;
-      }
-      // Mirrors validateMeasurements: each side is enforced only if it is set, and both are
-      // unset by default, so this normally rejects nothing but blanks and non-numbers.
-      const cm = toCm(n, unit);
-      const r = fieldRange(f, unit);
-      if (f.min > 0 && f.max > 0 && (cm < f.min || cm > f.max)) {
-        errs[f.key] = t("measureRange", { field: f.label, min: r.min, max: r.max, unit });
-      } else if (f.min > 0 && cm < f.min) {
-        errs[f.key] = t("measureMin", { field: f.label, min: r.min, unit });
-      } else if (f.max > 0 && cm > f.max) {
-        errs[f.key] = t("measureMax", { field: f.label, max: r.max, unit });
-      }
-    }
-    return errs;
   }
 
   async function handleAdd(buyNow = false) {
@@ -251,15 +221,15 @@ export function ProductDetail({ product }: { product: ProductDetailDTO }) {
       eventSourceUrl: typeof window !== "undefined" ? window.location.href : undefined,
     };
 
+    if (lengths.length > 0 && length == null) {
+      toast.error(t("selectLength"));
+      return;
+    }
+
     if (isMto) {
       if (!mto) return;
-      const errs = validate();
-      setErrors(errs);
-      if (Object.keys(errs).length) {
-        toast.error(t("measureFixErrors"));
-        // The failing field can be far above the button on mobile, so a silent refusal reads
-        // as a dead button.
-        measuresRef.current?.scrollIntoView({ block: "center", behavior: "smooth" });
+      if (!size) {
+        toast.error(t("selectSize"));
         return;
       }
       setAdding(true);
@@ -268,18 +238,15 @@ export function ProductDetail({ product }: { product: ProductDetailDTO }) {
           handle: product.handle,
           colorId: color.id,
           quantity: qty,
-          unit,
-          values: Object.fromEntries(
-            Object.entries(values).filter(([, v]) => v.trim() !== ""),
-          ),
-          notes: notes.trim() || undefined,
+          size,
+          length: length ?? undefined,
           tackTack,
         },
         meta,
       );
       setAdding(false);
       if (err) {
-        toast.error(err === "unavailable" ? t("outOfStock") : err);
+        toast.error(err === "unavailable" ? t("outOfStock") : t("unavailableCombination"));
         return;
       }
       trackMeta(
@@ -303,10 +270,6 @@ export function ProductDetail({ product }: { product: ProductDetailDTO }) {
     }
     if (!stocked(selected)) {
       toast.error(t("outOfStock"));
-      return;
-    }
-    if (lengths.length > 0 && length == null) {
-      toast.error(t("selectLength"));
       return;
     }
     setAdding(true);
@@ -427,105 +390,48 @@ export function ProductDetail({ product }: { product: ProductDetailDTO }) {
               </p>
             )}
 
-            {isMto && mto ? (
-              <div ref={measuresRef}>
-                <MeasurementForm
-                  fields={mto.fields}
-                  unit={unit}
-                  onUnitChange={setUnit}
-                  values={values}
-                  onChange={(next) => {
-                    setValues(next);
-                    /**
-                     * Drop the error on whatever field just changed.
-                     *
-                     * Without this, errors set by the last Add click outlive the values that
-                     * caused them: correcting a waist of 12 to 50 left "Waist must be between
-                     * 50 and 180" sitting under a waist of 50, which reads as the form being
-                     * broken rather than the message being stale. Per-field rather than
-                     * clearing everything, so fixing one field does not hide the others still
-                     * waiting to be fixed.
-                     */
-                    setErrors((prev) => {
-                      if (!Object.keys(prev).length) return prev;
-                      const cleared = { ...prev };
-                      for (const k of Object.keys(next)) {
-                        if (next[k] !== values[k]) delete cleared[k];
-                      }
-                      return cleared;
-                    });
-                  }}
-                  errors={errors}
-                  intro={mto.intro}
-                  notesLabel={mto.notesLabel}
-                  notes={notes}
-                  onNotesChange={setNotes}
-                  maxNotes={MAX_NOTES}
-                />
-                {(mto.guide || mto.guideImage) && (
-                  <details className="mt-4 border border-line">
-                    <summary className="focus-ring cursor-pointer px-3.5 py-2.5 font-button text-[12px] text-strong">
-                      {t("howToMeasure")}
-                    </summary>
-                    <div className="border-t border-line px-3.5 py-3">
-                      {mto.guideImage && (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={mto.guideImage}
-                          alt={t("howToMeasure")}
-                          className="mb-3 max-w-full"
-                          loading="lazy"
-                        />
-                      )}
-                      {mto.guide && <p className="text-[13px] whitespace-pre-line text-ink">{mto.guide}</p>}
-                    </div>
-                  </details>
-                )}
-              </div>
-            ) : (
-              <>
-                {/* Sizes */}
-                <div className="mt-6">
-                  <p className="mb-2.5 font-button text-[13px] font-medium text-strong">{t("size")}</p>
-                  <div className="flex flex-wrap gap-2">
-                    {sizes.map((s) => {
-                      const disabled = sizeSoldOut(s);
-                      return (
-                        <button
-                          key={s}
-                          disabled={disabled}
-                          onClick={() => setSize(s)}
-                          aria-pressed={size === s}
-                          className={cn(chip, size === s ? chipOn : chipOff, disabled && chipDead)}
-                        >
-                          {s}
-                        </button>
-                      );
-                    })}
-                  </div>
+            {/* Sizes — one row for both modes, as on Alessia. Only a ready-to-wear size can sell
+                out; a made-to-order one is cut after the sale. */}
+            {sizes.length > 0 && (
+              <div className="mt-6">
+                <p className="mb-2.5 font-button text-[13px] font-medium text-strong">{t("size")}</p>
+                <div className="flex flex-wrap gap-2">
+                  {sizes.map((s) => {
+                    const disabled = !isMto && sizeSoldOut(s);
+                    return (
+                      <button
+                        key={s}
+                        disabled={disabled}
+                        onClick={() => setSize(s)}
+                        aria-pressed={size === s}
+                        className={cn(chip, size === s ? chipOn : chipOff, disabled && chipDead)}
+                      >
+                        {s}
+                      </button>
+                    );
+                  })}
                 </div>
+              </div>
+            )}
 
-                {/* Length — a ready-to-wear choice. Absent under made-to-order, where the hem
-                    is the total-length MEASUREMENT: offering both would give the atelier two
-                    numbers for one dimension. */}
-                {lengths.length > 0 && (
-                  <div className="mt-6">
-                    <p className="mb-2.5 font-button text-[13px] font-medium text-strong">{t("length")}</p>
-                    <div className="flex flex-wrap gap-2">
-                      {lengths.map((l) => (
-                        <button
-                          key={l}
-                          onClick={() => setLength(l)}
-                          aria-pressed={length === l}
-                          className={cn(chip, length === l ? chipOn : chipOff)}
-                        >
-                          {l}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </>
+            {/* Length — the hem, picked by number in inches, in both modes. Always selectable:
+                it is a cutting instruction, not a stock axis. */}
+            {lengths.length > 0 && (
+              <div className="mt-6">
+                <p className="mb-2.5 font-button text-[13px] font-medium text-strong">{t("length")}</p>
+                <div className="flex flex-wrap gap-2">
+                  {lengths.map((l) => (
+                    <button
+                      key={l}
+                      onClick={() => setLength(l)}
+                      aria-pressed={length === l}
+                      className={cn(chip, length === l ? chipOn : chipOff)}
+                    >
+                      {l}
+                    </button>
+                  ))}
+                </div>
+              </div>
             )}
 
             {/* Tack Tack — offered in BOTH modes. It is a finishing choice, not a fit
@@ -633,7 +539,7 @@ export function ProductDetail({ product }: { product: ProductDetailDTO }) {
           compareAt={compareAt}
           label={variantLabel({
             color: color?.name ?? "",
-            size: selected?.size,
+            size,
             length,
             tackTack,
             madeToOrder: isMto,

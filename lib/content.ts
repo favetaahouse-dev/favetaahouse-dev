@@ -4,8 +4,8 @@ import { supabase } from "@/lib/supabase";
 import { DEFAULT_CONTENT, type Section } from "@/lib/content-schema";
 import { assetUrl } from "@/lib/asset-url";
 import { parseList, parseLengths } from "@/lib/variant-options";
-import { parseMeasureFields, type MeasureField, type Unit } from "@/lib/measurements";
-import { DEFAULT_CATEGORIES, normalizeCategory, sortCategoriesForNav } from "@/lib/categories";
+import { parseMeasureFields, type MeasureField } from "@/lib/measurements";
+import { DEFAULT_CATEGORIES, normalizeCategory, sortCategories } from "@/lib/categories";
 
 /**
  * Read a CMS content section (content table merged over defaults).
@@ -184,33 +184,21 @@ export async function getVariantOptions(): Promise<{ sizes: string[]; lengths: n
 }
 
 export type MadeToOrderSettings = {
-  /** The house-wide measurement schema. A product narrows it via products.mto_fields. */
+  /**
+   * The measurement list the old made-to-order form asked for. Nothing asks for it now — the
+   * piece is chosen from size and length chips — but it still labels the measurements on any
+   * order placed through that form, on the admin order page, the receipt and the emails.
+   */
   fields: MeasureField[];
   leadMinDays: number;
   leadMaxDays: number;
-  /** What the shopper's unit switch starts on. They can change it either way. */
-  defaultUnit: Unit;
-  intro: string;
-  introAr: string;
-  guide: string;
-  guideAr: string;
-  guideImage: string;
-  notesLabel: string;
-  notesLabelAr: string;
   returnsNote: string;
 };
 
 /**
- * The made-to-order schema and copy (Admin → Content → Made to Order).
- *
- * Unlike getVariantOptions this IS read by the storefront — the measurement form is generated
- * from it — so the product page awaits it alongside getVariantOptions. Both ride the same
- * "content" cache tag, so nothing new enters the cache graph.
- *
- * Every copy field returns "" when unset so the caller can fall back to its *translated*
- * string; an English default here would win over the Arabic on /ar. The one exception is the
- * field list, which ships with the house default because an empty measurement form is an
- * unsellable product rather than a monolingual one.
+ * The made-to-order settings (Admin → Content → Made to Order): the house lead time and the
+ * receipt's returns note. Rides the same "content" cache tag as getVariantOptions, so the
+ * product page reading both adds nothing to its cache graph.
  */
 export async function getMadeToOrderSettings(): Promise<MadeToOrderSettings> {
   const c = await getContent("made-to-order");
@@ -225,28 +213,19 @@ export async function getMadeToOrderSettings(): Promise<MadeToOrderSettings> {
     // An inverted range would render "ready in 21–14 days". Clamp rather than reject: the
     // owner typing the two boxes out of order should not take the product page down.
     leadMaxDays: Math.max(days("leadMaxDays", 21), leadMinDays),
-    defaultUnit: c.unitInches === "true" ? "in" : "cm",
-    intro: c.intro || "",
-    introAr: c.intro_ar || "",
-    guide: c.guide || "",
-    guideAr: c.guide_ar || "",
-    guideImage: c.guideImage ? assetUrl(c.guideImage) : "",
-    notesLabel: c.notesLabel || "",
-    notesLabelAr: c.notesLabel_ar || "",
     returnsNote: c.returnsNote || "",
   };
 }
 
 /**
- * The category options the admin product form offers. Categories are dynamic — the list is
- * the categories products actually use, unioned with the built-in defaults so the picker is
- * never empty. Admin-only; the storefront derives its category nav from the same product data.
- * Order: the built-in four first (abaya-first), then any admin-added categories alphabetically.
+ * The category options the admin product form offers: the house categories (Abaya, Kaftan,
+ * Ready to Wear — lib/categories.ts), then any other category a product already uses. Typing a
+ * brand-new name in the form still works; this is the list of suggestions, not a limit.
+ * Admin-only; the storefront derives its category nav from the same definitions.
  */
 export async function getProductCategories(): Promise<string[]> {
   const { data } = await supabase.from("products").select("category");
   const used = new Set((data ?? []).map((r) => normalizeCategory(r.category as string)));
-  const defaults = DEFAULT_CATEGORIES as readonly string[];
-  const extra = sortCategoriesForNav([...used].filter((c) => c && !defaults.includes(c)));
-  return [...defaults, ...extra];
+  const extra = sortCategories([...used].filter((c) => c && !DEFAULT_CATEGORIES.includes(c)));
+  return [...DEFAULT_CATEGORIES, ...extra];
 }

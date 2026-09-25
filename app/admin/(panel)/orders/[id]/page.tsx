@@ -61,8 +61,8 @@ export default async function AdminOrderDetail({ params }: { params: Promise<{ i
                 </div>
                 <div className="flex-1 text-sm">
                   {/* The kind of line leads, because it decides who handles it: an atelier cuts
-                      a made-to-order piece from measurements, a packer pulls a stocked size off
-                      the rail. Reading that off a "/"-joined label was guesswork. */}
+                      a made-to-order piece to the size and length below, a packer pulls a
+                      stocked size off the rail. Reading that off a "/"-joined label was guesswork. */}
                   <div className="flex flex-wrap items-center gap-2">
                     <span
                       className={
@@ -82,8 +82,10 @@ export default async function AdminOrderDetail({ params }: { params: Promise<{ i
                       <dt className="text-white/40">Colour</dt>
                       <dd>{it.color || "—"}</dd>
                     </div>
-                    {/* Ready-to-wear detail: what came off the rail. */}
-                    {!mto && (
+                    {/* Size and length, for both kinds of line: what comes off the rail, or what
+                        the atelier cuts to. A made-to-order line placed through the old
+                        measurement form has neither — its measurements print below instead. */}
+                    {(!mto || it.size) && (
                       <>
                         <div className="flex gap-1.5">
                           <dt className="text-white/40">Size</dt>
@@ -109,30 +111,28 @@ export default async function AdminOrderDetail({ params }: { params: Promise<{ i
                     )}
                   </dl>
 
-                  {/* Inline, so staff can answer the phone without opening the print view. */}
-                  {mto && (
+                  {mto && it.leadMinDays != null && it.leadMaxDays != null && (
+                    <p className="mt-1.5 text-[11px] text-white/40">
+                      Promised in {it.leadMinDays}–{it.leadMaxDays} days
+                    </p>
+                  )}
+
+                  {/* Only on lines placed through the old measurement form — inline, so staff can
+                      answer the phone without opening the print view. */}
+                  {mto && Object.keys(it.measurements ?? {}).length > 0 && (
                     <div className="mt-2 border border-white/10 p-2.5">
                       <p className="mb-1.5 text-[10px] uppercase tracking-[0.12em] text-white/40">
                         Measurements{it.measureUnit ? ` (${it.measureUnit})` : ""}
                       </p>
-                      {Object.keys(it.measurements ?? {}).length === 0 ? (
-                        <p className="text-xs text-white/40">None recorded.</p>
-                      ) : (
-                        <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs sm:grid-cols-3">
-                          {Object.entries(it.measurements ?? {}).map(([k, v]) => (
-                            <div key={k} className="flex justify-between gap-2">
-                              <dt className="text-white/40">{measureLabel(k)}</dt>
-                              <dd dir="ltr">{v}{it.measureUnit}</dd>
-                            </div>
-                          ))}
-                        </dl>
-                      )}
+                      <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs sm:grid-cols-3">
+                        {Object.entries(it.measurements ?? {}).map(([k, v]) => (
+                          <div key={k} className="flex justify-between gap-2">
+                            <dt className="text-white/40">{measureLabel(k)}</dt>
+                            <dd dir="ltr">{v}{it.measureUnit}</dd>
+                          </div>
+                        ))}
+                      </dl>
                       {it.notes && <p className="mt-2 text-xs text-white/60">Note: {it.notes}</p>}
-                      {it.leadMinDays != null && it.leadMaxDays != null && (
-                        <p className="mt-1 text-[11px] text-white/40">
-                          Promised in {it.leadMinDays}–{it.leadMaxDays} days
-                        </p>
-                      )}
                     </div>
                   )}
                 </div>

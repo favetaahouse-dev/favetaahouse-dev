@@ -23,10 +23,13 @@ export function CollectionToolbar({
   total,
   priceMax,
   facets,
+  defaultSort = "featured",
 }: {
   total: number;
   priceMax: number;
   facets: CollectionFacets;
+  /** The order this collection opens in (defaultSortFor). Picking it clears ?sort= from the URL. */
+  defaultSort?: SortKey;
 }) {
   const t = useTranslations("collection");
   const router = useRouter();
@@ -36,7 +39,7 @@ export function CollectionToolbar({
   const [filterOpen, setFilterOpen] = useState(false);
   const [sortOpen, setSortOpen] = useState(false);
 
-  const currentSort = (sp.get("sort") as SortKey) || "featured";
+  const currentSort = (sp.get("sort") as SortKey) || defaultSort;
   const inStock = sp.get("inStock") === "1";
   const activeColor = sp.get("color");
   const activeMaterial = sp.get("material");
@@ -195,7 +198,7 @@ export function CollectionToolbar({
               <button
                 key={o.key}
                 onClick={() => {
-                  apply({ sort: o.key === "featured" ? null : o.key });
+                  apply({ sort: o.key === defaultSort ? null : o.key });
                   setSortOpen(false);
                 }}
                 className={cn(

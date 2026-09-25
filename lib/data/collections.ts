@@ -1,7 +1,7 @@
 import { cacheLife, cacheTag } from "next/cache";
 import { getTranslations } from "next-intl/server";
 import { supabase } from "@/lib/supabase";
-import { categoryHandle, LEGACY_HANDLE_TO_CATEGORY } from "@/lib/categories";
+import { NEW_IN, categoryHandle, houseCategoryForHandle } from "@/lib/categories";
 import { CARD, cardImages, toCard, type ProductCardDTO } from "./catalog";
 
 export type SortKey =
@@ -17,13 +17,13 @@ const ALL_HANDLES = new Set(["view-all", "all", "new-in", "shop"]);
 
 /**
  * Resolve a collection handle to the `products.category` value it stands for, or null if it
- * isn't a category page. The three built-in handles (abayas/jalabiyas/sheilas) always resolve —
- * even when empty — via their legacy alias; any admin-added category resolves by matching its
- * derived handle against the categories live products actually use.
+ * isn't a category page. The house categories (abayas / kaftans / ready-to-wear) always resolve
+ * — even when empty, since they always show in the nav; any admin-added category resolves by
+ * matching its derived handle against the categories live products actually use.
  */
 async function categoryForHandle(handle: string): Promise<string | null> {
-  const legacy = LEGACY_HANDLE_TO_CATEGORY[handle];
-  if (legacy) return legacy;
+  const house = houseCategoryForHandle(handle);
+  if (house) return house;
   const { data } = await supabase.from("products").select("category").eq("status", "active");
   const values = new Set((data ?? []).map((r) => r.category as string));
   return [...values].find((value) => categoryHandle(value) === handle) ?? null;
@@ -34,14 +34,16 @@ async function categoryForHandle(handle: string): Promise<string | null> {
  * to. Any other handle still renders on first visit (dynamicParams defaults to true), so
  * this is a warm-cache list rather than an allowlist.
  */
-export const COLLECTION_HANDLES = [
-  "all",
-  "abayas",
-  "jalabiyas",
-  "sheilas",
-  "sales",
-  "travel-collection",
-];
+export const COLLECTION_HANDLES = ["all", "new-in", "abayas", "kaftans", "ready-to-wear", "sales"];
+
+/**
+ * The order a collection opens in when the shopper hasn't picked one. New In is defined by
+ * recency — it is the whole catalogue, newest first — so it opens that way; every other
+ * collection opens on the featured order.
+ */
+export function defaultSortFor(handle: string): SortKey {
+  return handle === NEW_IN.handle ? "created-descending" : "featured";
+}
 const EMPTY_SENTINEL = "00000000-0000-0000-0000-000000000000";
 
 // The listing query is capped so a runaway catalogue can't silently hit PostgREST's
@@ -233,6 +235,7 @@ export async function getCollectionFacets(handle: string): Promise<CollectionFac
 }
 
 const TITLES: Record<string, string> = {
+  kaftans: "Kaftans", "ready-to-wear": "Ready to Wear",
   abayas: "Abayas", "view-all-abayas": "Abayas", "daily-abayas": "Daily Abayas", "evening-abayas": "Evening Abayas",
   jalabiyas: "Jalabiyas", "view-all-jalabiyas": "Jalabiyas", "daily-jalabiyas": "Daily Jalabiyas",
   "evening-jalabiyas": "Evening Jalabiyas", liberty: "Liberty", sheilas: "Sheilas", sales: "Sale",
@@ -244,6 +247,9 @@ const TITLES: Record<string, string> = {
 // Collection handles whose Arabic label is a translated UI string (the `nav` namespace),
 // mirroring how the navbar resolves these same categories (lib/data/navigation.ts).
 const NAV_KEY: Record<string, string> = {
+  "new-in": "newIn",
+  kaftans: "kaftans",
+  "ready-to-wear": "readyToWear",
   abayas: "abayas",
   "view-all-abayas": "abayas",
   jalabiyas: "jalabiyas",

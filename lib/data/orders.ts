@@ -6,7 +6,11 @@ export type OrderItemDTO = {
   id: string;
   variantId: string | null;
   productId: string | null;
-  /** 'MTO' lines have no variant and no size — they carry measurements instead. */
+  /**
+   * 'MTO' lines have no variant: their size and length are the ones the customer picked to be
+   * cut to. Only a line placed through the old measurement form has neither, and carries
+   * `measurements` instead.
+   */
   fulfillment: "RTW" | "MTO";
   title: string;
   color: string;

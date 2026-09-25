@@ -111,11 +111,9 @@ export function CheckoutForm({
       toast.error(
         res.error === "stock"
           ? "Some items are out of stock."
-          : res.error === "measurements"
-            ? t("errorMeasurements")
-            : res.error === "mode"
-              ? t("errorMode")
-              : "Something went wrong.",
+          : res.error === "mode"
+            ? t("errorMode")
+            : "Something went wrong.",
       );
     }
   }

@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { getAllProductHandles } from "@/lib/data/catalog";
+import { HOUSE_CATEGORIES, NEW_IN } from "@/lib/categories";
 
 // getAllProductHandles carries its own "use cache" + "products" tag, so the sitemap
 // rebuilds when the catalogue changes rather than re-querying on every crawl.
@@ -10,8 +11,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const paths = [
     "",
     "/collections/all",
-    "/collections/abayas",
-    "/collections/jalabiyas",
+    // The nav's Collections list, from the same definitions the nav is built from.
+    ...[NEW_IN.handle, ...HOUSE_CATEGORIES.map((c) => c.handle)].map((h) => `/collections/${h}`),
     "/collections/sales",
     "/collections/travel-collection",
     "/pages/about",

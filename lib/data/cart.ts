@@ -17,9 +17,10 @@ export const CART_COOKIE = "cartId";
  * One line type for two kinds of purchase.
  *
  * A ready-to-wear line is a variant: a stocked (colour, size) row, optionally with a length and
- * tack-tack choice. A made-to-order line has no variant and no size — it is a product, a colour
- * and a set of measurements, cut after the sale. `fulfillment` is which one you are looking at,
- * and it decides which of the nullable halves is populated.
+ * tack-tack choice. A made-to-order line has no variant — it is a product, a colour, and a size
+ * and length chosen from the same chips, cut after the sale. `fulfillment` is which one you are
+ * looking at, and it decides where the size comes from. `measurements` survives only on lines
+ * added before made-to-order moved to chips.
  *
  * `maxQty` rather than `maxStock`: for a made-to-order line "stock" is a lie — there is nothing
  * on a shelf — so the field says what it actually bounds. Ready-to-wear fills it from stock,
@@ -68,7 +69,7 @@ export type CartState = {
  * no variant at all — still resolve a handle, a title and a photograph.
  */
 const CART_SELECT =
-  "id, coupon_code, items:cart_items(id, quantity, fulfillment, length, tack_tack, measurements, measure_unit, notes, " +
+  "id, coupon_code, items:cart_items(id, quantity, fulfillment, size, length, tack_tack, measurements, measure_unit, notes, " +
   "variant:variants(id, color, size, price, compare_at, stock, available, image_url), " +
   "color:product_colors(id, name, hex, image_url), " +
   "product:products(id, handle, title, fulfillment, mto_price, mto_compare_at, mto_lead_min, mto_lead_max, " +
@@ -113,8 +114,8 @@ function mapLine(it: any): CartLine | null {
       handle: p.handle,
       title: p.title,
       color: it.color?.name ?? "",
-      size: null,
-      length: null,
+      size: it.size ?? null,
+      length: it.length ?? null,
       tackTack: it.tack_tack,
       measurements: asMeasurements(it.measurements),
       measureUnit: isUnit(it.measure_unit) ? it.measure_unit : null,
@@ -127,9 +128,10 @@ function mapLine(it: any): CartLine | null {
       quantity: it.quantity,
       maxQty: MAX_MTO_QTY,
       // A product switched back to ready-to-wear only, or left without a made-to-order price,
-      // can no longer honour this line. Surfacing it as unavailable is what lets the drawer say
-      // so before checkout refuses it.
-      available: p.fulfillment !== "READY_TO_WEAR" && price != null,
+      // can no longer honour this line — and nor can a line from the old measurement form,
+      // which has no size to cut to. Surfacing it as unavailable is what lets the drawer say so
+      // before checkout refuses it.
+      available: p.fulfillment !== "READY_TO_WEAR" && price != null && !!it.size,
     };
   }
 

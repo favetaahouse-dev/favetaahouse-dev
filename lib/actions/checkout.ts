@@ -6,8 +6,8 @@ import { randomUUID } from "crypto";
 import { z } from "zod";
 import { supabase } from "@/lib/supabase";
 import { getCart, getCartCoupon, CART_COOKIE } from "@/lib/data/cart";
-import { getMadeToOrderSettings } from "@/lib/content";
-import { applicableFields, validateMeasurements } from "@/lib/measurements";
+import { getVariantOptions } from "@/lib/content";
+import { madeToOrderSizes } from "@/lib/variant-options";
 import { skipcashEnabled, createPayment } from "@/lib/skipcash";
 import { sendOrderConfirmation, sendMerchantOrderEmail } from "@/lib/email";
 import { auth } from "@/lib/auth";
@@ -58,35 +58,34 @@ export async function createCheckout(
   /**
    * Re-validate every made-to-order line before the RPC.
    *
-   * The cart cookie lives 60 days, and in that window the CMS field list can change, a bound can
-   * tighten, a colour can be deleted or the product can flip back to ready-to-wear only. Without
-   * this, a cart assembled under last month's rules ships whatever it was holding to the atelier.
+   * The cart cookie lives 60 days, and in that window the size or length list can change, a
+   * colour can be deleted or the product can flip back to ready-to-wear only. Without this, a
+   * cart assembled under last month's rules ships whatever it was holding to the atelier — and a
+   * line from the old measurement form, which has no size, would reach it with nothing to cut to.
    *
    * Two batched reads, never 2N: one products query for the whole cart, one cached CMS read.
-   * create_order keeps only the cheap structural invariants — reimplementing the field-level
-   * rules in plpgsql would be a second copy of lib/measurements.ts that immediately drifts.
+   * create_order keeps only the cheap structural invariants.
    */
   const mtoLines = cart.items.filter((i) => i.fulfillment === "MTO");
-  const rules = new Map<string, string[]>();
   if (mtoLines.length) {
-    const { data: rows } = await supabase
-      .from("products")
-      .select("id, fulfillment, mto_price, mto_fields")
-      .in("id", [...new Set(mtoLines.map((i) => i.productId))]);
+    const [{ data: rows }, options] = await Promise.all([
+      supabase
+        .from("products")
+        .select("id, fulfillment, mto_price, variants(size)")
+        .in("id", [...new Set(mtoLines.map((i) => i.productId))]),
+      getVariantOptions(),
+    ]);
+    const sizesFor = new Map<string, string[]>();
     for (const p of rows ?? []) {
       if (p.fulfillment === "READY_TO_WEAR" || p.mto_price == null) return { ok: false, error: "mode" };
-      rules.set(p.id as string, (p.mto_fields as string[]) ?? []);
+      sizesFor.set(p.id, madeToOrderSizes((p.variants ?? []).map((v) => v.size), options.sizes));
     }
-    const settings = await getMadeToOrderSettings();
     for (const line of mtoLines) {
-      const only = rules.get(line.productId);
-      if (!only || !line.measureUnit) return { ok: false, error: "mode" };
-      const check = validateMeasurements(
-        applicableFields(settings.fields, only),
-        line.measurements ?? {},
-        line.measureUnit,
-      );
-      if (!check.ok) return { ok: false, error: "measurements" };
+      const sizes = sizesFor.get(line.productId);
+      if (!sizes || !line.size || !sizes.includes(line.size)) return { ok: false, error: "mode" };
+      if (options.lengths.length && (line.length == null || !options.lengths.includes(line.length))) {
+        return { ok: false, error: "mode" };
+      }
     }
   }
 
@@ -101,9 +100,8 @@ export async function createCheckout(
           product_id: i.productId,
           color_id: i.colorId,
           quantity: i.quantity,
-          measurements: i.measurements,
-          measure_unit: i.measureUnit,
-          notes: i.notes,
+          size: i.size,
+          length: i.length,
           tack_tack: i.tackTack,
         }
       : {

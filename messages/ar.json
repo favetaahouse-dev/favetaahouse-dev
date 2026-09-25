@@ -5,7 +5,10 @@
   },
   "nav": {
     "home": "الرئيسية",
+    "newIn": "جديدنا",
     "abayas": "عبايات",
+    "kaftans": "قفطان",
+    "readyToWear": "جاهز للارتداء",
     "jalabiyas": "جلابيات",
     "sheilas": "شيلات",
     "travel": "مجموعة السفر",
@@ -28,7 +31,6 @@
   },
   "home": {
     "trendy": "جديد هذا الموسم",
-    "all": "الكل",
     "filterBy": "تصفية حسب القسم",
     "loadMore": "عرض المزيد",
     "whoWeAre": "من نحن",
@@ -70,7 +72,7 @@
     "sale": "تخفيض",
     "soldOut": "نفدت الكمية",
     "selectSize": "الرجاء اختيار المقاس",
-    "length": "الطول",
+    "length": "الطول (بالبوصة)",
     "selectLength": "الرجاء اختيار الطول",
     "tackTack": "تك تك",
     "tackTackYes": "نعم (بدون إرجاع)",
@@ -96,21 +98,8 @@
     "mtoLead": "يُفصَّل لكِ خلال {min}–{max} يوماً",
     "mtoBlurb": "يُقصّ ويُخاط على مقاساتك.",
     "rtwBlurb": "يُشحن من أتيليهنا في الدوحة.",
-    "yourMeasurements": "مقاساتك",
-    "howToMeasure": "طريقة القياس",
-    "unit": "الوحدة",
-    "unitCm": "سم",
-    "unitIn": "بوصة",
-    "notes": "ملاحظات للأتيليه (اختياري)",
-    "notesPlaceholder": "هل من شيء نعرفه عن القَصّة؟",
-    "measureRequired": "{field} مطلوب",
-    "measureNumber": "أدخلي {field} كرقم",
-    "measureRange": "{field} يجب أن يكون بين {min} و{max} {unit}",
-    "measureFixErrors": "يرجى مراجعة المقاسات المحدّدة أدناه",
     "mtoNoReturn": "القطع المفصّلة حسب الطلب تُقَصّ خصيصاً لكِ ولا يمكن إرجاعها.",
-    "selectColor": "يرجى اختيار اللون",
-    "measureMin": "{field} يجب ألا يقل عن {min} {unit}",
-    "measureMax": "{field} يجب ألا يزيد عن {max} {unit}"
+    "selectColor": "يرجى اختيار اللون"
   },
   "collection": {
     "results": "{count} منتج",
@@ -126,6 +115,7 @@
     "clear": "مسح",
     "clearAll": "مسح الكل",
     "empty": "لا توجد منتجات.",
+    "comingSoon": "قطع جديدة قريبًا.",
     "featured": "المميزة",
     "bestSelling": "الأكثر مبيعاً",
     "priceLow": "السعر من الأقل للأعلى",
@@ -170,7 +160,6 @@
     "orderSummary": "ملخص الطلب",
     "processing": "جارٍ المعالجة…",
     "mtoNotice": "يحتوي هذا الطلب على قطع مفصّلة حسب الطلب — جاهزة خلال {min}–{max} يوماً.",
-    "errorMeasurements": "بعض المقاسات لم تعد صالحة. يرجى مراجعة سلتك.",
     "errorMode": "أحد العناصر في سلتك لم يعد متاحاً للطلب. يرجى مراجعة سلتك."
   },
   "account": {

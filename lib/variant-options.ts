@@ -63,6 +63,24 @@ export function sortSizes(sizes: string[]): string[] {
   });
 }
 
+/**
+ * The sizes a made-to-order piece is offered in.
+ *
+ * A piece that is also sold ready-to-wear already has a size row — its variants — and offering
+ * the same sizes made to order keeps the two modes one row of chips. A made-to-order-only piece
+ * has no variants, so it takes the house list (Admin → Content → Sizes & Lengths). "One Size"
+ * only means something on its own: beside real sizes it is a stocked-sheila fallback that a
+ * tailored piece cannot be cut to, so it drops out of any longer list.
+ *
+ * Shared by the product page, the cart action and checkout so the three can never disagree
+ * about what may be ordered.
+ */
+export function madeToOrderSizes(productSizes: string[], houseSizes: string[]): string[] {
+  const own = [...new Set(productSizes)];
+  const sizes = sortSizes(own.length ? own : houseSizes);
+  return sizes.length > 1 ? sizes.filter((s) => s !== "One Size") : sizes;
+}
+
 // `cellKey` used to live here, describing the DB unique (color, size, length, tack_tack).
 // Deleted rather than corrected: that key stopped existing in 20260718120000_stock_per_size.sql
 // and the function had no caller anywhere in the repo, so all it could do was tell the next
@@ -72,10 +90,10 @@ export function sortSizes(sizes: string[]): string[] {
  * One human label for a line across the cart drawer, checkout summary, customer order page,
  * admin order page, receipt HTML and both emails, so those six sites can't drift.
  *
- * Made-to-order lines have no size — measurements replace it — so the size slot carries the
- * "Made to Order" marker instead, and the length is dropped: under made-to-order the hem is a
- * measurement, and printing a chip value beside it would give the atelier two numbers for one
- * dimension. Tack Tack survives both modes; it is a finishing choice, not a fit dimension.
+ * Both modes read the same way — colour, size, length in inches, tack-tack — because both are
+ * now chosen from the same chips. A made-to-order line adds its marker at the end, which is
+ * what tells the atelier from the packer. A line carried over from the old measurement form has
+ * no size or length, and simply collapses to "Colour / Made to Order".
  *
  * `filter(Boolean)` is load-bearing rather than defensive: it is what lets a missing size
  * collapse cleanly instead of rendering "Black / ".
@@ -89,12 +107,9 @@ export function variantLabel(v: {
   /** Localised by the storefront. Defaults to English — the receipt and emails are English. */
   madeToOrderLabel?: string;
 }): string {
-  const mto = !!v.madeToOrder;
-  const parts: (string | null | undefined)[] = [
-    v.color,
-    mto ? (v.madeToOrderLabel || "Made to Order") : v.size,
-  ];
-  if (!mto && v.length != null && v.length > 0) parts.push(`${v.length}"`);
+  const parts: (string | null | undefined)[] = [v.color, v.size];
+  if (v.length != null && v.length > 0) parts.push(`${v.length}"`);
   if (v.tackTack) parts.push("Tack Tack");
+  if (v.madeToOrder) parts.push(v.madeToOrderLabel || "Made to Order");
   return parts.filter(Boolean).join(" / ");
 }
