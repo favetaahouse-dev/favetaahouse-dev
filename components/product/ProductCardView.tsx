@@ -20,6 +20,14 @@ export const PRODUCT_GRID_CLASS =
   "grid grid-cols-2 gap-x-5 gap-y-10 md:grid-cols-3 md:gap-x-5 md:gap-y-14";
 
 /**
+ * How many leading cards load eagerly on a grid that opens the page: the desktop's first row,
+ * which on a phone is the first row plus the start of the second. One of these is the LCP on
+ * every catalogue page, and next/image lazy-loads by default, so without it the largest paint
+ * waits on the lazy-load observer. Grids further down a page (recommendations) pass nothing.
+ */
+export const EAGER_CARDS = 3;
+
+/**
  * The card's markup, with no data fetching and no hooks of its own, so it renders on
  * either side of the boundary: <ProductCard> resolves the labels on the server for the
  * catalogue pages, while the wishlist — which reads its handles from localStorage — passes
@@ -28,9 +36,12 @@ export const PRODUCT_GRID_CLASS =
 export function ProductCardView({
   product,
   labels,
+  eager = false,
 }: {
   product: ProductCardDTO;
   labels: ProductCardLabels;
+  /** Above the fold — see EAGER_CARDS. */
+  eager?: boolean;
 }) {
   return (
     <div className="group relative flex flex-col">
@@ -47,6 +58,9 @@ export function ProductCardView({
                 alt={product.title}
                 fill
                 sizes="(max-width:768px) 50vw, 33vw"
+                // loading, not `preload`/`priority`: see ProductGallery. The hover shot stays
+                // lazy — it is invisible until a pointer arrives, so it is never the LCP.
+                loading={eager ? "eager" : "lazy"}
                 className="object-cover transition-all duration-700 ease-out group-hover:scale-[1.04] group-hover:opacity-0"
               />
               {product.hoverImage && (

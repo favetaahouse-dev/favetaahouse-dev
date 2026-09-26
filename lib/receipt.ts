@@ -47,14 +47,14 @@ export function renderReceiptHtml(order: OrderDTO, opts: ReceiptOpts): string {
       it.leadMinDays != null && it.leadMaxDays != null
         ? `<div style="color:${muted};font-size:11px;">Made to order &middot; ready in ${it.leadMinDays}–${it.leadMaxDays} days</div>`
         : "";
-    const note = it.notes
-      ? `<div style="color:${muted};font-size:11px;">Note: ${esc(it.notes)}</div>`
-      : "";
     const measures = parts.length
       ? `<div style="color:${muted};font-size:11px;">${parts.join(" &middot; ")}</div>`
       : "";
-    return `${measures}${lead}${note}`;
+    return `${measures}${lead}`;
   };
+  /** The shopper's note, on any kind of line — the receipt is the atelier's and the packer's copy. */
+  const noteBlock = (it: OrderDTO["items"][number]): string =>
+    it.notes ? `<div style="color:${muted};font-size:11px;">Note: ${esc(it.notes)}</div>` : "";
   const addr = order.shippingAddress as Record<string, string> | null;
   const ink = "#111111";
   const rule = "#dddddd";
@@ -67,7 +67,7 @@ export function renderReceiptHtml(order: OrderDTO, opts: ReceiptOpts): string {
         <td style="padding:10px 0;border-bottom:1px solid ${rule};vertical-align:top;">
           <div style="color:${ink};">${esc(it.title)}</div>
           <div style="color:${muted};font-size:12px;">${esc(variantLabel({ ...it, madeToOrder: it.fulfillment === "MTO" }))}${it.sku ? ` &middot; ${esc(it.sku)}` : ""}</div>
-          ${measureBlock(it)}
+          ${measureBlock(it)}${noteBlock(it)}
         </td>
         <td style="padding:10px 8px;border-bottom:1px solid ${rule};text-align:center;color:${ink};white-space:nowrap;">${it.quantity}</td>
         <td style="padding:10px 8px;border-bottom:1px solid ${rule};text-align:right;color:${muted};white-space:nowrap;">${money(it.price)}</td>

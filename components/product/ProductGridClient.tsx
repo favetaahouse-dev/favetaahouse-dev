@@ -14,13 +14,20 @@ import type { ProductCardDTO } from "@/lib/data/catalog";
  * Client Components" failure. Resolving the two badge labels once here, from the client
  * translator, keeps a single copy of the card markup on both sides of the boundary.
  */
-export function ProductGridClient({ products }: { products: ProductCardDTO[] }) {
+export function ProductGridClient({
+  products,
+  eagerCount = 0,
+}: {
+  products: ProductCardDTO[];
+  /** Leading cards to load eagerly — EAGER_CARDS when the grid opens the page. */
+  eagerCount?: number;
+}) {
   const t = useTranslations("product");
   const labels = { outOfStock: t("outOfStock"), sale: t("sale") };
   return (
     <div className={PRODUCT_GRID_CLASS}>
-      {products.map((p) => (
-        <ProductCardView key={p.handle} product={p} labels={labels} />
+      {products.map((p, i) => (
+        <ProductCardView key={p.handle} product={p} labels={labels} eager={i < eagerCount} />
       ))}
     </div>
   );

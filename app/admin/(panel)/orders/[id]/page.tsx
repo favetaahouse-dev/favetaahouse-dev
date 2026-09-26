@@ -117,6 +117,15 @@ export default async function AdminOrderDetail({ params }: { params: Promise<{ i
                     </p>
                   )}
 
+                  {/* The customer's own words, on any kind of line — set off with a rule so the
+                      person cutting or packing cannot read past it. pre-line keeps their breaks. */}
+                  {it.notes && (
+                    <p className="mt-2 whitespace-pre-line border-s-2 border-white/25 ps-2.5 text-xs text-white/85">
+                      <span className="text-white/40">Note: </span>
+                      {it.notes}
+                    </p>
+                  )}
+
                   {/* Only on lines placed through the old measurement form — inline, so staff can
                       answer the phone without opening the print view. */}
                   {mto && Object.keys(it.measurements ?? {}).length > 0 && (
@@ -132,7 +141,6 @@ export default async function AdminOrderDetail({ params }: { params: Promise<{ i
                           </div>
                         ))}
                       </dl>
-                      {it.notes && <p className="mt-2 text-xs text-white/60">Note: {it.notes}</p>}
                     </div>
                   )}
                 </div>

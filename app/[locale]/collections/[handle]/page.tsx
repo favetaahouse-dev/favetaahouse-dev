@@ -12,6 +12,7 @@ import {
 } from "@/lib/data/collections";
 import { CollectionToolbar } from "@/components/collection/CollectionToolbar";
 import { ProductGrid } from "@/components/product/ProductGrid";
+import { EAGER_CARDS } from "@/components/product/ProductCardView";
 import { ProductGridSkeleton } from "@/components/product/ProductGridSkeleton";
 
 type Params = { locale: string; handle: string };
@@ -101,7 +102,7 @@ async function CollectionResults({
       <CollectionToolbar total={total} priceMax={range.max} facets={facets} defaultSort={defaultSort} />
       <div className="mx-auto max-w-[1200px] px-4 py-10 md:px-8 md:pb-[90px]">
         {products.length ? (
-          <ProductGrid products={products} />
+          <ProductGrid products={products} eagerCount={EAGER_CARDS} />
         ) : (
           <p className="py-24 text-center text-sm text-muted">{narrowed ? t("empty") : t("comingSoon")}</p>
         )}

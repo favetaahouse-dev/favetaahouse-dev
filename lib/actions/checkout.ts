@@ -103,6 +103,7 @@ export async function createCheckout(
           size: i.size,
           length: i.length,
           tack_tack: i.tackTack,
+          notes: i.notes,
         }
       : {
           fulfillment: "RTW" as const,
@@ -110,6 +111,7 @@ export async function createCheckout(
           quantity: i.quantity,
           length: i.length,
           tack_tack: i.tackTack,
+          notes: i.notes,
         },
   );
 

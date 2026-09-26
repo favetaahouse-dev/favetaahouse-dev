@@ -37,6 +37,7 @@ async function OrderContent({ params }: { params: Promise<Params> }) {
     if (session?.user?.id !== order.userId) notFound();
   }
   const t = await getTranslations("account");
+  const tc = await getTranslations("cart");
   const commerce = await getCommerceSettings();
   const L = locale === "ar";
   const taxLabel = L ? commerce.taxLabelAr : commerce.taxLabel;
@@ -117,6 +118,11 @@ async function OrderContent({ params }: { params: Promise<Params> }) {
                 <p className="text-xs text-muted">
                   {variantLabel({ ...it, madeToOrder: it.fulfillment === "MTO" })} · × {it.quantity}
                 </p>
+                {it.notes && (
+                  <p className="mt-1 text-[11px] text-muted">
+                    {tc("note")}: {it.notes}
+                  </p>
+                )}
                 {it.fulfillment === "MTO" && Object.keys(it.measurements ?? {}).length > 0 && (
                   <p className="mt-1 text-[11px] text-muted" dir="ltr">
                     {Object.entries(it.measurements ?? {})

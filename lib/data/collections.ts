@@ -17,8 +17,8 @@ const ALL_HANDLES = new Set(["view-all", "all", "new-in", "shop"]);
 
 /**
  * Resolve a collection handle to the `products.category` value it stands for, or null if it
- * isn't a category page. The house categories (abayas / kaftans / ready-to-wear) always resolve
- * — even when empty, since they always show in the nav; any admin-added category resolves by
+ * isn't a category page. The house categories (HOUSE_CATEGORIES) always resolve — even when
+ * empty, since they always show in the nav; any admin-added category resolves by
  * matching its derived handle against the categories live products actually use.
  */
 async function categoryForHandle(handle: string): Promise<string | null> {
@@ -34,7 +34,7 @@ async function categoryForHandle(handle: string): Promise<string | null> {
  * to. Any other handle still renders on first visit (dynamicParams defaults to true), so
  * this is a warm-cache list rather than an allowlist.
  */
-export const COLLECTION_HANDLES = ["all", "new-in", "abayas", "kaftans", "ready-to-wear", "sales"];
+export const COLLECTION_HANDLES = ["all", "new-in", "abayas", "kaftans", "dresses", "ready-to-wear", "sales"];
 
 /**
  * The order a collection opens in when the shopper hasn't picked one. New In is defined by
@@ -235,7 +235,7 @@ export async function getCollectionFacets(handle: string): Promise<CollectionFac
 }
 
 const TITLES: Record<string, string> = {
-  kaftans: "Kaftans", "ready-to-wear": "Ready to Wear",
+  kaftans: "Kaftans", dresses: "Dresses", "ready-to-wear": "Ready to Wear",
   abayas: "Abayas", "view-all-abayas": "Abayas", "daily-abayas": "Daily Abayas", "evening-abayas": "Evening Abayas",
   jalabiyas: "Jalabiyas", "view-all-jalabiyas": "Jalabiyas", "daily-jalabiyas": "Daily Jalabiyas",
   "evening-jalabiyas": "Evening Jalabiyas", liberty: "Liberty", sheilas: "Sheilas", sales: "Sale",
@@ -249,6 +249,7 @@ const TITLES: Record<string, string> = {
 const NAV_KEY: Record<string, string> = {
   "new-in": "newIn",
   kaftans: "kaftans",
+  dresses: "dresses",
   "ready-to-wear": "readyToWear",
   abayas: "abayas",
   "view-all-abayas": "abayas",

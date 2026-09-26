@@ -8,6 +8,7 @@ import {
   updateCartItemAction,
   removeCartItemAction,
   type MadeToOrderInput,
+  type ReadyToWearInput,
 } from "@/lib/actions/cart";
 import { applyCouponAction, removeCouponAction } from "@/lib/actions/coupon";
 
@@ -23,9 +24,9 @@ type CartCtx = {
   pending: boolean;
   setOpen: (o: boolean) => void;
   /**
-   * Made-to-order lives beside `add` rather than inside it: the two carry genuinely different
-   * payloads (a stocked variant vs. a measurement set) and folding them together would put the
-   * ready-to-wear path — the one that already works — at risk for no gain.
+   * Made-to-order lives beside `add` rather than inside it: the two resolve genuinely different
+   * things (a stocked variant vs. a size cut to order, priced and checked differently) and
+   * folding them together would put the ready-to-wear path at risk for no gain.
    * Resolves to null on success, or the server's reason so the form can say which field failed.
    */
   addMto: (
@@ -33,10 +34,7 @@ type CartCtx = {
     meta?: { eventId: string; eventSourceUrl?: string },
   ) => Promise<string | null>;
   add: (
-    variantId: string,
-    qty?: number,
-    length?: number,
-    tackTack?: boolean,
+    input: ReadyToWearInput,
     /** Meta dedup key + page URL, so the server can send the matching Conversions API event. */
     meta?: { eventId: string; eventSourceUrl?: string },
   ) => Promise<boolean>;
@@ -77,22 +75,13 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     if (!touched.current) setState(s);
   }, []);
 
-  const add = useCallback(
-    async (
-      variantId: string,
-      qty = 1,
-      length?: number,
-      tackTack?: boolean,
-      meta?: { eventId: string; eventSourceUrl?: string },
-    ) => {
-      touched.current = true;
-      const res = await addToCartAction(variantId, qty, length, tackTack, meta);
-      setState(res.cart);
-      if (res.ok) setOpen(true);
-      return res.ok;
-    },
-    [],
-  );
+  const add = useCallback<CartCtx["add"]>(async (input, meta) => {
+    touched.current = true;
+    const res = await addToCartAction(input, meta);
+    setState(res.cart);
+    if (res.ok) setOpen(true);
+    return res.ok;
+  }, []);
 
   const addMto = useCallback<CartCtx["addMto"]>(async (input, meta) => {
     touched.current = true;

@@ -82,10 +82,10 @@ export default async function AdminCategories() {
           </table>
         </div>
         <p className="border-t border-edge px-5 py-3 text-[12px] leading-relaxed text-secondary">
-          New In fills itself with the newest arrivals. Abayas, Kaftans and Ready to Wear always
-          show on the site, even while nothing is in them. To add a category, type a new name in a
-          product&rsquo;s Category field: it appears here, in the menu and in the homepage filter
-          as soon as that product is live.
+          New In fills itself with the newest arrivals. The categories marked &ldquo;Always
+          shown&rdquo; stay on the site even while nothing is in them. To add a category, type a new
+          name in a product&rsquo;s Category field: it appears here, in the menu and in the homepage
+          filter as soon as that product is live.
         </p>
       </Panel>
     </div>

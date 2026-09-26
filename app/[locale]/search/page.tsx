@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { setRequestLocale, getTranslations } from "next-intl/server";
 import { searchProducts } from "@/lib/data/catalog";
 import { ProductGrid } from "@/components/product/ProductGrid";
+import { EAGER_CARDS } from "@/components/product/ProductCardView";
 import { ProductGridSkeleton } from "@/components/product/ProductGridSkeleton";
 import { MetaSearch } from "@/components/meta/MetaSearch";
 
@@ -52,7 +53,7 @@ async function SearchResults({
         </p>
       )}
       {products.length ? (
-        <ProductGrid products={products} />
+        <ProductGrid products={products} eagerCount={EAGER_CARDS} />
       ) : (
         <p className="py-24 text-center text-sm text-muted">{t("noResults")}</p>
       )}

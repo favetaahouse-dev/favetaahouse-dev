@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { Search, ShoppingBag, Menu, Heart, User } from "lucide-react";
+import { Search, ShoppingBag, Menu, Heart } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Link, usePathname } from "@/lib/i18n-navigation";
 import { useCart } from "@/components/providers/cart-context";
@@ -148,13 +148,14 @@ export function Header({
             <Logo light={light} />
           </Link>
 
-          {/* end: language, then the controls that lead somewhere personal, plus the bag */}
+          {/* end: language, the wishlist, and the bag. No account icon — the owner took it off
+              the bar; Account lives at the foot of the menu drawer instead. */}
           <div className="flex items-center gap-4 justify-self-end md:gap-5">
             {/* The language toggle leads this cluster rather than sitting among the icons,
-                because it is a different KIND of control: the three marks beside it open
-                something, this one reloads the whole document in another script. Putting it
-                first, behind a hairline, is the fashion-house convention — and it means the
-                bag stays at the outside edge where the thumb expects it. */}
+                because it is a different KIND of control: the marks beside it open something,
+                this one reloads the whole document in another script. Putting it first, behind a
+                hairline, is the fashion-house convention — and it means the bag stays at the
+                outside edge where the thumb expects it. */}
             <LocaleSwitcher compact />
             <span
               aria-hidden
@@ -162,9 +163,6 @@ export function Header({
             />
             <Link href="/wishlist" aria-label={ta("wishlist")} className={cn(iconBtn, "hidden sm:block")}>
               <Heart {...icon.nav} />
-            </Link>
-            <Link href="/account" aria-label={ta("account")} className={iconBtn}>
-              <User {...icon.nav} />
             </Link>
             <button
               onClick={() => setOpen(true)}

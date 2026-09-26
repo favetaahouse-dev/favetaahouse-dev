@@ -72,7 +72,16 @@
   --font-heading: var(--font-playfair), "Playfair Display", Georgia, serif;
   --font-sans: var(--font-lato), "Helvetica Neue", Helvetica, Arial, sans-serif;
   --font-button: var(--font-poppins), "Helvetica Neue", Helvetica, Arial, sans-serif;
-  --font-arabic: var(--font-cairo), "Segoe UI", Tahoma, sans-serif;
+  /* Arabic letters come from an enlarged Cairo face first (lib/fonts.ts, cairoArabic): at the
+     same px, Arabic sets narrower and lighter than Latin and read a size smaller. That face
+     covers the Arabic block only, so any Latin in the same text falls through to plain Cairo
+     at its normal size. -ui is the same idea for interface labels, enlarged a step further
+     because their English twins are tracked capitals. -display is plain Cairo on purpose: at
+     heading sizes, in bold, Cairo already stands as tall as Playfair (body 0.50 vs 0.52 em,
+     alef 0.72 vs capitals 0.71), and enlarging it made Arabic headings the bigger of the two. */
+  --font-arabic: var(--font-cairo-ar), var(--font-cairo), "Segoe UI", Tahoma, sans-serif;
+  --font-arabic-ui: var(--font-cairo-ar-ui), var(--font-cairo), "Segoe UI", Tahoma, sans-serif;
+  --font-arabic-display: var(--font-cairo), "Segoe UI", Tahoma, sans-serif;
 
   /* ── Geometry ──
      Was 0px everywhere. 2px is not "rounded" — at this scale the eye reads it as a cut
@@ -230,7 +239,7 @@
   [dir="rtl"] h4, [lang="ar"] h4,
   [dir="rtl"] h5, [lang="ar"] h5,
   [dir="rtl"] h6, [lang="ar"] h6 {
-    font-family: var(--font-arabic);
+    font-family: var(--font-arabic-display);
     font-weight: 700;
     letter-spacing: 0;
   }
@@ -423,7 +432,7 @@
   [dir="rtl"] .section-title, [lang="ar"] .section-title,
   [dir="rtl"] .display, [lang="ar"] .display,
   [dir="rtl"] .display-xl, [lang="ar"] .display-xl {
-    font-family: var(--font-arabic);
+    font-family: var(--font-arabic-display);
     font-weight: 700;
     letter-spacing: 0;
   }
@@ -505,11 +514,15 @@
   /* ── Tab / filter label ── */
   .tab-label {
     font-family: var(--font-button);
-    font-size: 0.8125rem;
+    /* 14px on a phone, 15px from md — the homepage's category row is the one place this label
+       is used, and at 13px it read as a caption under the section title rather than as a way
+       into the catalogue. */
+    font-size: 0.875rem;
     font-weight: 500;
-    /* 0.08em on a phone, 0.12em from md: the four house categories then fit a 375pt row
-       without scrolling. Set here rather than as a tracking-* utility on the markup, because a
-       utility would outrank the Arabic zero-tracking reset below by layer order. */
+    /* 0.08em on a phone, 0.12em from md: the tighter tracking keeps the homepage filter row
+       as close to one screen as it can get before it has to scroll. Set here rather than as a
+       tracking-* utility on the markup, because a utility would outrank the Arabic
+       zero-tracking reset below by layer order. */
     letter-spacing: 0.08em;
     text-transform: uppercase;
     color: var(--color-muted);
@@ -518,7 +531,7 @@
     transition: color var(--dur-fast) var(--ease-lux), border-color var(--dur-fast) var(--ease-lux);
   }
   @media (min-width: 768px) {
-    .tab-label { letter-spacing: 0.12em; }
+    .tab-label { font-size: 0.9375rem; letter-spacing: 0.12em; }
   }
   .tab-label:hover { color: var(--color-ink); }
   /* aria-pressed is the filter form of the same control — see components/home/TrendyTabs.tsx. */
@@ -527,10 +540,20 @@
     color: var(--color-brand);
     border-bottom-color: var(--color-brand);
   }
+  /* Arabic takes a fifth more size than the English here, on top of the enlarged label face
+     every Arabic label already gets (--font-arabic-ui). Measured side by side: that face alone
+     brings the nav and the buttons level with their English, but this row is bigger and its
+     words are short — عبايات, قفطان, فستان — against long tracked capitals, and at the same
+     px they still read a size smaller. At 1.2× they stand as tall as the English. */
   [dir="rtl"] .tab-label,
   [lang="ar"] .tab-label {
     letter-spacing: 0;
     text-transform: none;
+    font-size: 1.05rem; /* 1.2 × 0.875rem */
+  }
+  @media (min-width: 768px) {
+    [dir="rtl"] .tab-label,
+    [lang="ar"] .tab-label { font-size: 1.125rem; /* 1.2 × 0.9375rem */ }
   }
 
   /* ── Unified form field ──
@@ -706,7 +729,11 @@
    Latin-only face) plus a Tailwind tracking-* utility. In Arabic that combination is
    what looks broken: Poppins has no Arabic glyphs so the text falls back to a system
    font, and the letter-spacing pulls apart the joined letters of the cursive script.
-   Reset both to Cairo with zero tracking — the same fix the headings get above.
+   Reset both to Cairo's label face with zero tracking — the same fix the headings get above.
+   The label face (--font-arabic-ui) is also what brings Arabic labels up to the visual size
+   of their English capitals, which is why the nav links no longer need a font-size nudge of
+   their own. .tab-label and .field-label are here because they, too, set Poppins directly:
+   without this the filter tabs and form labels fell back to a system Arabic face.
    This MUST be unlayered: Tailwind's tracking-* utilities live in the utilities layer,
    which wins over @layer components by CSS layer order regardless of specificity, so a
    components-layer rule would lose. Unlayered rules outrank every layered rule. */
@@ -721,13 +748,19 @@
 [dir="rtl"] .btn-outline,
 [lang="ar"] .btn-outline,
 [dir="rtl"] .badge,
-[lang="ar"] .badge {
-  font-family: var(--font-arabic);
+[lang="ar"] .badge,
+[dir="rtl"] .tab-label,
+[lang="ar"] .tab-label,
+[dir="rtl"] .field-label,
+[lang="ar"] .field-label {
+  font-family: var(--font-arabic-ui);
   letter-spacing: 0;
 }
-/* Cairo reads a touch small next to Latin caps — nudge the nav links up for legibility. */
-[dir="rtl"] nav .nav-underline {
-  font-size: 0.875rem;
+/* The unified form field sets Lato directly for Latin prose; typed Arabic — an address, a
+   note to the atelier — belongs in the running-text face instead. */
+[dir="rtl"] .field,
+[lang="ar"] .field {
+  font-family: var(--font-arabic);
 }
 
 /* ── Fixed header offset ──

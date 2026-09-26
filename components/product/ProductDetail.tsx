@@ -12,7 +12,7 @@ import { ProductGallery } from "@/components/product/ProductGallery";
 import { ProductLightbox } from "@/components/product/ProductLightbox";
 import { StickyBuyBar } from "@/components/product/StickyBuyBar";
 import { useCart } from "@/components/providers/cart-context";
-import { sortSizes, variantLabel } from "@/lib/variant-options";
+import { MAX_LINE_NOTE, sortSizes, variantLabel } from "@/lib/variant-options";
 import { MAX_MTO_QTY } from "@/lib/measurements";
 import { trackMeta, newEventId } from "@/lib/meta/fbq";
 import { viewContentPayload, addToCartPayload } from "@/lib/meta/events";
@@ -109,6 +109,7 @@ export function ProductDetail({ product }: { product: ProductDetailDTO }) {
   const [colorId, setColorId] = useState(firstColorId);
   const [size, setSize] = useState(initialMode === "MTO" ? (mto?.sizes[0] ?? "") : firstSize);
   const [tackTack, setTackTack] = useState(false); // "No" by default
+  const [note, setNote] = useState("");
   const [length, setLength] = useState<number | null>(lengths[0] ?? null);
   const [qty, setQty] = useState(1);
   /** One index for the gallery, the lightbox and the colour jump, so closing the zoomed
@@ -241,6 +242,7 @@ export function ProductDetail({ product }: { product: ProductDetailDTO }) {
           size,
           length: length ?? undefined,
           tackTack,
+          note: note || undefined,
         },
         meta,
       );
@@ -249,6 +251,8 @@ export function ProductDetail({ product }: { product: ProductDetailDTO }) {
         toast.error(err === "unavailable" ? t("outOfStock") : t("unavailableCombination"));
         return;
       }
+      // The note belongs to the line just added; the next piece starts without one.
+      setNote("");
       trackMeta(
         "AddToCart",
         addToCartPayload({
@@ -275,9 +279,13 @@ export function ProductDetail({ product }: { product: ProductDetailDTO }) {
     setAdding(true);
     // One id shared by the browser event below and the Conversions API event that
     // addToCartAction sends, so Meta merges the pair instead of counting two add-to-carts.
-    const ok = await add(selected.id, qty, length ?? undefined, tackTack, meta);
+    const ok = await add(
+      { variantId: selected.id, quantity: qty, length: length ?? undefined, tackTack, note: note || undefined },
+      meta,
+    );
     setAdding(false);
     if (ok) {
+      setNote("");
       // Only on success. A refused add — out of stock at the moment of the click — must not
       // report an AddToCart, or the funnel shows intent that never happened.
       trackMeta(
@@ -450,6 +458,24 @@ export function ProductDetail({ product }: { product: ProductDetailDTO }) {
                   </button>
                 ))}
               </div>
+            </div>
+
+            {/* Note — the last of the choices, in both modes: whatever the chips cannot say
+                travels with this line to the order, the receipt and the admin. A <label>, not
+                the <p> the chip rows use, because this one names a real form control. */}
+            <div className="mt-6">
+              <label htmlFor="line-note" className="mb-2.5 block font-button text-[13px] font-medium text-strong">
+                {t("note")}
+              </label>
+              <textarea
+                id="line-note"
+                rows={2}
+                maxLength={MAX_LINE_NOTE}
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                placeholder={t("notePlaceholder")}
+                className="field resize-y"
+              />
             </div>
 
             {/* Quantity + actions */}

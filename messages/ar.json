@@ -8,6 +8,7 @@
     "newIn": "جديدنا",
     "abayas": "عبايات",
     "kaftans": "قفطان",
+    "dresses": "فستان",
     "readyToWear": "جاهز للارتداء",
     "jalabiyas": "جلابيات",
     "sheilas": "شيلات",
@@ -77,6 +78,8 @@
     "tackTack": "تك تك",
     "tackTackYes": "نعم (بدون إرجاع)",
     "tackTackNo": "لا",
+    "note": "أضيفي ملاحظة (اختياري)",
+    "notePlaceholder": "هل من شيء تودّين أن نعرفه عن طلبك؟",
     "unavailableCombination": "هذا الخيار غير متوفر",
     "outOfStock": "غير متوفر",
     "freeShipping": "شحن مجاني وإمكانية الإرجاع خلال ٣٠ يوماً",
@@ -143,7 +146,8 @@
     "madeToOrder": "تفصيل حسب الطلب",
     "measurementsCount": "{n} مقاسات",
     "leadTime": "جاهز خلال {min}–{max} يوماً",
-    "lineUnavailable": "لم يعد متوفراً"
+    "lineUnavailable": "لم يعد متوفراً",
+    "note": "ملاحظة"
   },
   "checkout": {
     "title": "إتمام الشراء",

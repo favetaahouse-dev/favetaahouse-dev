@@ -218,8 +218,8 @@ export async function getMadeToOrderSettings(): Promise<MadeToOrderSettings> {
 }
 
 /**
- * The category options the admin product form offers: the house categories (Abaya, Kaftan,
- * Ready to Wear — lib/categories.ts), then any other category a product already uses. Typing a
+ * The category options the admin product form offers: the house categories (HOUSE_CATEGORIES in
+ * lib/categories.ts), then any other category a product already uses. Typing a
  * brand-new name in the form still works; this is the list of suggestions, not a limit.
  * Admin-only; the storefront derives its category nav from the same definitions.
  */

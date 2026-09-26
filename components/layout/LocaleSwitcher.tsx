@@ -49,11 +49,11 @@ export function LocaleSwitcher({ className, compact = false }: { className?: str
         style={toArabic ? undefined : LATIN}
         className={cn(
           "focus-ring -m-2 p-2 leading-none whitespace-nowrap transition-opacity duration-300 hover:opacity-60",
-          // Cairo sets small for its em, so the Arabic offer takes a size up: 13/15 puts
-          // Poppins' cap height (0.7em ≈ 9.1px) against Cairo's ع at ~7.5px, which is as
-          // close as two scripts get. Sizing is per-script for exactly this reason — a
-          // single figure would leave one of the two labels looking shrunken.
-          toArabic ? "font-arabic text-[15px] font-semibold" : "text-[13px] font-medium uppercase",
+          // One figure for both scripts. The Arabic offer sets in the enlarged label face
+          // (--font-arabic-ui, Cairo's Arabic at 120%), which is what brings عربي up to the
+          // visual size of Poppins' capitals — the compensation that used to be a separate
+          // 15px here now lives in the face, where every Arabic label shares it.
+          toArabic ? "font-arabic-ui text-[13px] font-semibold" : "text-[13px] font-medium uppercase",
           className,
         )}
       >
@@ -65,8 +65,8 @@ export function LocaleSwitcher({ className, compact = false }: { className?: str
   // The two-label switcher (footer, mobile drawer) shows both scripts AT ONCE, so neither
   // label can take the page's face: on an English page العربية fell back to a system Arabic
   // font with 0.14em prising its joined letters apart, and on an Arabic page English came
-  // out as untracked Cairo. Each label is set in its own script's face and size instead —
-  // the same 13/11 step the compact toggle uses, for the same reason.
+  // out as untracked Cairo. Each label is set in its own script's face instead, at one size:
+  // the Arabic label face carries the step between the scripts, as in the compact toggle.
   return (
     <div className={cn("flex items-center gap-2 text-[11px]", className)}>
       {routing.locales.map((l, i) => (
@@ -81,7 +81,7 @@ export function LocaleSwitcher({ className, compact = false }: { className?: str
             style={l === "ar" ? undefined : LATIN}
             className={cn(
               "transition-opacity hover:opacity-100",
-              l === "ar" ? "font-arabic text-[13px]" : "uppercase",
+              l === "ar" ? "font-arabic-ui" : "uppercase",
               l === locale ? "opacity-100 underline" : "opacity-60",
             )}
           >

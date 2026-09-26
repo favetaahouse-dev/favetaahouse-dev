@@ -5,19 +5,22 @@ import { supabase } from "@/lib/supabase";
 import { getOrCreateCart, cartStateById, getCart, type CartState, type CartLine } from "@/lib/data/cart";
 import { getVariantOptions } from "@/lib/content";
 import { MAX_MTO_QTY } from "@/lib/measurements";
-import { madeToOrderSizes } from "@/lib/variant-options";
+import { MAX_LINE_NOTE, madeToOrderSizes } from "@/lib/variant-options";
 import { sendMetaAddToCart } from "@/lib/meta/server-events";
 import { addToCartPayload } from "@/lib/meta/events";
 
 /** Meta dedup key + originating URL, supplied by the browser so both halves share an event_id. */
 export type AddToCartMeta = { eventId: string; eventSourceUrl?: string; fbc?: string };
 
+/** The shopper's note, as stored: trimmed, and null rather than "" so "no note" has one spelling. */
+const cleanNote = (note: string | undefined): string | null => note?.trim() || null;
+
 /**
- * Identity of a made-to-order line: same product, colour, size, length and tack-tack — the same
- * choices that make two ready-to-wear lines one line.
+ * Identity of a made-to-order line: same product, colour, size, length, tack-tack and note — the
+ * same choices that make two ready-to-wear lines one line.
  *
  * Done here rather than by a unique constraint: the DB keeps a partial unique index for
- * READY-TO-WEAR lines only (see 20260816120000_made_to_order.sql), keyed on the variant, and a
+ * READY-TO-WEAR lines only (see 20260926120000_line_notes.sql), keyed on the variant, and a
  * made-to-order line has none. A line carried over from the measurement form has no size, so it
  * can never match a new one and is never silently merged into it.
  */
@@ -27,8 +30,9 @@ function mtoKey(l: {
   size: string | null;
   length: number | null;
   tackTack: boolean | null;
+  notes: string | null;
 }): string {
-  return [l.productId, l.colorId ?? "", l.size ?? "", l.length ?? "", l.tackTack ? 1 : 0].join("|");
+  return [l.productId, l.colorId ?? "", l.size ?? "", l.length ?? "", l.tackTack ? 1 : 0, l.notes ?? ""].join("|");
 }
 
 /**
@@ -58,14 +62,24 @@ async function upsertLine(
   if (error) throw new Error(error.message);
 }
 
+const rtwInputSchema = z.object({
+  variantId: z.string().uuid(),
+  quantity: z.number().int().min(1).optional(),
+  /** Inches, from the house length list. */
+  length: z.number().int().positive().optional(),
+  tackTack: z.boolean().optional(),
+  note: z.string().max(MAX_LINE_NOTE).optional(),
+});
+export type ReadyToWearInput = z.input<typeof rtwInputSchema>;
+
 export async function addToCartAction(
-  variantId: string,
-  quantity = 1,
-  length?: number,
-  tackTack = false,
+  input: ReadyToWearInput,
   meta?: AddToCartMeta,
 ): Promise<{ ok: boolean; cart: CartState; error?: string }> {
+  const parsed = rtwInputSchema.safeParse(input);
   const cart = await getOrCreateCart();
+  if (!parsed.success) return { ok: false, cart: await cartStateById(cart.id!), error: "invalid" };
+  const { variantId, quantity = 1, tackTack = false } = parsed.data;
   const { data: variant } = await supabase
     .from("variants")
     .select("available, stock, product_id, color_id")
@@ -74,14 +88,19 @@ export async function addToCartAction(
   if (!variant || !variant.available || variant.stock < 1) {
     return { ok: false, cart: await cartStateById(cart.id!), error: "unavailable" };
   }
-  // A line is a (variant, length, tack-tack) choice — same size in two lengths = two lines.
-  const len = length ?? null;
-  const existing = cart.items.find(
-    (i) => i.fulfillment === "RTW" && i.variantId === variantId && i.length === len && i.tackTack === tackTack,
-  );
+  // A line is a (variant, length, tack-tack, note) choice — the same size in two lengths, or with
+  // two different notes, is two lines. The DB's partial unique index says the same thing.
+  const len = parsed.data.length ?? null;
+  const notes = cleanNote(parsed.data.note);
+  const isThisLine = (i: CartLine) =>
+    i.fulfillment === "RTW" &&
+    i.variantId === variantId &&
+    i.length === len &&
+    i.tackTack === tackTack &&
+    i.notes === notes;
   await upsertLine(
     cart.id!,
-    existing,
+    cart.items.find(isThisLine),
     {
       variant_id: variantId,
       product_id: variant.product_id,
@@ -89,6 +108,7 @@ export async function addToCartAction(
       fulfillment: "RTW",
       length: len,
       tack_tack: tackTack,
+      notes,
     },
     quantity,
     variant.stock,
@@ -100,9 +120,7 @@ export async function addToCartAction(
   // promise is not guaranteed to run on Vercel — the function can be frozen the moment this
   // action returns. It can never throw (see lib/meta/capi.ts).
   if (meta?.eventId) {
-    const line = next.items.find(
-      (i) => i.fulfillment === "RTW" && i.variantId === variantId && i.length === len && i.tackTack === tackTack,
-    );
+    const line = next.items.find(isThisLine);
     if (line) await reportAdd(line, quantity, meta);
   }
 
@@ -118,6 +136,7 @@ const mtoInputSchema = z.object({
   /** Inches, from the house length list. */
   length: z.number().int().positive().optional(),
   tackTack: z.boolean().optional(),
+  note: z.string().max(MAX_LINE_NOTE).optional(),
 });
 export type MadeToOrderInput = z.input<typeof mtoInputSchema>;
 
@@ -171,8 +190,9 @@ export async function addMadeToOrderAction(
   }
 
   const tackTack = !!data.tackTack;
+  const notes = cleanNote(data.note);
   const qty = data.quantity ?? 1;
-  const key = mtoKey({ productId: product.id, colorId: color.id, size: data.size, length, tackTack });
+  const key = mtoKey({ productId: product.id, colorId: color.id, size: data.size, length, tackTack, notes });
   const existing = cart.items.find((i) => i.fulfillment === "MTO" && mtoKey(i) === key);
 
   try {
@@ -187,6 +207,7 @@ export async function addMadeToOrderAction(
         size: data.size,
         length,
         tack_tack: tackTack,
+        notes,
       },
       qty,
       MAX_MTO_QTY,

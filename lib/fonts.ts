@@ -1,4 +1,5 @@
 import { Playfair_Display, Poppins, Lato, Cairo } from "next/font/google";
+import localFont from "next/font/local";
 
 /**
  * Four faces, three jobs, no overlap.
@@ -65,8 +66,61 @@ export const cairo = Cairo({
 });
 
 /**
+ * Cairo's ARABIC letters, drawn larger — so Arabic reads the same size as English at the same px.
+ *
+ * Measured in the browser: at one font-size Cairo's Arabic body stands exactly as tall as Lato's
+ * x-height (0.50 vs 0.51 em) and its alef as tall as Lato's capitals (0.72 em) — yet an Arabic
+ * word sets ~20% narrower than the English one, in thinner strokes, and ~35% narrower than the
+ * tracked capitals the buttons and labels use. So Arabic looked a size smaller everywhere.
+ *
+ * `size-adjust` enlarges the glyphs without touching font-size, so none of the storefront's fixed
+ * pixel sizes needs an Arabic twin; `unicode-range` (Google's own Arabic-subset range for Cairo
+ * v31) confines it to Arabic, so the Latin on an Arabic page — a product name, a price, "XS" —
+ * falls through to `cairo` above at its normal size. Two faces from one 31 KB file: running text
+ * at 112%, interface labels at 120% (their English twins are tracked capitals, which read larger
+ * than lowercase). Wired up as --font-arabic / --font-arabic-ui in app/globals.css.
+ *
+ * Self-hosted from fonts.gstatic.com because next/font/google cannot take font-face descriptors.
+ * Cairo is licensed under the SIL Open Font License 1.1. Not preloaded, for the same reason as
+ * `cairo`. No fallback metrics: the next family in the stack, `cairo`, is the fallback.
+ */
+export const cairoArabic = localFont({
+  src: "../app/fonts/cairo-arabic.woff2",
+  variable: "--font-cairo-ar",
+  weight: "200 1000",
+  display: "swap",
+  preload: false,
+  adjustFontFallback: false,
+  declarations: [
+    { prop: "size-adjust", value: "112%" },
+    {
+      prop: "unicode-range",
+      value:
+        "U+0600-06FF, U+0750-077F, U+0870-088E, U+0890-0891, U+0897-08E1, U+08E3-08FF, U+200C-200E, U+2010-2011, U+204F, U+2E41, U+FB50-FDFF, U+FE70-FE74, U+FE76-FEFC, U+102E0-102FB, U+10E60-10E7E, U+10EC2-10EC4, U+10EFC-10EFF, U+1EE00-1EEFF",
+    },
+  ],
+});
+
+export const cairoArabicUi = localFont({
+  src: "../app/fonts/cairo-arabic.woff2",
+  variable: "--font-cairo-ar-ui",
+  weight: "200 1000",
+  display: "swap",
+  preload: false,
+  adjustFontFallback: false,
+  declarations: [
+    { prop: "size-adjust", value: "120%" },
+    {
+      prop: "unicode-range",
+      value:
+        "U+0600-06FF, U+0750-077F, U+0870-088E, U+0890-0891, U+0897-08E1, U+08E3-08FF, U+200C-200E, U+2010-2011, U+204F, U+2E41, U+FB50-FDFF, U+FE70-FE74, U+FE76-FEFC, U+102E0-102FB, U+10E60-10E7E, U+10EC2-10EC4, U+10EFC-10EFF, U+1EE00-1EEFF",
+    },
+  ],
+});
+
+/**
  * One string to spread onto every <html> (both root layouts) so the variables are in
  * scope for the whole document. Keeping the export name and shape means neither layout
  * has to know how many families there are.
  */
-export const fontVars = `${playfair.variable} ${poppins.variable} ${lato.variable} ${cairo.variable}`;
+export const fontVars = `${playfair.variable} ${poppins.variable} ${lato.variable} ${cairo.variable} ${cairoArabic.variable} ${cairoArabicUi.variable}`;

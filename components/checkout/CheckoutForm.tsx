@@ -161,6 +161,11 @@ export function CheckoutForm({
                     madeToOrderLabel: tc("madeToOrder"),
                   })}
                 </p>
+                {it.notes && (
+                  <p className="line-clamp-2 text-xs text-muted">
+                    {tc("note")}: {it.notes}
+                  </p>
+                )}
               </div>
               <div className="self-center text-[13px]">
                 <Price cents={it.price * it.quantity} />

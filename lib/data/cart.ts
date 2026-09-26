@@ -151,7 +151,7 @@ function mapLine(it: any): CartLine | null {
     tackTack: it.tack_tack,
     measurements: null,
     measureUnit: null,
-    notes: null,
+    notes: it.notes ?? null,
     leadMin: null,
     leadMax: null,
     price: v.price,

@@ -8,6 +8,7 @@
     "newIn": "New In",
     "abayas": "Abayas",
     "kaftans": "Kaftans",
+    "dresses": "Dresses",
     "readyToWear": "Ready to Wear",
     "jalabiyas": "Jalabiyas",
     "sheilas": "Sheilas",
@@ -77,6 +78,8 @@
     "tackTack": "Tack Tack",
     "tackTackYes": "Yes (No Return)",
     "tackTackNo": "No",
+    "note": "Add a note (optional)",
+    "notePlaceholder": "Anything we should know about your order?",
     "unavailableCombination": "This combination is unavailable",
     "outOfStock": "Out of stock",
     "freeShipping": "Free shipping and 30 days to return",
@@ -143,7 +146,8 @@
     "madeToOrder": "Made to order",
     "measurementsCount": "{n} measurements",
     "leadTime": "Ready in {min}–{max} days",
-    "lineUnavailable": "No longer available"
+    "lineUnavailable": "No longer available",
+    "note": "Note"
   },
   "checkout": {
     "title": "Checkout",

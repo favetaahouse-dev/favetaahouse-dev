@@ -8,12 +8,19 @@ import type { ProductCardDTO } from "@/lib/data/catalog";
  * here hydrates a couple of small leaves per card instead of a whole card tree — 20 of
  * those on the homepage, 99 on /collections/all.
  */
-export async function ProductCard({ product }: { product: ProductCardDTO }) {
+export async function ProductCard({
+  product,
+  eager,
+}: {
+  product: ProductCardDTO;
+  eager?: boolean;
+}) {
   const t = await getTranslations("product");
   return (
     <ProductCardView
       product={product}
       labels={{ outOfStock: t("outOfStock"), sale: t("sale") }}
+      eager={eager}
     />
   );
 }

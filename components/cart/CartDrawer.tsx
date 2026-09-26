@@ -110,6 +110,13 @@ export function CartDrawer() {
                           .join(" · ")}
                       </p>
                     )}
+                    {/* Clamped: the drawer is a summary, and the note prints in full on the
+                        order page and the receipt. */}
+                    {it.notes && (
+                      <p className="mt-0.5 line-clamp-2 text-[11px] text-muted">
+                        {t("note")}: {it.notes}
+                      </p>
+                    )}
                     {!it.available && (
                       <p className="mt-0.5 text-[11px] text-signal">{t("lineUnavailable")}</p>
                     )}

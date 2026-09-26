@@ -6,6 +6,7 @@ import { Link } from "@/lib/i18n-navigation";
 import { useWishlist } from "@/components/providers/wishlist-context";
 import { getCardsByHandles } from "@/lib/actions/catalog";
 import { ProductGridClient } from "@/components/product/ProductGridClient";
+import { EAGER_CARDS } from "@/components/product/ProductCardView";
 import type { ProductCardDTO } from "@/lib/data/catalog";
 
 export function WishlistView() {
@@ -49,7 +50,7 @@ export function WishlistView() {
       ) : (
         // The wishlist lives in localStorage, so its cards are picked in the browser and
         // rendered through the client grid rather than the server one.
-        <ProductGridClient products={shown} />
+        <ProductGridClient products={shown} eagerCount={EAGER_CARDS} />
       )}
     </div>
   );

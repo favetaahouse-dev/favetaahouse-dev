@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/lib/i18n-navigation";
 import { ProductGridClient } from "@/components/product/ProductGridClient";
+import { EAGER_CARDS } from "@/components/product/ProductCardView";
 import type { ProductCardDTO } from "@/lib/data/catalog";
 import type { NavItem } from "@/lib/data/navigation";
 
@@ -69,10 +70,11 @@ export function TrendyTabs({
             role="group"
             aria-label={t("filterBy")}
             // Scrollable rather than wrapping: a wrapped row becomes ragged lines above the grid.
-            // The four house categories fit a 375pt phone as they are; once an admin adds more,
-            // the row scrolls, and it bleeds to the screen edges (-mx-4 px-4) so the last label
-            // is cut by the glass rather than by the page margin, which reads as "more this way".
-            className="no-scrollbar -mx-4 mt-6 flex justify-start gap-4 overflow-x-auto px-4 md:mx-0 md:justify-center md:gap-7 md:px-0"
+            // When the categories outgrow a phone (in English, five already do at 375pt), the
+            // row scrolls, and it bleeds to the screen edges (-mx-4 px-4) so the last label is
+            // cut by the glass rather than by the page margin, which reads as "more this way".
+            // Wide gaps (24px, 48px from md) so each category reads as its own destination.
+            className="no-scrollbar -mx-4 mt-6 flex justify-start gap-6 overflow-x-auto px-4 md:mx-0 md:justify-center md:gap-12 md:px-0"
           >
             {categories.map((category) => (
               <button
@@ -96,7 +98,7 @@ export function TrendyTabs({
         {filtered.length > 0 ? (
           <>
             <div className="mt-10">
-              <ProductGridClient products={shown} />
+              <ProductGridClient products={shown} eagerCount={EAGER_CARDS} />
             </div>
 
             <div className="mt-12 text-center">

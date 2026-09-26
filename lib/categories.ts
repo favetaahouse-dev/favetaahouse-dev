@@ -22,6 +22,7 @@
 export const HOUSE_CATEGORIES = [
   { value: "ABAYA", handle: "abayas", labelKey: "abayas" },
   { value: "KAFTAN", handle: "kaftans", labelKey: "kaftans" },
+  { value: "DRESS", handle: "dresses", labelKey: "dresses" },
   { value: "READY TO WEAR", handle: "ready-to-wear", labelKey: "readyToWear" },
 ] as const;
 

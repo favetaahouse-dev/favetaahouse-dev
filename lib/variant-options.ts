@@ -20,6 +20,13 @@
  */
 export const MAX_COLORS = 40;
 
+/**
+ * The longest note a shopper can attach to a line — enough for a real instruction to the
+ * atelier or the packer, short enough that it cannot become a document. Here, shared by both
+ * sides, so the product page's maxLength and the cart actions' check are one number.
+ */
+export const MAX_LINE_NOTE = 500;
+
 /** Canonical size ordering — mirrors the array in the migration's position recompute. */
 export const SIZE_ORDER = ["XS", "S", "M", "L", "XL", "XXL", "One Size"];
 
